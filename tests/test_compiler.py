@@ -9,7 +9,7 @@ from pathlib import Path
 import unittest
 
 from h3_character_sheet.compiler import (
-    AUXILIARY_IDS, BODY_IDS, DEFAULT_STATE, DEFAULT_STATE_JSON,
+    AUXILIARY_IDS, BODY_IDS, PORTRAIT_IDS, DEFAULT_STATE, DEFAULT_STATE_JSON,
     EXPERIMENTAL_PIXEL_THRESHOLD, PRESETS, STATE_MAX_BYTES, VIEW_IDS,
     StateValidationError, _round_coordinate, compile_state, layout_json, parse_state,
 )
@@ -149,17 +149,47 @@ class ValidationTests(unittest.TestCase):
 
 
 class LayoutTests(unittest.TestCase):
+    def test_all_legacy_six_view_geometries_are_unchanged(self):
+        # Recorded from the unmodified f22e03e compiler, before adding face_left.
+        path = Path(__file__).with_name("fixtures") / "legacy_six_view_layouts.json"
+        expected = json.loads(path.read_text())
+        self.assertEqual(len(expected), 63)
+        for fixture in expected:
+            with self.subTest(views=fixture["views"]):
+                layout = compile_state(state_json(fixture["views"]))["layout"]
+                self.assertEqual(layout["canvas"], fixture["canvas"])
+                self.assertEqual(layout["feet_y"], fixture["feet_y"])
+                self.assertEqual([{key: panel[key] for key in ("id", "rect")} for panel in layout["panels"]], fixture["panels"])
+
+    def test_portraits_share_scale_and_expand_only_when_both_selected(self):
+        for details in ([], ["hands"], ["feet"], ["hands", "feet"]):
+            result = compile_state(state_json([*PORTRAIT_IDS, *details]))
+            panels = {p["id"]: p["rect"] for p in result["layout"]["panels"]}
+            front, left = [panels[view] for view in PORTRAIT_IDS]
+            self.assertEqual(front[1:], left[1:])
+            self.assertLess(front[0] + front[2], left[0])
+            self.assertEqual((result["width"], result["height"]), (1344, 1280))
+            for view in details:
+                self.assertLess(front[1] + front[3], panels[view][1])
+            for portrait in PORTRAIT_IDS:
+                single = compile_state(state_json([portrait, *details]))
+                self.assertEqual((single["width"], single["height"]), (736, 1280))
+
     def test_specification_auto_examples(self):
         examples = [
             (PRESETS["basic"], 1120, 2208, 1280),
-            (PRESETS["detail"], 1120, 2208, 1280),
+            (PRESETS["detail"], 1120, 2816, 1280),
+            (["face_front", "body_front", "body_left", "body_back", "hands", "feet"], 1120, 2208, 1280),
+            (["face_left"], 1120, 736, 1280),
+            (["face_front", "face_left"], 1120, 1344, 1280),
             (PRESETS["turnaround"], 1120, 1600, 1280),
             (["body_front"], 1120, 608, 1280),
             (["body_left"], 1120, 608, 1280),
             (["face_front"], 1120, 736, 1280),
             (["hands", "feet"], 1120, 736, 1280),
             (PRESETS["basic"], 672, 1344, 768),
-            (PRESETS["detail"], 672, 1344, 768),
+            (PRESETS["detail"], 672, 1696, 768),
+            (["face_front", "body_front", "body_left", "body_back", "hands", "feet"], 672, 1344, 768),
             (PRESETS["turnaround"], 672, 960, 768),
             (["body_front"], 672, 384, 768),
         ]
@@ -169,7 +199,7 @@ class LayoutTests(unittest.TestCase):
                 self.assertEqual((result["width"], result["height"]), (width, height))
                 self.assertEqual(result["pixel_count"], width * height)
 
-    def test_all_63_nonempty_subsets_in_auto_and_manual(self):
+    def test_all_127_nonempty_subsets_in_auto_and_manual(self):
         count = 0
         configurations = [
             {"body_height": h} for h in (32, 672, 896, 1120, 1344, 1792)
@@ -177,7 +207,7 @@ class LayoutTests(unittest.TestCase):
             {"mode": "manual", "manual_width": w, "manual_height": h}
             for w, h in ((2240, 1280), (1280, 2240), (32, 16384), (16384, 32), (32, 32))
         ]
-        for bits in range(1, 64):
+        for bits in range(1, 1 << len(VIEW_IDS)):
             views = [view for index, view in enumerate(VIEW_IDS) if bits & (1 << index)]
             count += 1
             for size in configurations:
@@ -212,7 +242,7 @@ class LayoutTests(unittest.TestCase):
                             self.assertAlmostEqual(top + rect_height, layout["feet_y"], delta=1.00001e-6)
                             self.assertEqual(top, bodies[0]["rect"][1])
                             self.assertEqual(rect_height, bodies[0]["rect"][3])
-        self.assertEqual(count, 63)
+        self.assertEqual(count, 127)
 
     def test_auxiliary_splits(self):
         def panel_map(views):
@@ -292,6 +322,33 @@ class LayoutTests(unittest.TestCase):
 
 
 class PromptTests(unittest.TestCase):
+    def test_footwear_requirement_is_selected_only_in_every_subset(self):
+        for bits in range(1, 1 << len(VIEW_IDS)):
+            views = [v for i, v in enumerate(VIEW_IDS) if bits & (1 << i)]
+            result = compile_state(state_json(views))
+            prompt = result["prompt"]
+            with self.subTest(views=views):
+                self.assertEqual('"id":"feet"' in prompt, "feet" in views)
+                self.assertEqual("required separate panel" in prompt, "feet" in views)
+                self.assertEqual("dedicated feet/footwear close-up as its own visible panel" in prompt, "feet" in views)
+                if "feet" in views:
+                    self.assertIn("toe areas, heels and sole edges visible from this angle", prompt)
+                    self.assertIn("any visible boot shafts", prompt)
+                    self.assertIn("If the reference is barefoot, preserve bare feet", prompt)
+                    self.assertIn("do not invent a specific shoe design", prompt)
+                    self.assertIn("do not expose bare toes through closed shoes", prompt)
+                    self.assertLess(prompt.index("dedicated feet/footwear close-up as its own visible panel"), prompt.index("retention_analysis:"))
+
+    def test_profile_prompt_is_anatomical_left_portrait_not_body(self):
+        result = compile_state(state_json(["face_left"]))
+        self.assertEqual([p["id"] for p in result["layout"]["panels"]], ["face_left"])
+        self.assertIn("strict left-profile portrait", result["prompt"])
+        self.assertIn("subject's anatomical left side", result["prompt"])
+        self.assertIn("complete hairstyle through the chest", result["prompt"])
+        self.assertNotIn("full-body", result["prompt"])
+        self.assertNotIn("nose points", result["prompt"])
+        self.assertNotIn('"id":"body_left"', result["prompt"])
+
     def test_fixed_section_order_and_format(self):
         prompt = compile_state(DEFAULT_STATE_JSON)["prompt"]
         sections = ["subject_definitions:", "summary:", "retention_analysis:", "detailed_description:", "overall_soundscape:", "non_diegetic_music:"]
@@ -351,6 +408,9 @@ class PromptTests(unittest.TestCase):
         cases = {f"preset_{name}": views for name, views in PRESETS.items()}
         cases.update({f"single_{view}": [view] for view in VIEW_IDS})
         cases["hands_and_feet"] = ["hands", "feet"]
+        cases["both_portraits"] = list(PORTRAIT_IDS)
+        cases["left_portrait_and_feet"] = ["face_left", "feet"]
+        cases["legacy_six_views"] = [view for view in VIEW_IDS if view != "face_left"]
         directory = Path(__file__).with_name("snapshots")
         for name, views in cases.items():
             with self.subTest(snapshot=name):

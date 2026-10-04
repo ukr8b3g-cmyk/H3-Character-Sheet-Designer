@@ -6,17 +6,17 @@ import shutil
 import subprocess
 import unittest
 
-from h3_character_sheet.compiler import compile_state
+from h3_character_sheet.compiler import compile_state, VIEW_IDS
 
 ROOT = Path(__file__).resolve().parents[1]
-VIEWS = ['face_front', 'body_front', 'body_left', 'body_back', 'hands', 'feet']
+VIEWS = VIEW_IDS
 
 
 @unittest.skipUnless(shutil.which('node'), 'Node.js is optional for Python-only installations')
 class SemanticParityTests(unittest.TestCase):
     def test_all_view_combinations_share_canonical_state(self):
         values = []
-        for count in range(1, 7):
+        for count in range(1, len(VIEWS) + 1):
             for views in itertools.combinations(VIEWS, count):
                 state = {'size': {'manual_height': 1280, 'mode': 'auto',
                                   'manual_width': 2240, 'body_height': 1120},

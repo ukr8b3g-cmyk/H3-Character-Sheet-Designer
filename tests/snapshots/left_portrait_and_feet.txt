@@ -1,0 +1,26 @@
+subject_definitions:
+<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view.
+
+summary:
+[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: anatomical left-profile portrait; dedicated feet/footwear close-up. Every panel depicts the same person from <Picture 1>. Include the dedicated feet/footwear close-up as its own visible panel, preserving whether the reference shows footwear or bare feet.
+
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details.
+
+detailed_description:
+Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet.
+[Shot 1] The finished sheet is already present in the first frame and remains completely unchanged through the last frame. The selected views coexist as separate, clearly spaced depictions of <Subject 1>; they are alternate views of one identity, not additional people. Keep all content within its assigned region, with uncluttered outer margins and empty gaps.
+Layout specification (semantic guidance, not visible text): {"canvas":[736,1280],"panels":[{"id":"face_left","rect":[0.119565,0.062500,0.760870,0.542500],"view":"anatomical left-profile portrait","content":"Show <Subject 1> in a strict left-profile portrait, camera looking directly at the subject's anatomical left side, from the complete hairstyle through the chest. Keep the face in a true side view, not a front or three-quarter portrait; retain the reference identity and visible upper clothing."},{"id":"feet","rect":[0.119565,0.640000,0.760870,0.297500],"view":"dedicated feet/footwear close-up","content":"Show one dedicated close-up of both of <Subject 1>'s feet, preserving the reference's barefoot or footwear state. Use a natural three-quarter detail view and keep both complete foot or footwear silhouettes inside the panel. When footwear is visible in <Picture 1>, preserve that same footwear: its colors, materials, shape, toe areas, heels and sole edges visible from this angle, and any visible boot shafts. For closed shoes, show the outer toe boxes; do not expose bare toes through closed shoes. Keep open-toed footwear open-toed. Do not redesign footwear or invent hidden construction. If the reference is barefoot, preserve bare feet; if footwear is not visible, do not invent a specific shoe design."}],"feet_y":null}
+Read rect coordinates as normalized [left, top, width, height], measured from the upper-left corner of the canvas. The canvas dimensions are in pixels. Use the specified placement and proportions without drawing the layout data into the image.
+Place the selected portrait and/or detail views in the leftmost auxiliary column.
+Place the anatomical left-profile portrait above the detail band, with clear empty space between them.
+Panel face_left occupies [left, top, width, height] = [0.119565, 0.062500, 0.760870, 0.542500]. Show <Subject 1> in a strict left-profile portrait, camera looking directly at the subject's anatomical left side, from the complete hairstyle through the chest. Keep the face in a true side view, not a front or three-quarter portrait; retain the reference identity and visible upper clothing.
+Panel feet occupies [left, top, width, height] = [0.119565, 0.640000, 0.760870, 0.297500]. Show one dedicated close-up of both of <Subject 1>'s feet, preserving the reference's barefoot or footwear state. Use a natural three-quarter detail view and keep both complete foot or footwear silhouettes inside the panel. When footwear is visible in <Picture 1>, preserve that same footwear: its colors, materials, shape, toe areas, heels and sole edges visible from this angle, and any visible boot shafts. For closed shoes, show the outer toe boxes; do not expose bare toes through closed shoes. Keep open-toed footwear open-toed. Do not redesign footwear or invent hidden construction. If the reference is barefoot, preserve bare feet; if footwear is not visible, do not invent a specific shoe design.
+The footwear detail is a required separate panel. Enlarge the feet within that assigned region and keep it clearly separated from the other selected views; footwear appearing elsewhere on the sheet does not replace this close-up.
+Show exactly the selected views and preserve the same identity, colors, materials, and reference-consistent asymmetries throughout. Do not add unselected views or extra people. Do not add captions, labels, lettering, watermarks, panel borders, or drawn alignment lines. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent.
+
+overall_soundscape:
+None. No speech, vocalization, ambience, or sound effects.
+
+non_diegetic_music:
+None.

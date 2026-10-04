@@ -34,7 +34,7 @@
 .h3-designer :focus-visible { outline: 2px solid #85e7d6; outline-offset: 2px; }
 .h3-intro { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 17px; min-height: 24px; }
 .h3-count { white-space: nowrap; color: var(--h3-accent); font-size: 15px; font-variant-numeric: tabular-nums; }
-.h3-cards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.h3-cards { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .h3-card { position: relative; min-width: 0; padding: 5px 3px 7px; background: #242d38; border: 1px solid #607183; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: border-color .15s, background .15s; }
 .h3-card[aria-pressed=true] { border-color: #85e7d6; background: linear-gradient(150deg, #28443e, #202f34); box-shadow: inset 0 0 0 1px #57cdb71f; }
 .h3-card:hover:not(:disabled) { border-color: #a0e9dc; }
@@ -90,6 +90,7 @@
 .h3-json-editor p { font-size: 14px; color: var(--h3-muted); }
 .h3-json-editor .h3-apply { display: block; }
 @container (max-width: 720px) {
+  .h3-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .h3-mode-row, .h3-number-row { flex-basis: 100%; }
   .h3-intro { flex-wrap: wrap; gap: 3px; }
   .h3-pixels { flex-basis: 100%; order: 3; }

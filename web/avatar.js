@@ -6,7 +6,7 @@
 let avatarSequence = 0;
 
 const VIEWS = new Set([
-  "face_front", "body_front", "body_left", "body_back", "hands", "feet",
+  "face_front", "face_left", "body_front", "body_left", "body_back", "hands", "feet",
 ]);
 
 function definitions(id) {
@@ -135,6 +135,11 @@ function faceFront(id) {
     <g transform="translate(80 30) scale(1.82)">${headFront(id)}</g>`;
 }
 
+/** Same anatomical-left fallback, cropped to a head-and-chest portrait. */
+function faceLeft(id) {
+  return `<svg x="0" y="0" width="160" height="260" viewBox="50 8 65 105" preserveAspectRatio="xMidYMid meet" overflow="hidden">${bodyLeft(id)}</svg>`;
+}
+
 /** One open hand with a thumb and four individually drawn tapered fingers. */
 function detailHand(id, transform) {
   return `<g transform="${transform}" stroke-linecap="round" stroke-linejoin="round">
@@ -183,6 +188,7 @@ export function avatarSVG(view, idPrefix = "h3-avatar") {
   const id = `h3-${prefix}-${++avatarSequence}`;
   const art = {
     face_front: faceFront,
+    face_left: faceLeft,
     body_front: bodyFront,
     body_left: bodyLeft,
     body_back: bodyBack,

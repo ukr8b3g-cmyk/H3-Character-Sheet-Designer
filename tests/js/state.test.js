@@ -36,8 +36,8 @@ test('malformed values, unknown fields and floating JSON integer tokens are reje
   assert.throws(() => parseJSONStrict('"' + 'あ'.repeat(6000) + '"'), error => error.code === 'oversize');
 });
 
-test('all 63 selections canonicalize without calculating layout in JS', () => {
-  for (let mask = 1; mask < 64; mask++) { const state = clone(); state.views = VIEW_IDS.filter((_, i) => mask & (1 << i)).reverse(); const result = parseState(serializeState(state)); assert.deepEqual(result.views, VIEW_IDS.filter((_, i) => mask & (1 << i))); }
+test('all 127 selections canonicalize without calculating layout in JS', () => {
+  for (let mask = 1; mask < 1 << VIEW_IDS.length; mask++) { const state = clone(); state.views = VIEW_IDS.filter((_, i) => mask & (1 << i)).reverse(); const result = parseState(serializeState(state)); assert.deepEqual(result.views, VIEW_IDS.filter((_, i) => mask & (1 << i))); }
 });
 
 test('view clicks synchronously own the serialized value for immediate save/API/queue', t => {

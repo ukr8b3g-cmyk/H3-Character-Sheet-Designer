@@ -14,7 +14,7 @@ test('approved GPT Image atlas is bundled as a real transparent PNG', () => {
   assert(bytes.length > 100_000, 'Expected full raster artwork, not a placeholder');
 });
 
-test('all six atlas viewports are bounded and full bodies share scale', () => {
+test('all seven atlas viewports are bounded and full bodies share scale', () => {
   assert.deepEqual(Object.keys(ARTWORK_RECTS), VIEW_IDS);
   for (const view of VIEW_IDS) {
     const [x,y,width,height] = artworkRect(view);

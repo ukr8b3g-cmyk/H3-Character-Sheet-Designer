@@ -2,7 +2,7 @@
 
 A standalone ComfyUI custom node for designing a multi-view character sheet and compiling an English MiniMax H3 reference prompt plus output dimensions.
 
-- Six illustrated view selectors: portrait, full-body front, anatomical left profile, full-body back, hands, and footwear
+- Seven illustrated view selectors: front portrait, anatomical-left portrait, full-body front, anatomical-left body profile, full-body back, hands, and footwear
 - Four presets, automatic layout sizing, editable manual dimensions, and a large live layout preview
 - Readable 870 × 930 default node, full-width dropdowns, and explicit custom panel-height entry
 - Default **2208 × 1280** experimental layout; choose a 672-pixel panel height for **1344 × 768**
@@ -37,9 +37,17 @@ Suggested experimental downstream settings are `length=5` **frames**, not five s
 4. Press Enter or leave a number field to commit a valid edit. Uncommitted drafts are not saved or queued
 5. Queue your normal H3 workflow. Preview networking is optional for execution: the node independently validates and compiles the current saved JSON
 
-The final view cannot be deselected. Face-only, hands-only, feet-only, left-profile-only, and hands-plus-feet layouts are supported. A missing or invalid saved value remains visible as an error; it is never silently reset. A failed preview can be retried without losing the committed selection.
+The default Basic preset stays at the original four views and 2208 × 1280. The optional Left portrait is a head-to-chest anatomical-left profile. Detail now selects all seven views and produces 2816 × 1280 at the default panel height (1696 × 768 at 672). Existing saved six-view selections retain their geometry and display as Custom; they are never automatically expanded.
+
+The final view cannot be deselected. Either portrait alone, both portraits, hands-only, feet-only, left-body-profile-only, and hands-plus-feet layouts are supported. A missing or invalid saved value remains visible as an error; it is never silently reset. A failed preview can be retried without losing the committed selection.
 
 **Experimental** appears above 1,032,192 pixels. This is a warning, not an artificial H3 size cap. ComfyUI's runtime axis limit is still enforced. Large outputs may require substantial VRAM and time.
+
+## Footwear detail behavior
+
+Footwear selects a separate enlarged detail panel; shoes already visible in a full-body panel do not replace it. The prompt preserves the reference's footwear, visible boot shafts, open-toed footwear, or bare feet as applicable. It cannot recover a shoe design absent from the reference. The UI mannequin is only an illustration, not evidence of the generated result.
+
+Local regression tests confirm selection reaches the saved input, layout, prompt and Designer output. The stronger detail instructions have not been evaluated on a GPU, so improved model compliance is not yet established. If a generated result omits the panel, retain the current workflow/API input, actual reference image and output for diagnosis.
 
 ## API and reproducibility
 
@@ -74,10 +82,12 @@ The harness uses the production compiler and UI renderer with a simulated ComfyU
 
 ## 日本語
 
-ComfyUI用の独立ノードです。6種類のビュー、4つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡す英文プロンプトと幅・高さを作ります。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
+ComfyUI用の独立ノードです。7種類のビュー、4つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡す英文プロンプトと幅・高さを作ります。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
 
 `custom_nodes` にcloneしてComfyUIを再起動してください。Designerの3出力を `MiniMaxH3ReferenceToVideo` に接続し、参照画像は別のLoad Imageから最初の画像参照へ渡します。H3モデルと通常の生成ワークフローは別途必要です。
 
-既定値は2208×1280の実験的高解像度です。基準高を672にすると1344×768になります。画面のマネキンは操作用の図であり、生成用画像には送信しません。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
+既定の基本4面は2208×1280のままです。新しい「横顔・左」は人物の解剖学的左側から見た顔～胸のポートレイトです。7面・ディテールは2816×1280になります。保存済みの6面は配置を維持し、カスタムとして表示されます。基本4面の基準高を672にすると1344×768になります（7面は1696×768）。画面のマネキンは操作用の図であり、生成用画像には送信しません。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
+
+「足・履物」は全身内の靴とは別の拡大枠を要求します。参照の靴・見えているブーツの筒・素足を保持し、見えない靴の意匠は発明しない指示です。選択が出力プロンプトへ届くことはローカル試験済みですが、GPUで効きが改善したかは未検証です。
 
 詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {avatarSVG} from '../../web/avatar.js';
 
-const views = ['face_front', 'body_front', 'body_left', 'body_back', 'hands', 'feet'];
-test('all six decorative SVG views are bounded, self contained, and collision free', () => {
+import {VIEW_IDS as views} from '../../web/state.js';
+test('all seven decorative SVG views are bounded, self contained, and collision free', () => {
   const ids = new Set();
   for (let instance = 0; instance < 3; instance++) {
     for (const view of views) {

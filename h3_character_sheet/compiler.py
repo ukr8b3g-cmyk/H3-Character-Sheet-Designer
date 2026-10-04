@@ -14,11 +14,12 @@ from typing import Any
 STATE_MAX_BYTES = 16 * 1024
 DEFAULT_MAX_RESOLUTION = 16384  # Standalone compiler default; node uses Core at runtime.
 EXPERIMENTAL_PIXEL_THRESHOLD = 1_032_192
-VIEW_IDS = ("face_front", "body_front", "body_left", "body_back", "hands", "feet")
+VIEW_IDS = ("face_front", "face_left", "body_front", "body_left", "body_back", "hands", "feet")
+PORTRAIT_IDS = ("face_front", "face_left")
 BODY_IDS = ("body_front", "body_left", "body_back")
-AUXILIARY_IDS = ("face_front", "hands", "feet")
+AUXILIARY_IDS = (*PORTRAIT_IDS, "hands", "feet")
 PRESETS = {
-    "basic": VIEW_IDS[:4],
+    "basic": ("face_front", "body_front", "body_left", "body_back"),
     "detail": VIEW_IDS,
     "turnaround": BODY_IDS,
     "single": ("body_front",),
@@ -40,6 +41,10 @@ VIEW_DETAILS = {
         "front portrait",
         "Show <Subject 1> directly from the front, from the face through the chest; retain the complete hairstyle and visible upper clothing.",
     ),
+    "face_left": (
+        "anatomical left-profile portrait",
+        "Show <Subject 1> in a strict left-profile portrait, camera looking directly at the subject's anatomical left side, from the complete hairstyle through the chest. Keep the face in a true side view, not a front or three-quarter portrait; retain the reference identity and visible upper clothing.",
+    ),
     "body_front": (
         "full-body front",
         "Show <Subject 1> directly from the front in a neutral standing pose, entirely visible from the top of the head to the soles of the footwear.",
@@ -57,8 +62,8 @@ VIEW_DETAILS = {
         "Show close details of both of <Subject 1>'s hands with their reference-consistent accessories; keep any gloves from the reference rather than replacing them with bare hands.",
     ),
     "feet": (
-        "left and right foot and footwear details",
-        "Show close details of both of <Subject 1>'s feet and footwear; preserve any reference shoes, boots, and boot shafts rather than replacing them with bare feet.",
+        "dedicated feet/footwear close-up",
+        "Show one dedicated close-up of both of <Subject 1>'s feet, preserving the reference's barefoot or footwear state. Use a natural three-quarter detail view and keep both complete foot or footwear silhouettes inside the panel. When footwear is visible in <Picture 1>, preserve that same footwear: its colors, materials, shape, toe areas, heels and sole edges visible from this angle, and any visible boot shafts. For closed shoes, show the outer toe boxes; do not expose bare toes through closed shoes. Keep open-toed footwear open-toed. Do not redesign footwear or invent hidden construction. If the reference is barefoot, preserve bare feet; if footwear is not visible, do not invent a specific shoe design.",
     ),
 }
 
@@ -176,20 +181,26 @@ def _ideal_layout(views: list[str], h: int) -> tuple[Fraction, Fraction, dict[st
     height = Fraction(h)
     margin, gap, body_width, aux_width = height / 14, height / 25, 2 * height / 5, height / 2
     auxiliaries = [view for view in AUXILIARY_IDS if view in views]
+    portraits = [view for view in PORTRAIT_IDS if view in views]
+    details = [view for view in ("hands", "feet") if view in views]
     bodies = [view for view in BODY_IDS if view in views]
-    columns = len(bodies) + bool(auxiliaries)
-    width = len(bodies) * body_width + bool(auxiliaries) * aux_width + (columns - 1) * gap + 2 * margin
+    # Each portrait has its own column. Existing selections without face_left
+    # retain the exact original geometry, including the six-view detail layout.
+    aux_columns = len(portraits) or bool(details)
+    columns = len(bodies) + aux_columns
+    width = len(bodies) * body_width + aux_columns * aux_width + (columns - 1) * gap + 2 * margin
     canvas_height = height + 2 * margin
     rects: dict[str, tuple[Fraction, ...]] = {}
     x, y = margin, margin
     if auxiliaries:
-        if "face_front" in auxiliaries and len(auxiliaries) > 1:
-            portrait_height = 31 * height / 50
-            rects["face_front"] = (x, y, aux_width, portrait_height)
+        group_width = aux_columns * aux_width + (aux_columns - 1) * gap
+        if portraits:
+            portrait_height = 31 * height / 50 if details else height
+            for index, view in enumerate(portraits):
+                rects[view] = (x + index * (aux_width + gap), y, aux_width, portrait_height)
             detail_y = y + portrait_height + gap
             detail_height = height - portrait_height - gap
-            details = [view for view in ("hands", "feet") if view in auxiliaries]
-            detail_width = (aux_width - gap) / 2 if len(details) == 2 else aux_width
+            detail_width = (group_width - gap) / 2 if len(details) == 2 else group_width
             for index, view in enumerate(details):
                 rects[view] = (x + index * (detail_width + gap), detail_y, detail_width, detail_height)
         elif len(auxiliaries) == 2:  # hands + feet, without portrait
@@ -198,7 +209,7 @@ def _ideal_layout(views: list[str], h: int) -> tuple[Fraction, Fraction, dict[st
                 rects[view] = (x, y + index * (detail_height + gap), aux_width, detail_height)
         else:
             rects[auxiliaries[0]] = (x, y, aux_width, height)
-        x += aux_width + gap
+        x += group_width + gap
     for view in bodies:
         rects[view] = (x, y, body_width, height)
         x += body_width + gap
@@ -254,37 +265,45 @@ def layout_json(layout: dict[str, Any]) -> str:
 def _layout_prose(state: dict[str, Any], layout: dict[str, Any]) -> list[str]:
     views = state["views"]
     auxiliaries = [view for view in AUXILIARY_IDS if view in views]
+    portraits = [view for view in PORTRAIT_IDS if view in views]
+    details = [view for view in ("hands", "feet") if view in views]
     bodies = [view for view in BODY_IDS if view in views]
     lines = []
     if auxiliaries:
-        lines.append("Place the selected portrait and/or detail views in the leftmost auxiliary column.")
-        if "face_front" in auxiliaries and len(auxiliaries) > 1:
-            lines.append("Place the front portrait above the detail band, with clear empty space between them.")
+        lines.append("Place the selected portrait and/or detail views in the leftmost auxiliary " + ("columns." if len(portraits) == 2 else "column."))
+        if len(portraits) == 2:
+            lines.append("Place the front portrait on the left and the anatomical left-profile portrait beside it on the right, at the same scale and with matching top and bottom limits.")
+        if portraits and details:
+            portrait_label = "portraits" if len(portraits) == 2 else VIEW_DETAILS[portraits[0]][0]
+            lines.append(f"Place the {portrait_label} above the detail band, with clear empty space between them.")
             if "hands" in auxiliaries and "feet" in auxiliaries:
                 lines.append("In that lower detail band, place the hands on the left and the feet/footwear on the right, separated by empty space.")
-        elif len(auxiliaries) == 2:
+        elif not portraits and len(details) == 2:
             lines.append("Stack the hand details above the feet/footwear details, with clear empty space between them.")
-        else:
+        elif len(auxiliaries) == 1:
             lines.append("The single selected auxiliary view uses the full height of its column.")
     if bodies:
         ordered = ", then ".join(VIEW_DETAILS[view][0] for view in bodies)
-        lines.append(f"Arrange the full-body columns from left to right as {ordered}" + (", to the right of the auxiliary column." if auxiliaries else "."))
+        lines.append(f"Arrange the full-body columns from left to right as {ordered}" + (", to the right of the auxiliary " + ("columns." if len(portraits) == 2 else "column.") if auxiliaries else "."))
         lines.append("Keep a common subject scale and identical panel top and bottom limits across the full-body views, with the footwear soles aligned to the shared feet_y baseline. Leave room for the complete head and footwear without cropping.")
     for panel in layout["panels"]:
         coordinates = ", ".join(_coordinate_text(value) for value in panel["rect"])
         lines.append(f"Panel {panel['id']} occupies [left, top, width, height] = [{coordinates}]. {panel['content']}")
+    if "feet" in views:
+        lines.append("The footwear detail is a required separate panel. Enlarge the feet within that assigned region and keep it clearly separated from the other selected views; footwear appearing elsewhere on the sheet does not replace this close-up.")
     return lines
 
 
 def compile_prompt(state: dict[str, Any], layout: dict[str, Any]) -> str:
     """The version-1 English template: LF-only, fixed sections, one trailing LF."""
     labels = "; ".join(VIEW_DETAILS[view][0] for view in state["views"])
+    footwear_summary = " Include the dedicated feet/footwear close-up as its own visible panel, preserving whether the reference shows footwear or bare feet." if "feet" in state["views"] else ""
     lines = [
         "subject_definitions:",
         "<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view.",
         "",
         "summary:",
-        f"[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: {labels}. Every panel depicts the same person from <Picture 1>.",
+        f"[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: {labels}. Every panel depicts the same person from <Picture 1>.{footwear_summary}",
         "",
         "retention_analysis:",
         "<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details.",

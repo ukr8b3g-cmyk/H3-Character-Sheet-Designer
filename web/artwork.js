@@ -7,6 +7,9 @@ export const ATLAS_SIZE = Object.freeze([1254, 1254]);
 // The side viewport includes transparent horizontal padding, not enlarged anatomy.
 export const ARTWORK_RECTS = Object.freeze({
   face_front: Object.freeze([0, 75, 470, 560]),
+  // Reuse the approved bald, neutral side-view bitmap from head through chest.
+  // This is a bounded viewport only: no mirrored face or replacement artwork.
+  face_left: Object.freeze([1010, 35, 140, 205]),
   body_front: Object.freeze([495, 20, 350, 625]),
   body_left: Object.freeze([904, 20, 350, 625]),
   body_back: Object.freeze([55, 625, 350, 625]),

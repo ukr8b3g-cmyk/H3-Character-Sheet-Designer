@@ -1,7 +1,7 @@
 /** Semantic state only. Layout, dimensions and prompt compilation stay in Python. */
-export const VIEW_IDS = Object.freeze(['face_front', 'body_front', 'body_left', 'body_back', 'hands', 'feet']);
+export const VIEW_IDS = Object.freeze(['face_front', 'face_left', 'body_front', 'body_left', 'body_back', 'hands', 'feet']);
 export const PRESETS = Object.freeze({
-  basic: VIEW_IDS.slice(0, 4), detail: [...VIEW_IDS], turnaround: VIEW_IDS.slice(1, 4), single: ['body_front'],
+  basic: ['face_front', 'body_front', 'body_left', 'body_back'], detail: [...VIEW_IDS], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'],
 });
 export const DEFAULT_STATE = Object.freeze({schema_version: 1, views: PRESETS.basic, size: Object.freeze({mode: 'auto', body_height: 1120, manual_width: 2240, manual_height: 1280})});
 export const DEFAULT_JSON = JSON.stringify(DEFAULT_STATE);

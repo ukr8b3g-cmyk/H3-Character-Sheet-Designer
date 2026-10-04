@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {readFileSync} from 'node:fs';
-import {DEFAULT_JSON, parseState, serializeState, DEFAULT_STATE, PRESETS} from '../../web/state.js';
+import {spawnSync} from 'node:child_process';
+import {DEFAULT_JSON, parseState, serializeState, DEFAULT_STATE, PRESETS, VIEW_IDS} from '../../web/state.js';
 let JSDOM;
 try { ({JSDOM} = await import(process.env.H3_JSDOM_PATH ? pathToFileURL(process.env.H3_JSDOM_PATH).href : 'jsdom')); } catch {}
 const domTest = (name, fn) => test(name, {skip: !JSDOM && 'Optional jsdom is unavailable; set H3_JSDOM_PATH to its api.js or install jsdom for DOM tests.'}, fn);
@@ -222,10 +223,10 @@ domTest('every view preset selects its documented views and Manual dimensions su
   assert.equal(root.querySelector('[data-height-presets]').disabled, false);
 });
 
-domTest('all six view buttons stay selectable, update Custom, and protect the final view', t => {
+domTest('all seven view buttons stay selectable, update Custom, and protect the final view', t => {
   const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
   choose(root.querySelector('select.h3-select'), 'detail');
-  const cards = [...root.querySelectorAll('.h3-card')]; assert.equal(cards.length, 6);
+  const cards = [...root.querySelectorAll('.h3-card')]; assert.equal(cards.length, VIEW_IDS.length);
   for (const card of cards.slice(0, -1)) { card.click(); assert.equal(card.getAttribute('aria-pressed'), 'false'); }
   const last = cards.at(-1); last.click(); assert.equal(last.getAttribute('aria-pressed'), 'true');
   assert.equal(record.controller.state.views.length, 1); assert.equal(root.querySelector('select.h3-select').value, 'custom');
@@ -257,4 +258,66 @@ domTest('CSS contract keeps dropdowns full-width and key text readable (not a la
   for (const select of root.querySelectorAll('select')) {
     const css = window.getComputedStyle(select); assert.equal(css.width, '100%'); assert.equal(css.height, '40px'); assert.equal(css.appearance, 'auto');
   }
+});
+
+domTest('every footwear selection reaches saved input, Python layout, prompt, and node STRING output', t => {
+  const h = setup(); t.after(h.cleanup); const {record, item} = h.node();
+  const root = record.ui.root, saved = [];
+  for (let bits = 1; bits < 1 << VIEW_IDS.length; bits++) {
+    const target = VIEW_IDS.filter((_, i) => bits & (1 << i));
+    const state = structuredClone(DEFAULT_STATE);
+    // Arrive at every target through a real button click, with preview pending.
+    const onlyFeet = target.length === 1 && target[0] === 'feet';
+    state.views = onlyFeet ? ['hands', 'feet'] : target.includes('feet') ? target.filter(v => v !== 'feet') : [...target, 'feet'];
+    record.widget.value = serializeState(state);
+    root.querySelector(`[data-view="${onlyFeet ? 'hands' : 'feet'}"]`).click();
+    const raw = item.widgets.find(w => w.name === 'state_json').value;
+    assert.deepEqual(parseState(raw).views, target);
+    assert.equal(JSON.parse(h.requests.at(-1).opts.body).state_json, raw);
+    assert.equal(root.querySelector('[data-view="feet"]').getAttribute('aria-pressed'), String(target.includes('feet')));
+    saved.push(raw);
+  }
+  const script = `import sys,json,types
+sys.modules['nodes'] = types.SimpleNamespace(MAX_RESOLUTION=16384)
+from h3_character_sheet.compiler import compile_state
+from h3_character_sheet.node import H3CharacterSheetDesigner
+result=[]
+for raw in json.load(sys.stdin):
+    compiled=compile_state(raw)
+    prompt,width,height=H3CharacterSheetDesigner().compile(raw)
+    assert (prompt,width,height)==(compiled['prompt'],compiled['width'],compiled['height'])
+    result.append({'views':[p['id'] for p in compiled['layout']['panels']],'prompt':prompt})
+json.dump(result,sys.stdout)`;
+  const run = spawnSync(process.env.PYTHON ?? 'python', ['-c', script], {cwd: new URL('../..', import.meta.url), input: JSON.stringify(saved), encoding: 'utf8', maxBuffer: 4 * 1024 * 1024});
+  assert.equal(run.status, 0, run.stderr || run.error?.message);
+  const outputs = JSON.parse(run.stdout);
+  assert.equal(outputs.length, 127);
+  outputs.forEach((out, i) => {
+    const views = parseState(saved[i]).views;
+    assert.deepEqual(out.views, views);
+    assert.equal(out.prompt.includes('"id":"feet"'), views.includes('feet'));
+    assert.equal(out.prompt.includes('required separate panel'), views.includes('feet'));
+  });
+});
+
+domTest('profile is optional, saved immediately, restored with Manual dimensions, and localized', async t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const card = root.querySelector('[data-view="face_left"]');
+  assert.equal(card.getAttribute('aria-pressed'), 'false');
+  assert.match(card.title, /anatomical left/);
+  assert.equal(root.querySelector('.h3-count').textContent, '4 / 7 selected');
+  card.click(); const raw = record.widget.value;
+  assert.deepEqual(parseState(raw).views, ['face_front', 'face_left', 'body_front', 'body_left', 'body_back']);
+  h.resolve(undefined, 2816, 1280); await tick();
+  assert(root.querySelector('[data-panel="face_left"] [data-artwork="face_left"]'));
+  root.querySelector('[data-mode="manual"]').click();
+  const manual = record.widget.value;
+  assert.deepEqual(parseState(manual).size, {...DEFAULT_STATE.size, mode: 'manual', manual_width: 2816});
+  record.widget.value = DEFAULT_JSON; record.widget.value = manual;
+  const transactions = h.transactions.length;
+  h.locale('ja'); assert.equal(card.querySelector('.h3-card-label').textContent, '横顔・左');
+  assert.match(card.title, /解剖学的左側/); assert.equal(record.widget.value, manual);
+  h.locale('en'); assert.equal(card.querySelector('.h3-card-label').textContent, 'Left portrait');
+  assert.equal(h.transactions.length, transactions);
+  card.click(); assert.equal(parseState(record.widget.value).size.manual_width, 2816);
 });
