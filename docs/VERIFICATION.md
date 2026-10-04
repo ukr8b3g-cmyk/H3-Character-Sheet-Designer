@@ -1,6 +1,6 @@
 # Verification record
 
-Implementation verification dates: 2026-10-03 and 2026-10-04 (UI correction and pre-Phase-2 profile/footwear work). Tests run in the dot cloud workspace, without changing a user's ComfyUI installation.
+Implementation verification dates: 2026-10-03 and 2026-10-04 (UI correction, profile/footwear work, and part-prompt implementation). Tests run in the dot cloud workspace, without changing a user's ComfyUI installation.
 
 ## Scope
 
@@ -8,8 +8,8 @@ The test suites exercise the production Python compiler and frontend controller,
 
 ## Automated results
 
-- Python 3.12.14: **54 tests passed**, with no skips (aiohttp 3.13.5)
-- Node.js 24.19.0: **48 tests passed**, with no skips (jsdom 30.1.1)
+- Python 3.12.14: **79 tests passed**, with no skips (aiohttp 3.13.5)
+- Node.js 24.19.0: **62 tests passed**, with no skips (jsdom 30.1.1)
 - Python compileall, JavaScript syntax checks, and `git diff --check`: passed
 - Python layouts: every one of the 127 nonempty view combinations across 11 Auto/Manual configurations, plus all documented dimension examples
 - Fifteen byte-exact English prompt snapshots, strict malformed JSON rejection, runtime Core limit changes, real aiohttp route/error/body-limit tests, and JS/Python semantic parity
@@ -17,6 +17,20 @@ The test suites exercise the production Python compiler and frontend controller,
 - Artwork: bundled PNG signature/dimensions/alpha channel, bounded atlas viewports, matching full-body viewport scales, and generated-raster-to-local-SVG fallback behavior
 
 Run `python -m unittest discover -s tests -p 'test_*.py' -v` and `npm test` after installing the development-only dependencies in the README. Earlier checks reused a preinstalled jsdom via `H3_JSDOM_PATH`; the profile/footwear run used repository-installed jsdom. That optional path is not required when jsdom is installed in the repository. jsdom does not calculate browser layout or certify CSS appearance, zoom behavior, or ComfyUI compatibility.
+
+## Part-prompt implementation (2026-10-04)
+
+- The 870 × 930 node, seven approved artwork selectors, existing geometry, and single STRING/three-output contract remain unchanged. Layout / Part prompts share the lower area. The part editor has exactly one eight-part dropdown and one free-text field, without clothing presets, modes, lettering switches, or separate placement controls
+- V1 is still the default and never silently migrated on load, tab selection, or view changes. The first nonblank part edit explicitly writes v2 with a sparse `part_prompts` object; unsupported versions stay visible as errors. Empty v2 generates all fifteen existing snapshot prompts byte-for-byte
+- A separate immutable-baseline comparison against commit `291e3091a4b7d116ae6cd8ecf29ec324c52a465c` matched all 1,397 complete v1 compiler outputs exactly, including prompt bytes, geometry, dimensions, and returned metadata
+- Every nonempty selection retains geometry. The existing 127×11 Auto/Manual layout checks pass; v2 empty/all-parts geometry is additionally compared for all 127 subsets in Auto and portrait Manual dimensions. Part propagation is checked for eight parts across all 127 subsets
+- Compiler scoping is deterministic, without image analysis, NLP, translation, or quote parsing. Footwear reaches all selected body views even without a footwear detail. Rear clothing does not reach front/portrait panel instructions. Named-part directives and the more specific rear-clothing rule have explicit precedence; unrelated reference details and static sheet geometry remain constrained
+- The same canonical panel content feeds JSON and natural-language instructions. Japanese, newlines, CRLF, literal braces, quotes, backslashes, and emoji round-trip. Limits are 1000 UTF-16 units per field, 64 KiB state, and 192 KiB HTTP envelope; invalid surrogates are rejected. Worst-case eight-part JSON escaping and real aiohttp limits pass
+- Actual DOM input events are serialized synchronously before simulated Queue, including Japanese composition input. DOM tests cover native Enter, blur without duplicate commit, repeated part/tab/preset/view/locale changes, retained limits errors, clear-one-part behavior, independent duplicates, restore/Undo/Redo state, keyboard tabs/labels, and graph transaction boundaries
+- Independent review caught and fixed a no-edit mutation of restored pretty/CRLF v2 data on blur/part changes. A regression test verifies exact saved bytes and no Undo entry for those interactions. Review also prompted a non-shrinking intrinsic minimum for the editor to avoid content/footer overlap; its CSS contract is tested but appearance is not browser-verified
+- Actual editor → saved STRING → production Python compiler → Designer output tests cover trousers plus boots, gloves, rear FLOWER lettering, sunglasses, and literal prompt syntax. All 127 v2 states also have Python/JavaScript semantic and output parity
+- Independent backend review found no blocking compiler/transport issue; its suggested combined global/upper/rear precedence regression was added. Final compileall, all JavaScript syntax checks, and git diff --check pass
+- The supported dot cloud browser was attempted again at the production-renderer localhost harness and returned `ERR_BLOCKED_BY_CLIENT`. No bypass was attempted. Real browser layout, browser/OS IME behavior, installed ComfyUI Undo/Queue, and GPU generation remain unverified; jsdom is not a substitute for those stages
 
 ## UI correction and supplied workflow check (2026-10-04)
 
@@ -67,3 +81,10 @@ No minimum supported frontend version is claimed until it has been tested inside
 9. Separately record structural pass, queue pass, successful GPU generation, and observed image quality. Inspect identity, anatomical side, footwear/gloves, exact selected views, and layout adherence
 10. Add the optional left portrait, test it alone and with the front portrait, and check true anatomical-left orientation. For footwear, compare the same reference/seed/settings before and after the prompt change: separate panel present, both feet, same shoe or bare-foot state, visible boot shafts, no shoe redesign. Record omission separately from incorrect footwear.
 11. Repeat applicable frontend checks independently for legacy UI and Nodes 2.0; do not infer their support from the classic harness
+
+
+## Additional manual acceptance for part prompts
+
+- Open both tabs at 870 × 930, Japanese/English, narrow width, and 66.55% zoom. Confirm the computed layout is large and the editor/footer stay readable, with scrolling when needed
+- Type using the real OS IME, multiline Enter, cut/paste, native text Undo, and graph Undo/Redo. Immediately Save/API-export/Queue while preview is pending; confirm the latest committed part text is present and literal braces/backslashes are unchanged downstream
+- Use an upper-body reference with Lower body = black long trousers and Feet / footwear = black boots; test with the detail panel both on and off. Separately test white gloves, sunglasses, and rear floral/FLOWER instructions. Record the generated result against each instruction without assuming the compiler proves model adherence

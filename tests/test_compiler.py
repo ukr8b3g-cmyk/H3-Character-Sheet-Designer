@@ -71,8 +71,8 @@ class ValidationTests(unittest.TestCase):
             self.assert_invalid(DEFAULT_STATE_JSON.replace("1120", token), "non_finite")
         self.assert_invalid(DEFAULT_STATE_JSON.replace("1120", "1e999"), "invalid_integer")
 
-    def test_schema_is_strict_integer_one(self):
-        for version in (True, False, 1.0, "1", None, 0, 2, -1, {}, []):
+    def test_schema_is_strict_supported_integer(self):
+        for version in (True, False, 1.0, 2.0, "1", "2", None, 0, 3, -1, {}, []):
             value = copy.deepcopy(DEFAULT_STATE)
             value["schema_version"] = version
             with self.subTest(version=version):

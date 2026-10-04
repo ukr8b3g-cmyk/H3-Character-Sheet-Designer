@@ -1,4 +1,4 @@
-import {VIEW_IDS, PRESETS, presetOf, StateError} from './state.js';
+import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, presetOf, StateError} from './state.js';
 import {createArtwork} from './artwork.js';
 let sequence = 0;
 export const HEIGHT_PRESETS = [672, 896, 1120, 1344, 1792];
@@ -15,8 +15,14 @@ const EN = {
   resolutionWarning: 'High resolution uses the full H3 generation path. VRAM and processing time vary.',
   committed: 'Saved immediately', pending: 'Updating layout…', stale: 'Previous layout · updating', previous: 'Previous layout', unavailable: 'Preview unavailable', retry: 'Retry preview', empty: 'Waiting for Python layout',
   draft: 'Uncommitted values are not saved or queued.', invalid: 'Saved JSON is invalid. Its original value is preserved.', editJSON: 'Repair saved JSON', apply: 'Apply valid JSON', rawHint: 'Only Apply changes the saved input.',
-  lastView: 'Keep at least one view selected.', sizeError: 'Enter a whole number of at least 32, in steps of 32.', maxSize: 'Exceeds the ComfyUI resolution limit.', integer: 'JSON integer fields cannot use decimal or exponent notation.', version: 'Only schema_version 1 is supported.', views: 'Select one or more of the seven known view IDs.', json: 'The JSON syntax is invalid.', duplicateKey: 'Duplicate JSON key', keys: 'Unknown or missing JSON keys', oversize: 'JSON must be no larger than 16 KiB.', mode: 'Size mode must be auto or manual.', object: 'Expected a JSON object', string: 'state_json must be a string.', preview: 'The server returned an invalid preview.', timeout: 'Preview timed out. The saved selection is unchanged.', network: 'Could not reach the preview endpoint. Queue still validates on the server.',
+  lastView: 'Keep at least one view selected.', sizeError: 'Enter a whole number of at least 32, in steps of 32.', maxSize: 'Exceeds the ComfyUI resolution limit.', integer: 'JSON integer fields cannot use decimal or exponent notation.', version: 'Only schema_version 1 or 2 is supported.', views: 'Select one or more of the seven known view IDs.', json: 'The JSON syntax is invalid.', duplicateKey: 'Duplicate JSON key', keys: 'Unknown or missing JSON keys', oversize: 'JSON must be no larger than 64 KiB.', mode: 'Size mode must be auto or manual.', object: 'Expected a JSON object', string: 'state_json must be a string.', preview: 'The server returned an invalid preview.', timeout: 'Preview timed out. The saved selection is unchanged.', network: 'Could not reach the preview endpoint. Queue still validates on the server.',
   fallback: 'Graphical designer unavailable. Edit the normal state_json string; Python compilation is still available.',
+  layoutTab: 'Layout', partsTab: 'Part prompts', part: 'Body part', partPrompt: 'Prompt', partCount: 'parts specified',
+  partPlaceholder: 'Describe colors, shapes, patterns, text, or placement freely.',
+  partHint: 'One instruction per part, shared across related selected views. Leave blank to follow the reference.',
+  partSaved: 'Saved as you type. Enter adds a new line.', partGuide: 'The layout guide uses mannequins; it does not visualize these instructions.',
+  head_hair_part: 'Head / hair', face_part: 'Face', upper_clothing_part: 'Upper-body clothing', back_clothing_part: 'Back of clothing', lower_body_part: 'Lower body', hands_part: 'Hands / gloves', footwear_part: 'Feet / footwear', other_part: 'Overall / other',
+  partText: 'Each part prompt must be a string.', parts: 'Unknown body part.', partLength: 'Keep each prompt within 1000 characters; some symbols count as more than one.', partUnicode: 'The prompt contains invalid Unicode.',
   undoWarning: 'This frontend does not expose the expected Undo transaction API.',
 };
 const JA = {
@@ -32,8 +38,14 @@ const JA = {
   resolutionWarning: '高解像度は通常のH3生成経路を使います。VRAM・処理時間は環境に依存します。',
   committed: '選択は即時保存', pending: '配置更新中…', stale: '前の配置・更新中', previous: '前の配置', unavailable: 'プレビュー取得失敗', retry: '再試行', empty: 'Pythonの配置を取得中',
   draft: '未確定の値は保存・実行されません。', invalid: '保存JSONが不正です。原文を保持しています。', editJSON: '保存JSONを修正', apply: '有効なJSONを適用', rawHint: '「適用」を押したときだけ保存値を変更します。',
-  lastView: '最低1つのビューを選択してください。', sizeError: '32以上の32倍数を整数で入力してください。', maxSize: 'ComfyUIの解像度上限を超えています。', integer: 'JSONの整数項目に小数・指数表記は使えません。', version: 'schema_versionは整数の1のみ対応しています。', views: '既知の7種類から1つ以上のビューを指定してください。', json: 'JSONの構文が不正です。', duplicateKey: 'JSONキーが重複しています', keys: 'JSONキーの不足または未知のキー', oversize: 'JSONは16 KiB以内にしてください。', mode: 'size.modeはautoまたはmanualにしてください。', object: 'JSONオブジェクトが必要です', string: 'state_jsonは文字列で指定してください。', preview: 'サーバーからのプレビューが不正です。', timeout: 'プレビューがタイムアウトしました。保存済み選択は維持しています。', network: 'プレビューを取得できません。Queue時にはサーバーで検証されます。',
+  lastView: '最低1つのビューを選択してください。', sizeError: '32以上の32倍数を整数で入力してください。', maxSize: 'ComfyUIの解像度上限を超えています。', integer: 'JSONの整数項目に小数・指数表記は使えません。', version: 'schema_versionは整数の1または2に対応しています。', views: '既知の7種類から1つ以上のビューを指定してください。', json: 'JSONの構文が不正です。', duplicateKey: 'JSONキーが重複しています', keys: 'JSONキーの不足または未知のキー', oversize: 'JSONは64 KiB以内にしてください。', mode: 'size.modeはautoまたはmanualにしてください。', object: 'JSONオブジェクトが必要です', string: 'state_jsonは文字列で指定してください。', preview: 'サーバーからのプレビューが不正です。', timeout: 'プレビューがタイムアウトしました。保存済み選択は維持しています。', network: 'プレビューを取得できません。Queue時にはサーバーで検証されます。',
   fallback: 'GUIデザイナーを利用できません。通常のstate_json文字列を編集してください。Python実行は利用可能です。',
+  layoutTab: 'レイアウト', partsTab: '部位指定', part: '部位', partPrompt: 'プロンプト', partCount: '部位を指定中',
+  partPlaceholder: '色・形・柄・文字・位置などを自由に入力',
+  partHint: '部位ごとの指示を、関連する選択ビューへ共通で反映します。空欄なら参照画像に従います。',
+  partSaved: '入力は即時保存。Enterで改行します。', partGuide: 'マネキンは配置確認用です。部位指定の見た目はプレビューに反映しません。',
+  head_hair_part: '頭・髪', face_part: '顔', upper_clothing_part: '上半身の服', back_clothing_part: '背面の服', lower_body_part: '下半身', hands_part: '手・手袋', footwear_part: '足・履物', other_part: '全体・その他',
+  partText: '部位プロンプトは文字列で入力してください。', parts: '未知の部位です。', partLength: '各プロンプトは1000文字以内にしてください（絵文字などは複数文字分）。', partUnicode: 'プロンプトに不正なUnicodeが含まれています。',
   undoWarning: 'このfrontendでは必要なUndoトランザクションAPIを確認できません。',
 };
 export const translations = {en: EN, ja: JA};
@@ -43,7 +55,7 @@ export function errorText(error, locale = 'en') {
     const key = error.code === 'size' ? 'sizeError' : error.code;
     return `${t[key] ?? t.network}${['duplicateKey', 'keys', 'object', 'maxSize'].includes(error.code) && error.detail ? ` (${error.detail})` : ''}`;
   }
-  const serverCodes = {duplicate_key: 'duplicateKey', non_finite: 'integer', invalid_integer: 'integer', invalid_size: 'sizeError', size_limit: 'maxSize', unsupported_schema: 'version', empty_views: 'views', unknown_view: 'views', invalid_mode: 'mode', missing_key: 'keys', unknown_key: 'keys', invalid_json: 'json', invalid_utf8: 'json', state_too_large: 'oversize', request_too_large: 'oversize'};
+  const serverCodes = {duplicate_key: 'duplicateKey', non_finite: 'integer', invalid_integer: 'integer', invalid_size: 'sizeError', size_limit: 'maxSize', unsupported_schema: 'version', empty_views: 'views', unknown_view: 'views', invalid_mode: 'mode', missing_key: 'keys', unknown_key: 'keys', invalid_json: 'json', invalid_utf8: 'json', state_too_large: 'oversize', request_too_large: 'oversize', unknown_part: 'parts', part_prompt_too_long: 'partLength'};
   return error?.serverCode && serverCodes[error.serverCode] ? t[serverCodes[error.serverCode]] : error?.serverMessage || t.network;
 }
 function element(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text) el.textContent = text; return el; }
@@ -60,6 +72,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   const root = element('section', 'h3-designer'); root.dataset.instance = id; root.setAttribute('aria-label', 'H3 Character Sheet Designer');
   const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
   let language = locale, t = translations[locale] ?? EN, disposed = false;
+  const partDrafts = new Map(); let selectedPart = PART_IDS[0], activeTab = 'layout';
   const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null;
   const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
   const cards = element('div', 'h3-cards'), cardMap = new Map();
@@ -102,7 +115,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     wrap.append(label, line, message); numberRow.append(wrap);
     listen(input, 'input', () => { drafts.set(field, {text: input.value, error: null}); renderFields(); });
     listen(input, 'blur', () => commitDraft(field));
-    listen(input, 'keydown', event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitDraft(field); } if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); drafts.delete(field); if (field === 'body_height') customHeight = false; renderFields(); fields.get(field).choices?.focus(); } });
+    listen(input, 'keydown', event => { if (event.isComposing || event.keyCode === 229) return; if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitDraft(field); } if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); drafts.delete(field); if (field === 'body_height') customHeight = false; renderFields(); fields.get(field).choices?.focus(); } });
   }
   const returnAuto = button('h3-link-button'); listen(returnAuto, 'click', () => act(() => controller.setMode('auto')));
   const modeHint = element('div', 'h3-mode-hint'); controls.append(modeRow, numberRow, returnAuto, modeHint);
@@ -111,12 +124,46 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   const status = element('div', 'h3-status'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   const errorBox = element('div', 'h3-error'); errorBox.setAttribute('role', 'alert');
   const retry = button('h3-retry'); listen(retry, 'click', () => { localError = null; void controller.refreshPreview(); });
-  const previewHead = element('div', 'h3-preview-head'), previewLabel = element('span'), previewTag = element('span', 'h3-preview-tag'); previewHead.append(previewLabel, previewTag);
-  const stage = element('div', 'h3-stage'); stage.dataset.previewStage = ''; const canvas = element('div', 'h3-sheet'); const empty = element('div', 'h3-empty'); stage.append(canvas, empty);
+  const previewHead = element('div', 'h3-preview-head'), tabs = element('div', 'h3-tabs'), previewTag = element('span', 'h3-preview-tag');
+  tabs.setAttribute('role', 'tablist'); const tabMap = new Map();
+  for (const name of ['layout', 'parts']) {
+    const tab = button('h3-tab'); tab.id = `${id}-${name}-tab`; tab.dataset.tab = name;
+    tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', `${id}-${name}-panel`);
+    listen(tab, 'click', () => { activeTab = name; render(); });
+    listen(tab, 'keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault(); event.stopPropagation();
+      activeTab = event.key === 'Home' ? 'layout' : event.key === 'End' ? 'parts' : activeTab === 'layout' ? 'parts' : 'layout';
+      render(); tabMap.get(activeTab).focus();
+    });
+    tabs.append(tab); tabMap.set(name, tab);
+  }
+  previewHead.append(tabs, previewTag);
+  const stage = element('div', 'h3-stage'); stage.id = `${id}-layout-panel`; stage.setAttribute('role', 'tabpanel'); stage.setAttribute('aria-labelledby', `${id}-layout-tab`); stage.tabIndex = 0;
+  stage.dataset.previewStage = ''; const canvas = element('div', 'h3-sheet'); const empty = element('div', 'h3-empty'); stage.append(canvas, empty);
+  const partPanel = element('div', 'h3-part-panel'); partPanel.id = `${id}-parts-panel`; partPanel.setAttribute('role', 'tabpanel'); partPanel.setAttribute('aria-labelledby', `${id}-parts-tab`);
+  const partRow = element('div', 'h3-part-row'), partLabel = element('label'), partSelect = element('select', 'h3-select');
+  partSelect.id = `${id}-part`; partSelect.dataset.partSelect = ''; partLabel.htmlFor = partSelect.id;
+  for (const part of PART_IDS) { const option = element('option'); option.value = part; partSelect.append(option); }
+  const partCount = element('span', 'h3-part-count'); partCount.setAttribute('aria-live', 'polite');
+  partRow.append(partLabel, partSelect, partCount);
+  const promptLabel = element('label', 'h3-prompt-label'), partInput = element('textarea', 'h3-part-input');
+  partInput.id = `${id}-part-prompt`; partInput.dataset.partPrompt = ''; promptLabel.htmlFor = partInput.id;
+  partInput.maxLength = PART_PROMPT_MAX_LENGTH; partInput.spellcheck = false; partInput.rows = 5;
+  const partHint = element('div', 'h3-part-hint'), partNote = element('div', 'h3-part-note'), partLength = element('span', 'h3-part-length');
+  partHint.id = `${id}-part-hint`; partNote.id = `${id}-part-note`;
+  partInput.setAttribute('aria-describedby', `${partHint.id} ${partNote.id}`);
+  const partBottom = element('div', 'h3-part-bottom'); partBottom.append(partNote, partLength);
+  partPanel.append(partRow, partHint, promptLabel, partInput, partBottom);
+  // Persist synchronously on every input, including IME input. Do not rewrite an
+  // unchanged textarea value while composing, so the caret and composition live on.
+  listen(partInput, 'input', () => commitPart());
+  listen(partInput, 'keydown', event => event.stopPropagation()); // Enter remains a native newline.
+  listen(partSelect, 'change', () => { selectedPart = partSelect.value; render(); });
   const footer = element('div', 'h3-footer');
   const jsonDetails = element('details', 'h3-json-editor'), summary = element('summary'), rawInput = element('textarea'), rawHint = element('p'), apply = button('h3-apply'); rawInput.spellcheck = false; rawInput.setAttribute('aria-label', 'state_json');
   listen(apply, 'click', () => act(() => controller.applyRaw(rawInput.value))); jsonDetails.append(summary, rawInput, rawHint, apply);
-  root.append(header, cards, presetRow, controls, metrics, warning, status, errorBox, retry, previewHead, stage, footer, jsonDetails);
+  root.append(header, cards, presetRow, controls, metrics, warning, status, errorBox, retry, previewHead, stage, partPanel, footer, jsonDetails);
   // Keep node dragging out of text controls, but let browser keyboard accessibility work.
   listen(root, 'pointerdown', event => event.stopPropagation());
   const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitSheet()) : null;
@@ -129,6 +176,34 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
       drafts.delete(field); controller.setSize(field, draft.text);
     } catch (error) { drafts.set(field, {...draft, error}); }
     render();
+  }
+  function commitPart() {
+    const text = partInput.value;
+    try {
+      partDrafts.set(selectedPart, {text, error: null}); controller.setPartPrompt(selectedPart, text);
+    } catch (error) { partDrafts.set(selectedPart, {text, error}); }
+    renderParts();
+  }
+  function renderParts() {
+    const state = controller.state, prompts = state?.part_prompts ?? {}, draft = partDrafts.get(selectedPart);
+    tabs.setAttribute('aria-label', t.diagram);
+    for (const [name, tab] of tabMap) {
+      tab.textContent = name === 'layout' ? t.layoutTab : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;
+      tab.setAttribute('aria-selected', String(name === activeTab)); tab.tabIndex = name === activeTab ? 0 : -1;
+    }
+    stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts';
+    previewTag.textContent = activeTab === 'layout' ? t.diagram : t.partSaved;
+    partLabel.textContent = t.part; partSelect.disabled = !state; partSelect.value = selectedPart;
+    for (const option of partSelect.options) option.textContent = `${prompts[option.value] ? '● ' : ''}${t[`${option.value}_part`]}`;
+    partCount.textContent = `${Object.keys(prompts).length} ${t.partCount}`;
+    promptLabel.textContent = `${t[`${selectedPart}_part`]} · ${t.partPrompt}`;
+    partHint.textContent = t.partHint; partInput.disabled = !state; partInput.placeholder = t.partPlaceholder;
+    const value = draft?.text ?? prompts[selectedPart] ?? '';
+    if (partInput.value !== value) partInput.value = value;
+    partInput.setAttribute('aria-invalid', String(Boolean(draft?.error)));
+    partNote.textContent = draft?.error ? `${errorText(draft.error, language)} ${t.draft}` : t.partSaved;
+    partNote.classList.toggle('h3-part-invalid', Boolean(draft?.error));
+    partLength.textContent = `${partInput.value.length} / ${PART_PROMPT_MAX_LENGTH}`;
   }
   function renderFields() {
     const state = controller.state;
@@ -182,7 +257,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   }
   function render(reason) {
     if (disposed) return;
-    if (reason === 'restore') { drafts.clear(); customHeight = false; localError = null; }
+    if (reason === 'restore') { drafts.clear(); partDrafts.clear(); customHeight = false; localError = null; }
     t = translations[language] ?? EN; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
     intro.textContent = t.intro; count.textContent = `${state?.views.length ?? 0} / ${VIEW_IDS.length} ${t.selected}`;
@@ -194,7 +269,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     auto.setAttribute('aria-pressed', String(state?.size.mode === 'auto')); manual.setAttribute('aria-pressed', String(state?.size.mode === 'manual'));
     sizeLabel.textContent = t.size; returnAuto.textContent = t.returnAuto; returnAuto.hidden = state?.size.mode !== 'manual';
     modeHint.textContent = state?.size.mode === 'manual' ? t.manualHint : t.autoHint;
-    renderFields();
+    renderFields(); renderParts();
     const p = controller.preview, displayP = p && state;
     dimensions.textContent = displayP ? `${p.width.toLocaleString('en-US')} × ${p.height.toLocaleString('en-US')}` : '— × —';
     const pixelCount = displayP ? p.width * p.height : 0;
@@ -206,7 +281,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     const problem = controller.error || localError || controller.previewError;
     errorBox.textContent = problem ? `${controller.error ? `${t.invalid} ` : ''}${errorText(problem, language)}` : ''; errorBox.hidden = !problem;
     retry.textContent = t.retry; retry.hidden = !controller.previewError || !state;
-    previewLabel.textContent = t.layout; previewTag.textContent = t.diagram; footer.textContent = t.caveat;
+    footer.textContent = activeTab === 'parts' ? t.partGuide : t.caveat;
     summary.textContent = t.editJSON; rawHint.textContent = t.rawHint; apply.textContent = t.apply;
     jsonDetails.hidden = !controller.error;
     if (lastRaw !== controller.raw) { rawInput.value = typeof controller.raw === 'string' ? controller.raw : String(controller.raw); lastRaw = controller.raw; }
@@ -214,5 +289,5 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     renderPreview();
   }
   render();
-  return {root, render, setLocale(value) { language = value === 'ja' ? 'ja' : 'en'; render('locale'); }, dispose() { disposed = true; abort.abort(); resizeObserver?.disconnect(); drafts.clear(); root.remove(); }, controller};
+  return {root, render, setLocale(value) { language = value === 'ja' ? 'ja' : 'en'; render('locale'); }, dispose() { disposed = true; abort.abort(); resizeObserver?.disconnect(); drafts.clear(); partDrafts.clear(); root.remove(); }, controller};
 }

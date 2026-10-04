@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DEFAULT_JSON, DEFAULT_STATE, VIEW_IDS, PRESETS, parseState, serializeState, parseJSONStrict, DesignerController, getLocale, subscribeLocale, StateError, presetOf} from '../../web/state.js';
+import {DEFAULT_JSON, DEFAULT_STATE, VIEW_IDS, PRESETS, parseState, serializeState, parseJSONStrict, DesignerController, getLocale, subscribeLocale, StateError, presetOf, PART_IDS, PART_PROMPT_MAX_LENGTH, MAX_BYTES, migratePartState} from '../../web/state.js';
 const clone = () => structuredClone(DEFAULT_STATE);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function preview(raw, width = 2208, height = 1280) {
@@ -32,8 +32,8 @@ test('malformed values, unknown fields and floating JSON integer tokens are reje
   const changes = [s => { s.schema_version = true; }, s => { s.schema_version = 2; }, s => { s.views = []; }, s => { s.views = ['bogus']; }, s => { s.views = [true]; }, s => { s.size.mode = 'other'; }, s => { s.size.body_height = 1119; }, s => { s.size.body_height = true; }, s => { s.size.body_height = '1120'; }, s => { s.size.body_height = 32.5; }, s => { s.extra = 1; }, s => { delete s.size.manual_width; }, s => { s.size.extra = 1; }];
   for (const change of changes) { const state = clone(); change(state); assert.throws(() => parseState(JSON.stringify(state))); }
   assert.throws(() => parseState(DEFAULT_JSON, 1024), error => error.code === 'maxSize');
-  assert.throws(() => parseState(' '.repeat(16385)), error => error.code === 'oversize');
-  assert.throws(() => parseJSONStrict('"' + 'あ'.repeat(6000) + '"'), error => error.code === 'oversize');
+  assert.throws(() => parseState(' '.repeat(MAX_BYTES + 1)), error => error.code === 'oversize');
+  assert.throws(() => parseJSONStrict('"' + 'あ'.repeat(Math.ceil(MAX_BYTES / 3)) + '"'), error => error.code === 'oversize');
 });
 
 test('all 127 selections canonicalize without calculating layout in JS', () => {
@@ -155,4 +155,51 @@ test('duplicate logical no-op makes no transaction and a retry does not alter ge
   assert.equal(h.transactions.length, 0); assert.equal(h.commits.length, 0);
   void h.controller.refreshPreview(); h.calls[0].resolve(preview(DEFAULT_JSON, 1344, 768)); await tick(); assert.equal(h.controller.preview, null);
   h.calls[1].resolve(preview(DEFAULT_JSON)); await tick(); assert.equal(h.controller.isCurrentPreview, true); assert.equal(h.commits.length, 0);
+});
+
+
+test('part migration is explicit; empty opening, selections, and restoration retain v1', t => {
+  const h = deferredController(); t.after(() => h.controller.dispose());
+  h.controller.setPartPrompt('footwear', '   '); assert.equal(h.controller.raw, DEFAULT_JSON);
+  h.controller.toggle('feet'); assert.equal(h.controller.state.schema_version, 1);
+  h.controller.setPartPrompt('footwear', '黒いブーツ');
+  assert.equal(h.controller.state.schema_version, 2); assert.deepEqual(h.controller.state.part_prompts, {footwear: '黒いブーツ'});
+  const saved = h.controller.raw;
+  h.controller.preset('single'); h.controller.setSize('body_height', '672');
+  assert.deepEqual(h.controller.state.part_prompts, {footwear: '黒いブーツ'});
+  h.controller.restore(DEFAULT_JSON); assert.equal(h.controller.raw, DEFAULT_JSON);
+  h.controller.restore(saved); assert.equal(h.controller.state.part_prompts.footwear, '黒いブーツ');
+  h.controller.setPartPrompt('footwear', ''); assert.equal(h.controller.state.schema_version, 2); assert.deepEqual(h.controller.state.part_prompts, {});
+});
+
+test('v2 has exact keys, canonical parts, bounded well-formed Unicode, and no interpretation', () => {
+  const v2 = migratePartState(DEFAULT_STATE);
+  const literal = '  背面の「FLOWER」 {red|blue} C:\\design\n白い手袋 🌸  ';
+  v2.part_prompts = {other: '末尾', back_clothing: literal, face: '\ufeff '};
+  const normalized = parseState(serializeState(v2));
+  assert.deepEqual(Object.keys(normalized.part_prompts), ['back_clothing', 'other']);
+  assert.equal(normalized.part_prompts.back_clothing, literal);
+  for (const prompts of [[], null, 'no', {unknown: 'x'}, {face: true}, {face: 12}, {face: '\ud800'}, {face: '\udc00'}, {face: 'x'.repeat(PART_PROMPT_MAX_LENGTH + 1)}]) {
+    assert.throws(() => serializeState({...v2, part_prompts: prompts}));
+  }
+  for (const text of ['あ'.repeat(1000), '🌸'.repeat(500), '\u0000'.repeat(1000)]) {
+    const state = {...v2, part_prompts: Object.fromEntries(PART_IDS.map(part => [part, text]))};
+    assert.deepEqual(parseState(serializeState(state)), state);
+    // Python can return ASCII escaped canonical state; this also fits the limit.
+    const escaped = serializeState(state).replace(/[\u007f-\uffff]/g, char => '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0'));
+    assert(new TextEncoder().encode(escaped).length < MAX_BYTES); assert.deepEqual(parseState(escaped), state);
+  }
+  assert.throws(() => parseState(JSON.stringify({...v2, schema_version: 3})), error => error.code === 'version');
+  assert.throws(() => parseState(JSON.stringify({...DEFAULT_STATE, part_prompts: {}})), error => error.code === 'keys');
+});
+
+test('part edits synchronously update Queue, skip duplicate blur commits and survive stale preview', async t => {
+  const h = deferredController(); t.after(() => h.controller.dispose());
+  h.controller.setPartPrompt('face', 'サングラス'); const saved = h.controller.raw;
+  assert.equal(h.commits.at(-1), saved); assert.equal(JSON.parse(saved).part_prompts.face, 'サングラス');
+  assert.equal(h.controller.setPartPrompt('face', 'サングラス'), false); assert.equal(h.commits.length, 1);
+  h.calls[0].resolve(preview(DEFAULT_JSON)); await tick(); assert.equal(h.controller.preview, null);
+  h.calls[1].resolve(preview(saved)); await tick(); assert.equal(h.controller.isCurrentPreview, true);
+  assert.throws(() => h.controller.setPartPrompt('face', 'x'.repeat(1001)), error => error.code === 'partLength');
+  assert.equal(h.controller.raw, saved);
 });

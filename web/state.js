@@ -1,11 +1,13 @@
 /** Semantic state only. Layout, dimensions and prompt compilation stay in Python. */
 export const VIEW_IDS = Object.freeze(['face_front', 'face_left', 'body_front', 'body_left', 'body_back', 'hands', 'feet']);
+export const PART_IDS = Object.freeze(['head_hair', 'face', 'upper_clothing', 'back_clothing', 'lower_body', 'hands', 'footwear', 'other']);
+export const PART_PROMPT_MAX_LENGTH = 1000; // UTF-16 code units, matching textarea maxlength.
 export const PRESETS = Object.freeze({
   basic: ['face_front', 'body_front', 'body_left', 'body_back'], detail: [...VIEW_IDS], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'],
 });
 export const DEFAULT_STATE = Object.freeze({schema_version: 1, views: PRESETS.basic, size: Object.freeze({mode: 'auto', body_height: 1120, manual_width: 2240, manual_height: 1280})});
 export const DEFAULT_JSON = JSON.stringify(DEFAULT_STATE);
-export const MAX_BYTES = 16 * 1024;
+export const MAX_BYTES = 64 * 1024;
 export class StateError extends Error {
   constructor(code, detail = '') { super(detail ? `${code}: ${detail}` : code); this.code = code; this.detail = detail; }
 }
@@ -77,17 +79,42 @@ export function validateSize(value, field, maxResolution = Infinity) {
   return value;
 }
 export function normalizeState(state, maxResolution = Infinity) {
-  keysExactly(state, ['schema_version', 'views', 'size'], 'state');
-  if (typeof state.schema_version !== 'number' || !Number.isInteger(state.schema_version) || state.schema_version !== 1) fail('version');
+  if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
+  if (![1, 2].includes(state.schema_version)) fail('version');
+  keysExactly(state, state.schema_version === 1 ? ['schema_version', 'views', 'size'] : ['schema_version', 'views', 'size', 'part_prompts'], 'state');
   if (!Array.isArray(state.views) || !state.views.length || state.views.some(view => typeof view !== 'string' || !VIEW_IDS.includes(view))) fail('views');
   keysExactly(state.size, ['mode', 'body_height', 'manual_width', 'manual_height'], 'size');
   if (!['auto', 'manual'].includes(state.size.mode)) fail('mode');
-  return {schema_version: 1, views: VIEW_IDS.filter(view => state.views.includes(view)), size: {
+  const normalized = {schema_version: state.schema_version, views: VIEW_IDS.filter(view => state.views.includes(view)), size: {
     mode: state.size.mode,
     body_height: validateSize(state.size.body_height, 'body_height', maxResolution),
     manual_width: validateSize(state.size.manual_width, 'manual_width', maxResolution),
     manual_height: validateSize(state.size.manual_height, 'manual_height', maxResolution),
   }};
+  if (state.schema_version === 2) {
+    const prompts = state.part_prompts;
+    if (!prompts || typeof prompts !== 'object' || Array.isArray(prompts)) fail('object', 'part_prompts');
+    if (Object.keys(prompts).some(part => !PART_IDS.includes(part))) fail('parts');
+    normalized.part_prompts = {};
+    for (const part of PART_IDS) {
+      if (!Object.hasOwn(prompts, part)) continue;
+      const text = validatePartPrompt(prompts[part]);
+      if (text.trim()) normalized.part_prompts[part] = text;
+    }
+  }
+  return normalized;
+}
+export function validatePartPrompt(text) {
+  if (typeof text !== 'string') fail('partText');
+  if (text.length > PART_PROMPT_MAX_LENGTH) fail('partLength');
+  if (!text.isWellFormed()) fail('partUnicode');
+  return text;
+}
+// Migration is explicit and only invoked by an actual part edit, never on restore.
+export function migratePartState(state) {
+  const next = normalizeState(state);
+  if (next.schema_version === 1) { next.schema_version = 2; next.part_prompts = {}; }
+  return next;
 }
 export const parseState = (raw, maxResolution) => normalizeState(parseJSONStrict(raw), maxResolution);
 export const serializeState = (state, maxResolution) => JSON.stringify(normalizeState(state, maxResolution));
@@ -173,6 +200,18 @@ export class DesignerController {
     if (typeof text !== 'string' || !/^\d+$/.test(text.trim())) fail('size', field);
     const value = validateSize(Number(text.trim()), field, this.maxResolution);
     return this.change(next => { next.size[field] = value; });
+  }
+  setPartPrompt(part, text) {
+    if (!PART_IDS.includes(part)) fail('parts');
+    validatePartPrompt(text);
+    if (!this.state || this.disposed) return false;
+    if (text === this.state.part_prompts?.[part]) return false;
+    // Opening an empty editor is not a schema migration or an Undo entry.
+    if (!text.trim() && !this.state.part_prompts?.[part]) return false;
+    const next = migratePartState(this.state);
+    if (text.trim()) next.part_prompts[part] = text;
+    else delete next.part_prompts[part];
+    return this.commit(next);
   }
   applyRaw(raw) { return this.commit(parseState(raw, this.maxResolution)); }
   async refreshPreview() {

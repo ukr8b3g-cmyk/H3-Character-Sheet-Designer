@@ -26,7 +26,7 @@
   scrollbar-width: thin;
 }
 .h3-designer * { box-sizing: border-box; }
-.h3-designer > :not(.h3-stage) { flex-shrink: 0; }
+.h3-designer > :not(.h3-stage):not(.h3-part-panel) { flex-shrink: 0; }
 .h3-designer [hidden] { display: none !important; }
 .h3-designer button, .h3-designer input, .h3-designer select, .h3-designer textarea { font: inherit; color: inherit; }
 .h3-designer button { cursor: pointer; }
@@ -107,3 +107,33 @@
 .h3-artwork { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; }
 .h3-artwork img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .h3-artwork svg { width: 100%; height: 100%; display: block; }
+
+/* Both tabs reuse the same remaining node area. The actual Python layout stays
+   large; the part editor never adds another vertical block beneath it. */
+.h3-preview-head { align-items: center; border-bottom: 1px solid #586f81; min-height: 42px; letter-spacing: 0; }
+.h3-tabs { display: flex; gap: 12px; }
+.h3-tab { background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 8px 12px; color: var(--h3-muted) !important; font-size: 18px !important; white-space: nowrap; }
+.h3-tab[aria-selected=true] { color: var(--h3-accent) !important; border-bottom-color: var(--h3-accent); font-weight: 650; }
+.h3-preview-tag { text-align: right; font-size: 13px; }
+.h3-part-panel { flex: 1 0 auto; min-height: min-content; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #586f81; border-radius: 8px; background: #1c2630; }
+.h3-part-row { display: flex; align-items: center; gap: 12px; }
+.h3-part-row label { font-size: 16px; color: var(--h3-muted); }
+.h3-part-count { font-size: 14px; color: var(--h3-accent); white-space: nowrap; }
+.h3-part-hint, .h3-part-note { font-size: 14px; line-height: 1.5; color: var(--h3-muted); }
+.h3-prompt-label { font-size: 16px; font-weight: 600; }
+.h3-part-input { width: 100%; flex: 1; min-height: 100px; resize: none; padding: 12px; border: 1px solid #687e92; border-radius: 6px; background: #101a23; font-size: 18px !important; line-height: 1.6 !important; }
+.h3-part-input:disabled { opacity: .72; }
+.h3-part-input::placeholder { color: #9bafbf; }
+.h3-part-input[aria-invalid=true] { border-color: #e8ca95; }
+.h3-part-bottom { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.h3-part-length { font-size: 13px; color: var(--h3-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.h3-part-invalid { color: #f2d39f; }
+@container (max-width: 480px) {
+  .h3-preview-head { flex-wrap: wrap; }
+  .h3-preview-tag { display: none; }
+  .h3-tab { padding: 8px; }
+  .h3-part-panel { padding: 10px; }
+  .h3-part-row { flex-wrap: wrap; gap: 6px; }
+  .h3-part-count { flex-basis: 100%; }
+  .h3-part-bottom { flex-wrap: wrap; }
+}

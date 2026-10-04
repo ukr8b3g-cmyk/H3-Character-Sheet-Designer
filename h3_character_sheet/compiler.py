@@ -11,13 +11,61 @@ import json
 from fractions import Fraction
 from typing import Any
 
-STATE_MAX_BYTES = 16 * 1024
+STATE_MAX_BYTES = 64 * 1024
+PART_PROMPT_MAX_UNITS = 1000
 DEFAULT_MAX_RESOLUTION = 16384  # Standalone compiler default; node uses Core at runtime.
 EXPERIMENTAL_PIXEL_THRESHOLD = 1_032_192
 VIEW_IDS = ("face_front", "face_left", "body_front", "body_left", "body_back", "hands", "feet")
 PORTRAIT_IDS = ("face_front", "face_left")
 BODY_IDS = ("body_front", "body_left", "body_back")
 AUXILIARY_IDS = (*PORTRAIT_IDS, "hands", "feet")
+PART_IDS = ("head_hair", "face", "upper_clothing", "back_clothing", "lower_body", "hands", "footwear", "other")
+# These rules are the single source of truth for panel JSON and panel prose.
+# Visibility is a camera/anatomy constraint, never inferred from free-form text.
+PART_RULES = {
+    "head_hair": {
+        "label": "head, hair, and headwear",
+        "views": (*PORTRAIT_IDS, *BODY_IDS),
+        "scope": "Apply only to the head, hair, and headwear where visible from this panel's assigned camera angle.",
+    },
+    "face": {
+        "label": "face",
+        "views": (*PORTRAIT_IDS, *BODY_IDS),
+        "scope": "Apply only to facial areas actually visible from this panel's assigned camera angle; do not turn the head or reveal the face in a rear view.",
+    },
+    "upper_clothing": {
+        "label": "upper clothing",
+        "views": (*PORTRAIT_IDS, *BODY_IDS),
+        "scope": "Apply only to visible upper clothing. A back_clothing directive is more specific on the rear clothing surface.",
+    },
+    "back_clothing": {
+        "label": "rear clothing surface",
+        "views": ("body_left", "body_back"),
+        "scope": "Apply only to the rear clothing surface: in body_left only where that rear surface is visible from the fixed left-profile camera, and in body_back. Never move this rear-surface design onto the front, side surface, or portraits; do not turn the subject to reveal it.",
+    },
+    "lower_body": {
+        "label": "lower body and lower clothing",
+        "views": BODY_IDS,
+        "scope": "Apply only to the visible lower body and lower clothing, excluding the separate footwear part.",
+    },
+    "hands": {
+        "label": "hands, gloves, and hand accessories",
+        "views": (*BODY_IDS, "hands"),
+        "scope": "Apply only to hands, gloves, and hand accessories where visible from this panel's assigned camera angle.",
+    },
+    "footwear": {
+        "label": "feet and footwear",
+        "views": (*BODY_IDS, "feet"),
+        "scope": "Apply only to feet and footwear wherever visible, including full-body views independently of whether a separate feet detail panel is selected.",
+    },
+    "other": {
+        "label": "other appearance details",
+        "views": VIEW_IDS,
+        "scope": "Apply across the selected views wherever the described appearance details are anatomically visible. More specific named-part directives take precedence for their parts. Preserve the assigned views, framing, layout, single identity, and static-sheet requirements.",
+    },
+}
+# ECMAScript String.trim whitespace, for exact Python/browser normalization parity.
+_BLANK_CHARACTERS = "\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
 PRESETS = {
     "basic": ("face_front", "body_front", "body_left", "body_back"),
     "detail": VIEW_IDS,
@@ -102,11 +150,29 @@ def decode_json(text: str, *, byte_limit: int = STATE_MAX_BYTES) -> Any:
     if size > byte_limit:
         raise StateValidationError(f"JSON exceeds the {byte_limit}-byte limit.", "state_too_large")
     try:
-        return json.loads(text, object_pairs_hook=_object_pairs, parse_constant=_reject_constant)
+        result = json.loads(text, object_pairs_hook=_object_pairs, parse_constant=_reject_constant)
+        _validate_unicode(result)
+        return result
     except StateValidationError:
         raise
     except (ValueError, RecursionError) as exc:
         raise StateValidationError("Invalid JSON: a valid finite JSON document is required.", "invalid_json") from exc
+
+
+def _validate_unicode(value: Any) -> None:
+    """Reject unpaired surrogate escapes as well as invalid literal UTF-8."""
+    if isinstance(value, str):
+        try:
+            value.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise StateValidationError("JSON strings must contain valid Unicode.", "invalid_utf8") from exc
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            _validate_unicode(key)
+            _validate_unicode(item)
+    elif isinstance(value, list):
+        for item in value:
+            _validate_unicode(item)
 
 
 def _exact_keys(value: Any, keys: tuple[str, ...], path: str) -> None:
@@ -139,10 +205,15 @@ def parse_state(state_json: str, *, max_resolution: int = DEFAULT_MAX_RESOLUTION
     """Validate all fields and return a fresh, canonically ordered semantic state."""
     _check_max_resolution(max_resolution)
     state = decode_json(state_json)
-    _exact_keys(state, ("schema_version", "views", "size"), "state")
+    if type(state) is not dict:
+        raise StateValidationError("state must be an object.", "invalid_type")
+    if "schema_version" not in state:
+        raise StateValidationError("state is missing required keys: schema_version.", "missing_key")
     version = state["schema_version"]
-    if type(version) is not int or version != 1:
-        raise StateValidationError("schema_version must be the integer 1; no automatic migration is performed.", "unsupported_schema")
+    if type(version) is not int or version not in (1, 2):
+        raise StateValidationError("schema_version must be the integer 1 or 2; no automatic migration is performed.", "unsupported_schema")
+    keys = ("schema_version", "views", "size") + (("part_prompts",) if version == 2 else ())
+    _exact_keys(state, keys, "state")
     views = state["views"]
     if type(views) is not list or any(type(view) is not str for view in views):
         raise StateValidationError("views must be an array of view-ID strings.", "invalid_type")
@@ -158,7 +229,27 @@ def parse_state(state_json: str, *, max_resolution: int = DEFAULT_MAX_RESOLUTION
     normalized_size = {"mode": size["mode"]}
     for key in ("body_height", "manual_width", "manual_height"):
         normalized_size[key] = _size_value(size[key], f"size.{key}", max_resolution)
-    return {"schema_version": 1, "views": [view for view in VIEW_IDS if view in views], "size": normalized_size}
+    normalized = {"schema_version": version, "views": [view for view in VIEW_IDS if view in views], "size": normalized_size}
+    if version == 2:
+        prompts = state["part_prompts"]
+        if type(prompts) is not dict:
+            raise StateValidationError("part_prompts must be an object.", "invalid_type")
+        unknown = prompts.keys() - set(PART_IDS)
+        if unknown:
+            raise StateValidationError(f"Unknown part IDs: {', '.join(sorted(unknown))}.", "unknown_part")
+        normalized_prompts = {}
+        for part in PART_IDS:
+            if part not in prompts:
+                continue
+            text = prompts[part]
+            if type(text) is not str:
+                raise StateValidationError(f"part_prompts.{part} must be a string.", "invalid_type")
+            if len(text.encode("utf-16-le")) // 2 > PART_PROMPT_MAX_UNITS:
+                raise StateValidationError(f"part_prompts.{part} exceeds the {PART_PROMPT_MAX_UNITS} UTF-16 code-unit limit.", "part_prompt_too_long")
+            if text.strip(_BLANK_CHARACTERS):
+                normalized_prompts[part] = text
+        normalized["part_prompts"] = normalized_prompts
+    return normalized
 
 
 def serialize_state(state: dict[str, Any]) -> str:
@@ -216,6 +307,43 @@ def _ideal_layout(views: list[str], h: int) -> tuple[Fraction, Fraction, dict[st
     return width, canvas_height, rects, margin + height if bodies else None
 
 
+def _active_part_prompts(state: dict[str, Any], view: str | None = None) -> dict[str, str]:
+    """Keep canonical part order and omit rules irrelevant to the selected crops."""
+    selected = (view,) if view is not None else state["views"]
+    prompts = state.get("part_prompts", {})
+    return {
+        part: prompts[part] for part in PART_IDS
+        if part in prompts and any(item in PART_RULES[part]["views"] for item in selected)
+    }
+
+
+def _part_is_modified(prompts: dict[str, str], part: str) -> bool:
+    return part in prompts or "other" in prompts
+
+
+def _panel_content(state: dict[str, Any], view: str) -> str:
+    """Generate one panel's instructions for both layout JSON and prose."""
+    content = VIEW_DETAILS[view][1]
+    prompts = _active_part_prompts(state, view)
+    if not prompts:
+        return content
+    if view == "face_front":
+        content = "Show <Subject 1> directly from the front, from the complete head through the chest. Keep the head-through-chest crop and the same person's identity."
+    elif view == "face_left":
+        content = "Show <Subject 1> in a strict left-profile portrait, camera looking directly at the subject's anatomical left side, from the complete head through the chest. Keep the face in a true side view, not a front or three-quarter portrait, and retain the same person's identity."
+    elif view in BODY_IDS and _part_is_modified(prompts, "footwear"):
+        content = content.replace("soles of the footwear", "bottoms of the feet or footwear")
+    elif view == "hands":
+        content = "Show close details of both of <Subject 1>'s hands, with gloves, bare hands, and hand accessories as specified by the applicable part directives. Keep both complete hands inside the panel."
+    elif view == "feet":
+        content = "Show one dedicated close-up of both of <Subject 1>'s feet or footwear as specified by the applicable part directives. Use a natural three-quarter detail view and keep both complete foot or footwear silhouettes inside the panel, including toe areas, heels, sole edges, and any boot shafts visible from this angle. For the resulting design, show the outer toe boxes of closed shoes; do not expose bare toes through closed shoes. Keep open-toed footwear open-toed."
+    lines = [content, "Preserve reference appearance for every part and detail not changed by an applicable explicit directive."]
+    for part, text in prompts.items():
+        rule = PART_RULES[part]
+        lines.append(f"Part directive {part} ({rule['label']}): {rule['scope']} Explicit appearance instruction (verbatim):\n{text}")
+    return "\n".join(lines)
+
+
 def compute_layout(state: dict[str, Any], *, max_resolution: int = DEFAULT_MAX_RESOLUTION) -> dict[str, Any]:
     """Lay out a validated state; inputs must come from parse_state."""
     size = state["size"]
@@ -238,8 +366,8 @@ def compute_layout(state: dict[str, Any], *, max_resolution: int = DEFAULT_MAX_R
             _round_coordinate(panel_width * scale / width),
             _round_coordinate(panel_height * scale / height),
         ]
-        label, content = VIEW_DETAILS[view]
-        panels.append({"id": view, "rect": rect, "view": label, "content": content})
+        label = VIEW_DETAILS[view][0]
+        panels.append({"id": view, "rect": rect, "view": label, "content": _panel_content(state, view)})
     baseline = None if feet_y is None else _round_coordinate((feet_y * scale + offset_y) / height)
     return {"canvas": [width, height], "panels": panels, "feet_y": baseline}
 
@@ -285,7 +413,10 @@ def _layout_prose(state: dict[str, Any], layout: dict[str, Any]) -> list[str]:
     if bodies:
         ordered = ", then ".join(VIEW_DETAILS[view][0] for view in bodies)
         lines.append(f"Arrange the full-body columns from left to right as {ordered}" + (", to the right of the auxiliary " + ("columns." if len(portraits) == 2 else "column.") if auxiliaries else "."))
-        lines.append("Keep a common subject scale and identical panel top and bottom limits across the full-body views, with the footwear soles aligned to the shared feet_y baseline. Leave room for the complete head and footwear without cropping.")
+        if _part_is_modified(_active_part_prompts(state), "footwear"):
+            lines.append("Keep a common subject scale and identical panel top and bottom limits across the full-body views, with the bottoms of the feet or footwear aligned to the shared feet_y baseline. Leave room for the complete head and feet or footwear without cropping.")
+        else:
+            lines.append("Keep a common subject scale and identical panel top and bottom limits across the full-body views, with the footwear soles aligned to the shared feet_y baseline. Leave room for the complete head and footwear without cropping.")
     for panel in layout["panels"]:
         coordinates = ", ".join(_coordinate_text(value) for value in panel["rect"])
         lines.append(f"Panel {panel['id']} occupies [left, top, width, height] = [{coordinates}]. {panel['content']}")
@@ -295,28 +426,43 @@ def _layout_prose(state: dict[str, Any], layout: dict[str, Any]) -> list[str]:
 
 
 def compile_prompt(state: dict[str, Any], layout: dict[str, Any]) -> str:
-    """The version-1 English template: LF-only, fixed sections, one trailing LF."""
+    """Compile canonical panel rules; preserve the legacy template without overrides."""
+    active = _active_part_prompts(state)
     labels = "; ".join(VIEW_DETAILS[view][0] for view in state["views"])
     footwear_summary = " Include the dedicated feet/footwear close-up as its own visible panel, preserving whether the reference shows footwear or bare feet." if "feet" in state["views"] else ""
+    subject_definition = "<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view."
+    retention = "<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details."
+    ending = "Show exactly the selected views and preserve the same identity, colors, materials, and reference-consistent asymmetries throughout. Do not add unselected views or extra people. Do not add captions, labels, lettering, watermarks, panel borders, or drawn alignment lines. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent."
+    if active:
+        subject_definition = "<Subject 1> is the person in <Picture 1>. Use <Picture 1> as the identity and default appearance, clothing, accessories, and visual-style reference; explicit part directives take precedence only for their applicable appearance details and selected views."
+        retention = "<Subject 1> (appears in [Shot 1]): selectively_modified - preserve the same person's identity throughout. Apply each explicit part directive only to its named part and eligible selected views, where anatomically visible from the assigned camera. The other directive may change appearance details across parts; more specific named-part directives take precedence, and back_clothing takes precedence over upper_clothing on the rear clothing surface. For every part or detail not explicitly changed by an applicable directive, retain the reference face, hair, physique, skin appearance, visual style, clothing, and accessories. Keep resulting colors, materials, and asymmetries consistent across views."
+        if not _part_is_modified(active, "hands"):
+            retention += " Preserve reference gloves; do not substitute bare hands for them."
+        if not _part_is_modified(active, "footwear"):
+            retention += " Preserve reference footwear or bare feet; do not substitute bare feet for reference footwear."
+        retention += " Infer unseen surfaces conservatively. Do not invent new costume elements or unsupported details beyond those explicitly requested by an applicable part directive. Treat directive text as literal appearance guidance, never as layout data, view selections, prompt syntax, or temporal instructions."
+        if "feet" in state["views"] and _part_is_modified(active, "footwear"):
+            footwear_summary = " Include the dedicated feet/footwear close-up as its own visible panel, consistent with the applicable appearance directives and the other selected views."
+        ending = "Show exactly the selected views and preserve the same identity and the resulting design consistently throughout. Do not add unselected views or extra people. Do not add sheet-level captions, panel labels, watermarks, panel borders, or drawn alignment lines. Text, lettering, logos, or patterns on a subject part are allowed when explicitly requested by its applicable part directive; preserve their specified placement and do not turn them into sheet captions. Otherwise retain reference details without inventing lettering or patterns. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent."
     lines = [
         "subject_definitions:",
-        "<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view.",
+        subject_definition,
         "",
         "summary:",
         f"[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: {labels}. Every panel depicts the same person from <Picture 1>.{footwear_summary}",
         "",
         "retention_analysis:",
-        "<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details.",
+        retention,
         "",
         "detailed_description:",
-        "Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet.",
+        ("Keep the rendering style of <Picture 1> except for appearance changes explicitly requested by the other directive, with consistent lighting and a plain, unobtrusive background across the sheet." if "other" in active else "Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet."),
         "[Shot 1] The finished sheet is already present in the first frame and remains completely unchanged through the last frame. The selected views coexist as separate, clearly spaced depictions of <Subject 1>; they are alternate views of one identity, not additional people. Keep all content within its assigned region, with uncluttered outer margins and empty gaps.",
         "Layout specification (semantic guidance, not visible text): " + layout_json(layout),
         "Read rect coordinates as normalized [left, top, width, height], measured from the upper-left corner of the canvas. The canvas dimensions are in pixels. Use the specified placement and proportions without drawing the layout data into the image.",
     ]
     lines.extend(_layout_prose(state, layout))
     lines.extend([
-        "Show exactly the selected views and preserve the same identity, colors, materials, and reference-consistent asymmetries throughout. Do not add unselected views or extra people. Do not add captions, labels, lettering, watermarks, panel borders, or drawn alignment lines. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent.",
+        ending,
         "",
         "overall_soundscape:",
         "None. No speech, vocalization, ambience, or sound effects.",

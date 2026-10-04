@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from h3_character_sheet.preview import compile_preview_request
+from h3_character_sheet.preview import HTTP_MAX_BYTES, compile_preview_request
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -22,7 +22,7 @@ class Handler(SimpleHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get('Content-Length', '0'))
-            if length > 32768 or length < 1:
+            if length > HTTP_MAX_BYTES or length < 1:
                 self.send_error(413)
                 return
             result = compile_preview_request(self.rfile.read(length), max_resolution=16384)

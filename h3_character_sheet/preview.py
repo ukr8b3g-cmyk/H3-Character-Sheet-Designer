@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from .compiler import StateValidationError, compile_state, decode_json
+from .compiler import STATE_MAX_BYTES, StateValidationError, compile_state, decode_json
 from .node import runtime_max_resolution
 
 PREVIEW_PATH = "/h3_character_sheet_designer/preview"
-HTTP_MAX_BYTES = 32 * 1024
+# The envelope JSON re-escapes state_json. Reserve room for even a fully escaped
+# valid state at its independent byte limit, with a bounded transport overhead.
+HTTP_MAX_BYTES = 3 * STATE_MAX_BYTES
 
 
 def compile_preview_request(body: bytes, *, max_resolution: int) -> dict:
     """Bound and validate the transport envelope before invoking the compiler."""
     if len(body) > HTTP_MAX_BYTES:
-        raise StateValidationError("Preview request exceeds the 32768-byte limit.", "request_too_large")
+        raise StateValidationError(f"Preview request exceeds the {HTTP_MAX_BYTES}-byte limit.", "request_too_large")
     try:
         text = body.decode("utf-8", errors="strict")
     except UnicodeDecodeError as exc:
@@ -28,7 +30,7 @@ async def preview(request):
     from aiohttp import web
 
     if request.content_length is not None and request.content_length > HTTP_MAX_BYTES:
-        return web.json_response({"error": {"code": "request_too_large", "message": "Preview request exceeds the 32768-byte limit."}}, status=413)
+        return web.json_response({"error": {"code": "request_too_large", "message": f"Preview request exceeds the {HTTP_MAX_BYTES}-byte limit."}}, status=413)
     if request.content_type != "application/json":
         return web.json_response({"error": {"code": "invalid_content_type", "message": "Content-Type must be application/json."}}, status=415)
     body = bytearray()
@@ -36,7 +38,7 @@ async def preview(request):
     async for chunk in request.content.iter_chunked(4096):
         body.extend(chunk)
         if len(body) > HTTP_MAX_BYTES:
-            return web.json_response({"error": {"code": "request_too_large", "message": "Preview request exceeds the 32768-byte limit."}}, status=413)
+            return web.json_response({"error": {"code": "request_too_large", "message": f"Preview request exceeds the {HTTP_MAX_BYTES}-byte limit."}}, status=413)
     try:
         result = compile_preview_request(bytes(body), max_resolution=runtime_max_resolution())
     except StateValidationError as exc:

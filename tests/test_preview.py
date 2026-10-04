@@ -6,7 +6,7 @@ import types
 import unittest
 from unittest import mock
 
-from h3_character_sheet.compiler import DEFAULT_STATE_JSON, StateValidationError, compile_state
+from h3_character_sheet.compiler import DEFAULT_STATE_JSON, PART_IDS, STATE_MAX_BYTES, StateValidationError, compile_state
 from h3_character_sheet.preview import HTTP_MAX_BYTES, PREVIEW_PATH, compile_preview_request, preview
 
 try:
@@ -23,6 +23,17 @@ def request_bytes(state=DEFAULT_STATE_JSON):
 class PreviewEnvelopeTests(unittest.TestCase):
     def test_preview_matches_compiler(self):
         self.assertEqual(compile_preview_request(request_bytes(), max_resolution=16384), compile_state(DEFAULT_STATE_JSON))
+
+    def test_maximal_v2_directives_and_padded_state_fit_transport(self):
+        state = json.loads(DEFAULT_STATE_JSON)
+        state.update(schema_version=2, part_prompts={part: "界" * 1000 for part in PART_IDS})
+        raw = json.dumps(state)
+        self.assertGreater(len(raw), 32768)  # Exceeds the previous HTTP limit.
+        self.assertEqual(compile_preview_request(request_bytes(raw), max_resolution=16384), compile_state(raw))
+        padded = raw + " " * (STATE_MAX_BYTES - len(raw.encode("utf-8")))
+        body = request_bytes(padded)
+        self.assertLess(len(body), HTTP_MAX_BYTES)
+        self.assertEqual(compile_preview_request(body, max_resolution=16384), compile_state(raw))
 
     def test_transport_keys_types_duplicates_and_utf8(self):
         invalid = [b"null", b"[]", b"{}", b'{"state_json":null}', b'{"state_json":{}}', b'{"state_json":"{}","extra":1}', b'{"state_json":"{}","state_json":"{}"}', b'\xff']
@@ -41,7 +52,7 @@ class PreviewEnvelopeTests(unittest.TestCase):
 
     def test_inner_state_bound_is_independent_of_http_bound(self):
         with self.assertRaises(StateValidationError) as caught:
-            compile_preview_request(request_bytes(DEFAULT_STATE_JSON + " " * 16384), max_resolution=16384)
+            compile_preview_request(request_bytes(DEFAULT_STATE_JSON + " " * STATE_MAX_BYTES), max_resolution=16384)
         self.assertEqual(caught.exception.code, "state_too_large")
 
 
@@ -68,6 +79,14 @@ class PreviewHTTPTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status, 400)
         self.assertEqual((await response.json())["error"]["code"], "size_limit")
 
+    async def test_maximal_v2_directives_http_200(self):
+        state = json.loads(DEFAULT_STATE_JSON)
+        state.update(schema_version=2, part_prompts={part: "\U0001f600" * 500 for part in PART_IDS})
+        raw = json.dumps(state)
+        response = await self.client.post(PREVIEW_PATH, json={"state_json": raw})
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.json(), compile_state(raw))
+
     async def test_invalid_state_http_400_retains_no_stale_success(self):
         response = await self.client.post(PREVIEW_PATH, json={"state_json": DEFAULT_STATE_JSON})
         self.assertEqual(response.status, 200)
@@ -88,13 +107,13 @@ class PreviewHTTPTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_oversized_chunked_body_http_413(self):
         async def chunks():
-            for _ in range(10):
+            for _ in range(HTTP_MAX_BYTES // 4096 + 1):
                 yield b" " * 4096
         response = await self.client.post(PREVIEW_PATH, data=chunks(), headers={"Content-Type": "application/json"})
         self.assertEqual(response.status, 413)
 
     async def test_inner_oversized_state_http_413(self):
-        response = await self.client.post(PREVIEW_PATH, json={"state_json": DEFAULT_STATE_JSON + " " * 16384})
+        response = await self.client.post(PREVIEW_PATH, json={"state_json": DEFAULT_STATE_JSON + " " * STATE_MAX_BYTES})
         self.assertEqual(response.status, 413)
         self.assertEqual((await response.json())["error"]["code"], "state_too_large")
 

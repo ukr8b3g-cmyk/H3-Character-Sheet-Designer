@@ -41,6 +41,21 @@ class NodeTests(unittest.TestCase):
         self.assertIn('"canvas":[2208,1280]', result[0])
         self.assertIn('{"canvas":', result[0])
 
+    def test_v2_directives_reach_native_output_verbatim_without_preview(self):
+        state = json.loads(DEFAULT_STATE_JSON)
+        instruction = ' 背中に「MOON {red|blue}」\n星柄 \\ "青" '
+        state.update(schema_version=2, part_prompts={"back_clothing": instruction, "footwear": "bare feet"})
+        raw = json.dumps(state)
+        node = H3CharacterSheetDesigner()
+        self.assertIs(node.VALIDATE_INPUTS(raw), True)
+        with mock.patch("h3_character_sheet.preview.compile_preview_request", side_effect=AssertionError("preview must not be called")):
+            result = node.compile(raw)
+        expected = compile_state(raw)
+        self.assertEqual(result, (expected["prompt"], expected["width"], expected["height"]))
+        self.assertIn(instruction, result[0])
+        self.assertNotIn("\\{red|blue\\}", result[0])
+        self.assertNotIn('"id":"feet"', result[0])
+
     def test_runtime_limit_is_read_on_every_call(self):
         self.assertEqual(runtime_max_resolution(), 16384)
         self.assertEqual(H3CharacterSheetDesigner().compile(DEFAULT_STATE_JSON)[1:], (2208, 1280))
