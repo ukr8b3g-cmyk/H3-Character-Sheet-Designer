@@ -1,5 +1,10 @@
 # H3 Character Sheet Designer
 
+<img width="3020" height="1160" alt="workflow (17)" src="https://github.com/user-attachments/assets/859548f9-2d2c-4092-aa48-fc868c12a7b2" />
+<img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
+
+
+
 A standalone ComfyUI custom node for designing a multi-view character sheet and compiling a MiniMax H3 reference prompt plus output dimensions. The template is English; free-form part instructions are preserved in their original language.
 
 - Seven illustrated view selectors: front portrait, anatomical-left portrait, full-body front, anatomical-left body profile, full-body back, hands, and footwear
