@@ -1,5 +1,13 @@
 # H3 Character Sheet Designer
 
+## Official template / 公式テンプレート
+
+**[Download the workflow JSON / ワークフローJSONをダウンロード](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [View in repository / リポジトリで開く](workflows/H3_Character_Sheet_Designer_wf.json)
+
+Load this GUI workflow in ComfyUI, then choose your reference image and installed models. See [template setup](#official-template-setup) below.
+
+このJSONをComfyUIへ読み込み、参照画像とお使いのモデルを選択してください。導入手順は下の[公式テンプレートの使い方](#公式テンプレートの使い方)をご覧ください。
+
 <img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
 
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
@@ -29,6 +37,28 @@ git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
 Restart ComfyUI and refresh its browser page. Add **H3 Character Sheet Designer** from the node menu. No `pip install` is required. Keep this repository as a custom-node folder; this is not a standalone image generator.
+
+## Official template setup
+
+The [official GUI workflow](workflows/H3_Character_Sheet_Designer_wf.json) is the maintainer-provided character-sheet template, preserved as supplied. Download the JSON using the link above, then drag it onto the ComfyUI canvas or open it with ComfyUI's workflow loader. It is a GUI workflow, not API-format JSON.
+
+1. Install this custom node as described above. The file records **ComfyUI Core 0.38.0 / frontend 1.53.6** as its saved baseline; use a build with native `MiniMaxH3ReferenceToVideo`, `SaveImageAdvanced`, and subgraph support. If a node is missing, update ComfyUI and its frontend.
+2. In **Load Image**, select your own character reference. The saved `h3-cyberpunk-courier.png` filename is a placeholder; the image is not bundled.
+3. Open the H3 subgraph and select the H3 diffusion model, text encoder, and video VAE installed in your `models/diffusion_models`, `models/text_encoders`, and `models/vae` folders. The workflow's **Model Links** note lists model files. Reselect the loaders for your filenames and platform; the saved diffusion-model name includes a Windows-style `minimax\` subfolder.
+4. Choose views and sizes in the Designer, then queue. The saved seven-view Auto selection compiles to **2816 × 1280** with the current compiler. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
+
+JSON structure and the saved Designer state have been checked locally. End-to-end loading, queue execution, and GPU output quality have not been re-verified for this publication. Large sheets can require substantial VRAM and time.
+
+### 公式テンプレートの使い方
+
+上のリンクからJSONをダウンロードし、ComfyUIのキャンバスへドラッグ＆ドロップするか、ワークフロー読み込み機能で開いてください。添付されたシート用ワークフローをそのまま収録しています（API形式ではありません）。
+
+1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.6** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
+2. **Load Image** でご自身の参照画像を選択してください。保存済みの `h3-cyberpunk-courier.png` は仮のファイル名で、画像は同梱していません。
+3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
+4. Designerでビューとサイズを選んで実行します。保存済みの7面・Auto設定は現行コンパイラーで **2816×1280** です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
+
+JSON構造とDesignerの保存状態はローカルで確認済みです。今回の公開作業では、ComfyUIでの読み込みからキュー実行までの通し動作とGPU生成品質は再検証していません。大きなシートは多くのVRAMと処理時間を必要とする場合があります。
 
 ## Connect to native H3
 
