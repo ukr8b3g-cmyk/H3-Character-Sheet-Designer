@@ -89,11 +89,37 @@ The final view cannot be deselected. Either portrait alone, both portraits, hand
 
 The eight parts are **Head / hair**, **Face**, **Upper-body clothing**, **Back of clothing**, **Lower body**, **Hands / gloves**, **Feet / footwear**, and **Overall / other**. The part dropdown is separate from the seven view selectors. There are no clothing presets, change modes, lettering switches, or separate text fields: describe shape, color, patterns, text, and placement in the same prompt.
 
-Examples: specify black long trousers under Lower body, black boots under Feet / footwear, white gloves under Hands / gloves, sunglasses under Face, or a floral pattern and the word FLOWER under Back of clothing. These are examples, not inserted defaults.
+### Short English examples
 
-Explicit instructions take precedence for the named part; unspecified details follow the reference. Footwear instructions apply in selected full-body views even if the separate Footwear detail panel is off. Back-of-clothing instructions apply only to the rear garment surface in back/side views, never the front or portraits. A specific part wins over Overall / other; Back of clothing wins over Upper-body clothing on the rear surface. Instructions stay saved when views, presets, sizes, or tabs change; an instruction with no related selected view is kept but does not affect that prompt.
+**English is recommended for part prompts**, based on the reported successful result. Start with a short instruction in the matching part field. If an attribute is ignored, add only the missing detail and try again. These are copy-ready examples, not inserted defaults or guaranteed results.
 
-This is a deterministic local compiler, not image analysis or an LLM translator. Japanese input and literal quotes, braces, backslashes, and requested lettering are retained. It does not detect what is visible in the reference or interpret quoted text into a separate field. The mannequin preview shows layout only; it does not visualize the requested appearance. Model adherence, exact lettering, and GPU quality are unverified.
+| Part field | Example |
+| --- | --- |
+| **Upper-body clothing** | `Change the jacket to silver-gray. Keep its design and material.` |
+| **Hands / gloves** | `Bare hands with natural skin and short nails in every view.` |
+| **Feet / footwear** | `Black high-heeled pumps, consistent in every view.` |
+| **Lower body** (upper-body-only reference) | `Complete the unseen lower body with black tailored trousers.` |
+| **Back of clothing** (matching the jacket) | `Keep the jacket silver-gray on the back as well.` |
+| **Back of clothing** (optional pattern) | `Add a floral pattern only to the back of the jacket.` |
+
+Use the back examples separately or combine them only if both changes are wanted. For an upper-body-only reference, specify missing lower clothing and footwear in their respective fields. This supplies a design for unseen areas; it cannot recover details absent from the image.
+
+If the short prompt is not enough, try a more specific version:
+
+- **Upper-body clothing:** `Change only the jacket color to silver-gray. Keep its shape, material, seams, and fasteners unchanged in every view.`
+- **Hands / gloves:** `Show bare hands with natural skin and short nails in every view. No gloves, hand coverings, or glove-like cuffs.`
+
+Add detail when needed rather than starting with a long list of constraints. Check every generated view: color, clothing, hands, footwear, and rear patterns may still be ignored or vary between views. There is no measured success rate for these examples or controlled English-versus-Japanese comparison.
+
+The compiled prompt gives explicit instructions precedence for the named part and asks to preserve unspecified reference details. **Hands / gloves and Feet / footwear instructions still apply in selected full-body views when the separate Hands and Footwear detail panels are off.** Back-of-clothing instructions apply only to the rear garment surface in back/side views, never the front or portraits. A specific part wins over Overall / other; Back of clothing wins over Upper-body clothing on the rear surface. Instructions stay saved when views, presets, sizes, or tabs change; an instruction with no related selected view is kept but does not affect that prompt.
+
+This is a deterministic local compiler, not image analysis or an LLM translator. **Input is passed through verbatim, with no automatic translation.** Japanese is accepted and retained, as are literal quotes, braces, backslashes, and requested lettering. It does not detect what is visible in the reference or interpret quoted text into a separate field. The mannequin preview shows layout only; it does not visualize the requested appearance. Broad model adherence, exact lettering, and GPU quality have not been systematically evaluated.
+
+### When to add Hands and Footwear detail panels
+
+Usually start with the portrait/full-body views you need and **leave Hands and Footwear off**, as in the official five-view template. Add either panel when you need a separate close-up. These panels can be useful when specifying hand or shoe details missing from an upper-body-only reference; describe the intended design in the corresponding part field.
+
+The **Hands** selector adds a hand-detail panel; it does not ask the character to wear gloves. Unwanted gloves have been reported, even with a kimono reference. This is a user observation, not a measured failure rate. Use a bare-hands instruction when needed and inspect both the full-body and detail views. Leaving detail panels off is a practical starting point, not a guarantee of better results.
 
 ## Footwear detail behavior
 
@@ -148,8 +174,31 @@ ComfyUI用の独立ノードです。7種類のビュー、4つのプリセッ�
 
 既定の基本4面は2208×1280のままです。新しい「横顔・左」は人物の解剖学的左側から見た顔～胸のポートレイトです。7面・ディテールは2816×1280になります。保存済みの6面は配置を維持し、カスタムとして表示されます。基本4面の基準高を672にすると1344×768になります（7面は1696×768）。画面のマネキンは操作用の図であり、生成用画像には送信しません。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
 
-「足・履物」は全身内の靴とは別の拡大枠を要求します。参照の靴・見えているブーツの筒・素足を保持し、見えない靴の意匠は発明しない指示です。選択が出力プロンプトへ届くことはローカル試験済みですが、GPUで効きが改善したかは未検証です。
+「足・履物」は全身内の靴とは別の拡大枠を要求します。関連する部位指定がない場合は、参照の靴・見えているブーツの筒・素足を保持し、見えない靴の意匠は発明しない指示です。選択が出力プロンプトへ届くことはローカル試験済みですが、GPUで効きが改善したかは未検証です。
 
-下部の「レイアウト｜部位指定」を切り替え、部位ドロップダウンと自由入力1欄で指示を保存できます。頭・髪、顔、上半身の服、背面の服、下半身、手・手袋、足・履物、全体・その他の8部位です。柄・文字・位置も同じ欄に書きます。部位ごとに保持され、関連する選択ビューへ共通反映します。足の拡大ビューが未選択でも、履物の指示は全身図へ届きます。背面の柄は前面へ移しません。見えない部分の自動検出や翻訳は行いません。未入力の旧ワークフローと配置は維持します。プレビューは配置確認用で、指定した服や柄には変わりません。
+下部の「レイアウト｜部位指定」を切り替え、部位ドロップダウンと自由入力1欄で指示を保存できます。頭・髪、顔、上半身の服、背面の服、下半身、手・手袋、足・履物、全体・その他の8部位です。柄・文字・位置も同じ欄に書きます。部位ごとに保持され、関連する選択ビューへ共通反映します。**手・足の拡大ビューが未選択でも、手・手袋と足・履物の指示は全身図のプロンプトへ届きます。** 背面の柄は背面のみに指定されますが、生成結果での再現を保証するものではありません。未入力の旧ワークフローと配置は維持します。プレビューは配置確認用で、指定した服や柄には変わりません。
+
+### 短い英語プロンプトから始める
+
+英語で反映できた報告を踏まえ、**部位指定は短い英語での入力をおすすめします**。日本語も入力できますが、自動翻訳はせず原文のまま渡します。まず必要な変更だけを短く書き、反映されなかった属性があれば具体的な説明を追加してください。
+
+| 入力する部位 | そのまま使える英語の例 |
+| --- | --- |
+| **上半身の服** | `Change the jacket to silver-gray. Keep its design and material.` |
+| **手・手袋** | `Bare hands with natural skin and short nails in every view.` |
+| **足・履物** | `Black high-heeled pumps, consistent in every view.` |
+| **下半身**（上半身だけの参照） | `Complete the unseen lower body with black tailored trousers.` |
+| **背面の服**（色をそろえる） | `Keep the jacket silver-gray on the back as well.` |
+| **背面の服**（柄を追加する場合） | `Add a floral pattern only to the back of the jacket.` |
+
+背面の2例は目的に合わせて選び、両方必要な場合だけ組み合わせます。上半身しか写っていない参照では、下半身と履物をそれぞれの欄で指定できます。見えない部分のデザインを補う指示であり、元画像にない情報を復元する機能ではありません。
+
+短い指定で足りない場合は、上の[詳しい指定例](#short-english-examples)のように形・素材・縫い目を維持する条件や、手袋・手の覆いを付けない条件を追加してください。長い指示が常に優れるわけではありません。変更が反映されない場合やビュー間で色・服・手・靴・背面の柄がそろわない場合もあるため、各ビューを確認してください。成功率や英語と日本語の比較は測定していません。
+
+### 手・足の拡大ビューを追加する目安
+
+通常は公式5面テンプレートと同様に、必要な顔・全身ビューを選び、**「両手」と「足・履物」の拡大ビューはオフから試す**のがおすすめです。細部の独立した拡大図が必要になったら追加してください。上半身だけの参照から手や靴の細部を指定したい場合にも役立ちます。対応する部位欄に、描いてほしいデザインを書いてください。
+
+「両手」の選択は拡大枠の追加であり、手袋を着ける指定ではありません。ただし、着物の参照でも意図しない手袋が出たという利用者の報告があります。発生率を測った結果ではありません。必要に応じて素手を明記し、全身図と拡大図の両方を確認してください。拡大ビューをオフにすれば必ず改善する、という意味ではありません。
 
 詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。
