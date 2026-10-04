@@ -86,6 +86,8 @@ The final view cannot be deselected. Either portrait alone, both portraits, hand
 **Experimental** appears above 1,032,192 pixels. This is a warning, not an artificial H3 size cap. ComfyUI's runtime axis limit is still enforced. Large outputs may require substantial VRAM and time.
 
 ## Part prompts
+<img width="1325" height="646" alt="{A223588C-EEB3-453F-8654-B27084426E4D}" src="https://github.com/user-attachments/assets/519bd600-f0cd-408c-8d30-8181a83d8b0a" />
+
 
 The eight parts are **Head / hair**, **Face**, **Upper-body clothing**, **Back of clothing**, **Lower body**, **Hands / gloves**, **Feet / footwear**, and **Overall / other**. The part dropdown is separate from the seven view selectors. There are no clothing presets, change modes, lettering switches, or separate text fields: describe shape, color, patterns, text, and placement in the same prompt.
 
