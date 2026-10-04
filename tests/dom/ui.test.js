@@ -7,8 +7,8 @@ import {DEFAULT_JSON, parseState, serializeState, DEFAULT_STATE, PRESETS, VIEW_I
 let JSDOM;
 try { ({JSDOM} = await import(process.env.H3_JSDOM_PATH ? pathToFileURL(process.env.H3_JSDOM_PATH).href : 'jsdom')); } catch {}
 const domTest = (name, fn) => test(name, {skip: !JSDOM && 'Optional jsdom is unavailable; set H3_JSDOM_PATH to its api.js or install jsdom for DOM tests.'}, fn);
-let installDesigner, createExtension;
-if (JSDOM) ({installDesigner, createExtension} = await import('../../web/integration.js'));
+let installDesigner, createExtension, graphTransaction;
+if (JSDOM) ({installDesigner, createExtension, graphTransaction} = await import('../../web/integration.js'));
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function choose(select, value) { select.value = value; select.dispatchEvent(new Event('change', {bubbles: true})); }
 function customHeight(root) { choose(root.querySelector('[data-height-presets]'), 'custom'); return root.querySelector('[data-field="body_height"]'); }
@@ -46,10 +46,11 @@ function setup() {
   return {dom, app, requests, transactions, registry, node, resolve, locale(value) { locale = value; settings.dispatchEvent(new Event('Comfy.Locale.change')); }, cleanup() { for (const node of graph._nodes) node.onRemoved?.(); dom.window.close(); for (const key of globals) { if (savedGlobals[key] === undefined) delete globalThis[key]; else globalThis[key] = savedGlobals[key]; } }};
 }
 
-domTest('single named STRING keeps original position; no second generation widget; instance hooks preserve returns', async t => {
+domTest('canonical STRING keeps identity and position; distinct UI never serializes; instance hooks preserve returns', async t => {
   const h = setup(); t.after(h.cleanup); const {item, original, record} = h.node(DEFAULT_JSON, true);
-  assert.equal(item.widgets.length, 2); assert.equal(item.widgets[0].name, 'other'); assert.equal(item.widgets[1].name, 'state_json'); assert.equal(item.widgets[1].serialize, true); assert.equal(item.widgets[1].options.dynamicPrompts, false);
-  assert.equal(item.onAdded(), 'add-original'); assert.equal(h.registry.has(original), false); assert.equal(h.registry.has(record.widget), true);
+  assert.equal(item.widgets.length, 3); assert.equal(item.widgets[0].name, 'other'); assert.equal(item.widgets[1], original); assert.equal(original.name, 'state_json'); assert.notEqual(original.serialize, false); assert.equal(original.options.dynamicPrompts, false);
+  assert.equal(record.widget.name, 'h3_designer_ui'); assert.equal(record.widget.serialize, false); assert.equal(record.widget.options.serialize, false); assert.equal(original.hidden, true);
+  assert.equal(item.onAdded(), 'add-original'); assert.equal(h.registry.has(original), true); assert.equal(h.registry.has(record.widget), true);
   assert.equal(item.onConfigure({}), 'configure-original'); assert.equal(item.onRemoved(), 'remove-original'); assert.equal(record.controller.disposed, true);
 });
 
@@ -482,4 +483,66 @@ json.dump(results,sys.stdout)`;
   const back = outputs[2].panels;
   for (const view of ['face_front', 'body_front']) assert.equal(back.find(p => p.id === view).content.includes('FLOWER'), false);
   assert.ok(back.find(p => p.id === 'body_back').content.includes('FLOWER'));
+});
+
+domTest('external canonical edits are read before UI mutations and preserve malformed source', t => {
+  const h = setup(); t.after(h.cleanup); const {record, original} = h.node();
+  original.value = serializeState({...structuredClone(DEFAULT_STATE), views: ['feet']});
+  record.ui.root.querySelector('[data-view="hands"]').click();
+  assert.deepEqual(parseState(original.value).views, ['hands', 'feet']);
+  assert.equal(record.controller.raw, original.value);
+  original.value = ' {bad'; record.sync();
+  assert.equal(record.controller.raw, ' {bad'); assert.equal(record.controller.state, null);
+  assert.equal(record.ui.root.querySelector('.h3-json-editor textarea').value, ' {bad');
+});
+
+domTest('duplicate installation is idempotent and disposal restores canonical visibility and hooks', t => {
+  const h = setup(); t.after(h.cleanup); const {record, item, original} = h.node();
+  assert.equal(installDesigner(item, h.app, h.api), record); assert.equal(item.widgets.length, 2);
+  record.dispose({reinstall: false}); record.dispose({reinstall: false});
+  assert.deepEqual(item.widgets, [original]); assert.equal(original.hidden, undefined);
+  assert.equal(original.element.hidden, false); assert.equal(h.registry.has(record.widget), false);
+  assert.equal(item.onAdded(), 'add-original'); assert.equal(h.registry.has(record.widget), false);
+});
+
+domTest('the visual widget has a collision-free name and preserves all canonical input references', t => {
+  const h = setup(); t.after(h.cleanup); const {record, item, original} = h.node();
+  record.dispose({reinstall: false});
+  const other = {name: 'h3_designer_ui', value: 'other'}; item.widgets.push(other);
+  const input = {_widget: original, widget: {name: 'state_json'}, pos: [3, 7]}; item.inputs = [input];
+  const refs = {...input}; const installed = installDesigner(item, h.app, {fetchApi: () => new Promise(() => {})});
+  assert.equal(installed.widget.name, 'h3_designer_ui_1');
+  assert.deepEqual(item.widgets.slice(0, 2), [original, other]);
+  installed.dispose({reinstall: false});
+  assert.equal(input._widget, refs._widget); assert.equal(input.widget, refs.widget); assert.equal(input.pos, refs.pos);
+});
+
+domTest('same node object can be re-added with a fresh graphical controller', t => {
+  const h = setup(); t.after(h.cleanup); const {record, item, original} = h.node();
+  record.controller.toggle('hands'); const saved = original.value;
+  item.onRemoved(); assert.equal(record.controller.disposed, true);
+  item.onAdded(); const next = installDesigner(item, h.app, {fetchApi: () => new Promise(() => {})});
+  assert.notEqual(next, record); assert.equal(next.controller.raw, saved);
+  next.controller.toggle('feet'); assert.ok(parseState(original.value).views.includes('feet'));
+  assert.equal(item.widgets.filter(widget => widget.name === 'state_json').length, 1);
+});
+
+
+domTest('graph transactions notify the official canvas history bridge in balanced native order', () => {
+  const events = [], node = {graph: {beforeChange() { events.push('graph-before'); }, afterChange() { events.push('graph-after'); }}, setDirtyCanvas() { events.push('dirty'); }};
+  const canvas = {emitBeforeChange() { events.push('canvas-before'); }, emitAfterChange() { events.push('canvas-after'); }};
+  graphTransaction(node, () => events.push('change'), canvas);
+  assert.deepEqual(events, ['canvas-before', 'graph-before', 'change', 'graph-after', 'canvas-after', 'dirty']);
+  events.length = 0;
+  assert.throws(() => graphTransaction(node, () => { events.push('change'); throw Error('failed commit'); }, canvas), /failed commit/);
+  assert.deepEqual(events, ['canvas-before', 'graph-before', 'change', 'graph-after', 'canvas-after']);
+});
+
+domTest('transaction compatibility uses only complete callback pairs without suppressing edits', () => {
+  const events = [], node = {graph: {beforeChange() { events.push('unpaired-graph'); }}, setDirtyCanvas() { events.push('dirty'); }};
+  graphTransaction(node, () => events.push('change'), {emitBeforeChange() { events.push('unpaired-canvas'); }});
+  assert.deepEqual(events, ['change', 'dirty']);
+  events.length = 0;
+  graphTransaction(node, () => events.push('change'), {emitBeforeChange() { events.push('before'); }, emitAfterChange() { events.push('after'); }});
+  assert.deepEqual(events, ['before', 'change', 'after', 'dirty']);
 });

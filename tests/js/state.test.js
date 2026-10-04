@@ -203,3 +203,22 @@ test('part edits synchronously update Queue, skip duplicate blur commits and sur
   assert.throws(() => h.controller.setPartPrompt('face', 'x'.repeat(1001)), error => error.code === 'partLength');
   assert.equal(h.controller.raw, saved);
 });
+
+test('canonical source adapters keep raw live and merge edits from current external state', t => {
+  let canonical = DEFAULT_JSON; const writes = [];
+  const controller = new DesignerController({raw: canonical, readRaw: () => canonical, writeRaw: value => { writes.push(value); canonical = value; }, requestPreview: () => new Promise(() => {})});
+  t.after(() => controller.dispose()); assert.equal(writes.length, 0);
+  canonical = serializeState({...clone(), views: ['feet']});
+  assert.equal(controller.raw, canonical); controller.toggle('hands');
+  assert.deepEqual(parseState(canonical).views, ['hands', 'feet']); assert.equal(writes.length, 1);
+  canonical = '{broken'; controller.syncFromSource(); assert.equal(controller.state, null); assert.equal(controller.raw, '{broken'); assert.equal(writes.length, 1);
+});
+
+test('source mutation rejects pending preview before observer synchronization', async t => {
+  let canonical = DEFAULT_JSON; const calls = [];
+  const controller = new DesignerController({raw: canonical, readRaw: () => canonical, writeRaw: value => { canonical = value; }, requestPreview: raw => new Promise(resolve => calls.push({raw, resolve}))});
+  t.after(() => controller.dispose());
+  canonical = serializeState({...clone(), views: ['feet']}); calls[0].resolve(preview(DEFAULT_JSON)); await tick();
+  assert.equal(controller.preview, null); assert.equal(controller.isCurrentPreview, false);
+  await controller.refreshPreview(); assert.equal(calls.at(-1).raw, canonical);
+});

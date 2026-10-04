@@ -147,19 +147,27 @@ export function validatePreview(data, state) {
 
 /** One persistent value, with separate advisory preview and request identity. */
 export class DesignerController {
-  constructor({raw, requestPreview, transaction = fn => fn(), onChange = () => {}, onCommit = () => {}, timeoutMs = 15000}) {
-    this.raw = raw; this.state = null; this.error = null; this.preview = null; this.previewRaw = null;
+  constructor({raw, requestPreview, transaction = fn => fn(), onChange = () => {}, onCommit = () => {}, timeoutMs = 15000, readRaw = null, writeRaw = null}) {
+    this.readRaw = readRaw; this.writeRaw = writeRaw; this._raw = raw; this.observedRaw = raw; this.state = null; this.error = null; this.preview = null; this.previewRaw = null;
     this.pending = false; this.previewError = null; this.maxResolution = Infinity;
     this.generation = 0; this.requestNumber = 0; this.disposed = false;
     this.requestPreview = requestPreview; this.transaction = transaction; this.onChange = onChange; this.onCommit = onCommit; this.timeoutMs = timeoutMs;
     this.restore(raw, false);
+  }
+  // Embedded integrations can retain their official widget as the sole value owner.
+  // The controller caches parsed/preview state only; raw always reads that source.
+  get raw() { return this.readRaw ? this.readRaw() : this._raw; }
+  set raw(value) { if (this.writeRaw) this.writeRaw(value); else this._raw = value; }
+  syncFromSource() {
+    if (!this.disposed && this.raw !== this.observedRaw) { this.restore(this.raw); return true; }
+    return false;
   }
   get isCurrentPreview() { return !this.pending && !this.previewError && this.preview !== null && this.previewRaw === this.raw; }
   emit(reason) { if (!this.disposed) this.onChange(this, reason); }
   invalidate() { this.generation++; this.requestNumber++; this.abort?.abort(); this.abort = null; clearTimeout(this.timer); this.pending = false; }
   restore(raw, notify = true) {
     if (this.disposed) return;
-    this.invalidate(); this.raw = raw; this.previewRaw = null; this.previewError = null;
+    this.invalidate(); this.observedRaw = raw; if (this.raw !== raw) this.raw = raw; this.previewRaw = null; this.previewError = null;
     try { this.state = parseState(raw, this.maxResolution); this.error = null; }
     catch (error) { this.state = null; this.error = error; }
     if (notify) this.emit('restore');
@@ -167,26 +175,30 @@ export class DesignerController {
   }
   commit(next) {
     if (this.disposed) return false;
+    this.syncFromSource();
     const raw = serializeState(next, this.maxResolution);
     if (raw === this.raw) return false;
     const previous = this.raw;
     this.transaction(() => {
-      this.invalidate(); this.raw = raw; this.state = parseState(raw, this.maxResolution); this.error = null; this.previewError = null; this.previewRaw = null;
+      this.invalidate(); this.observedRaw = raw; this.raw = raw; this.state = parseState(raw, this.maxResolution); this.error = null; this.previewError = null; this.previewRaw = null;
       this.onCommit(raw, previous);
     });
     this.emit('commit'); void this.refreshPreview(); return true;
   }
   change(mutator) {
+    this.syncFromSource();
     if (!this.state || this.disposed) return false;
     const next = structuredClone(this.state); mutator(next); return this.commit(next);
   }
   toggle(view) {
+    this.syncFromSource();
     if (!VIEW_IDS.includes(view)) fail('views');
     if (this.state?.views.length === 1 && this.state.views[0] === view) fail('lastView');
     return this.change(next => { next.views = next.views.includes(view) ? next.views.filter(id => id !== view) : [...next.views, view]; });
   }
   preset(name) { if (!PRESETS[name]) fail('views'); return this.change(next => { next.views = [...PRESETS[name]]; }); }
   setMode(mode) {
+    this.syncFromSource();
     if (mode === this.state?.size.mode) return false;
     if (mode === 'manual') {
       if (!this.isCurrentPreview) fail('updating');
@@ -202,6 +214,7 @@ export class DesignerController {
     return this.change(next => { next.size[field] = value; });
   }
   setPartPrompt(part, text) {
+    this.syncFromSource();
     if (!PART_IDS.includes(part)) fail('parts');
     validatePartPrompt(text);
     if (!this.state || this.disposed) return false;
@@ -215,6 +228,7 @@ export class DesignerController {
   }
   applyRaw(raw) { return this.commit(parseState(raw, this.maxResolution)); }
   async refreshPreview() {
+    if (this.syncFromSource()) return;
     if (this.disposed || !this.state) return;
     this.abort?.abort(); clearTimeout(this.timer);
     const abort = new AbortController(); this.abort = abort;
