@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-import {DEFAULT_JSON, parseState, serializeState, DEFAULT_STATE} from '../../web/state.js';
+import {readFileSync} from 'node:fs';
+import {DEFAULT_JSON, parseState, serializeState, DEFAULT_STATE, PRESETS} from '../../web/state.js';
 let JSDOM;
 try { ({JSDOM} = await import(process.env.H3_JSDOM_PATH ? pathToFileURL(process.env.H3_JSDOM_PATH).href : 'jsdom')); } catch {}
 const domTest = (name, fn) => test(name, {skip: !JSDOM && 'Optional jsdom is unavailable; set H3_JSDOM_PATH to its api.js or install jsdom for DOM tests.'}, fn);
 let installDesigner, createExtension;
 if (JSDOM) ({installDesigner, createExtension} = await import('../../web/integration.js'));
 const tick = () => new Promise(resolve => setImmediate(resolve));
+function choose(select, value) { select.value = value; select.dispatchEvent(new Event('change', {bubbles: true})); }
+function customHeight(root) { choose(root.querySelector('[data-height-presets]'), 'custom'); return root.querySelector('[data-field="body_height"]'); }
 function setup() {
   const dom = new JSDOM('<!doctype html><html><head></head><body></body></html>', {url: 'http://localhost/'});
   const globals = ['window', 'document', 'AbortController', 'Event', 'KeyboardEvent', 'HTMLElement'];
@@ -20,10 +23,10 @@ function setup() {
   const graph = app.graph;
   graph.beforeChange = node => transactions.push(['before', node.widgets.find(w => w.name === 'state_json').value]);
   graph.afterChange = node => transactions.push(['after', node.widgets.find(w => w.name === 'state_json').value]);
-  function node(raw = DEFAULT_JSON, prefixWidget = false) {
+  function node(raw = DEFAULT_JSON, prefixWidget = false, size = [300, 100]) {
     const element = document.createElement('textarea'); element.value = raw;
     const original = {name: 'state_json', type: 'customtext', value: raw, options: {}, element, onRemove() { registry.delete(original); element.remove(); }};
-    const item = {type: 'H3CharacterSheetDesigner', comfyClass: 'H3CharacterSheetDesigner', size: [300, 100], widgets: prefixWidget ? [{name: 'other', value: 'kept'}, original] : [original], graph, onConfigure() { return 'configure-original'; }, onRemoved() { return 'remove-original'; }, onAdded() { registry.add(original); return 'add-original'; },
+    const item = {type: 'H3CharacterSheetDesigner', comfyClass: 'H3CharacterSheetDesigner', size, widgets: prefixWidget ? [{name: 'other', value: 'kept'}, original] : [original], graph, onConfigure() { return 'configure-original'; }, onRemoved() { return 'remove-original'; }, onAdded() { registry.add(original); return 'add-original'; },
       setSize(size) { this.size = size; }, setDirtyCanvas() {},
       addDOMWidget(name, type, element, options) {
         const widget = {name, type, element, options, onRemove() { registry.delete(widget); element.remove(); }};
@@ -60,7 +63,7 @@ domTest('click → immediate save/queue uses latest raw, one Undo transaction; l
 });
 
 domTest('draft inputs remain separate; valid Enter commits once, invalid draft does not', async t => {
-  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const input = record.ui.root.querySelector('[data-field="body_height"]');
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const input = customHeight(record.ui.root);
   input.value = '673'; input.dispatchEvent(new Event('input', {bubbles: true}));
   assert.equal(record.controller.raw, DEFAULT_JSON); assert.match(input.parentElement.parentElement.textContent, /Uncommitted/);
   input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
@@ -122,7 +125,7 @@ domTest('failed DOM setup retains the original normal STRING widget', t => {
 });
 
 domTest('locale does not reset numeric drafts; restored values clear stale drafts without Undo', async t => {
-  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const input = record.ui.root.querySelector('[data-field="body_height"]');
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const input = customHeight(record.ui.root);
   input.value = '999'; input.dispatchEvent(new Event('input', {bubbles: true})); h.locale('ja');
   assert.equal(input.value, '999'); assert.match(input.parentElement.parentElement.textContent, /未確定/); assert.equal(h.transactions.length, 0);
   record.widget.value = DEFAULT_JSON; assert.equal(input.value, '1120'); assert.equal(h.transactions.length, 0);
@@ -143,4 +146,115 @@ domTest('append-then-throw DOM setup rolls back registry, hooks, and extra seria
     this.widgets.push(candidate); this.onAdded = () => 'leaked callback'; throw new Error('partly installed');
   }};
   assert.equal(installDesigner(node, h.app, {}), null); assert.deepEqual(node.widgets, [original]); assert.equal(removed, true); assert.equal(node.onAdded, priorAdded);
+});
+
+
+domTest('new nodes match the supplied 870×930 size and never shrink a larger node', t => {
+  const h = setup(); t.after(h.cleanup); const {item, record} = h.node();
+  assert.deepEqual(item.size, [870, 930]);
+  assert.equal(record.widget.options.getMinHeight(), 760);
+  assert.equal(record.widget.options.getHeight(), 840);
+  const larger = h.node(DEFAULT_JSON, false, [1100, 1200]);
+  assert.deepEqual(larger.item.size, [1100, 1200]);
+});
+
+domTest('both dropdowns are full controls; height shows its selected value and every preset commits once', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const selects = [...root.querySelectorAll('select')]; assert.equal(selects.length, 2);
+  for (const select of selects) {
+    assert.ok(select.classList.contains('h3-select'));
+    assert.equal(root.querySelector(`label[for="${select.id}"]`)?.control, select);
+    assert.equal(select.multiple, false);
+  }
+  const height = root.querySelector('[data-height-presets]'), input = root.querySelector('[data-field="body_height"]');
+  assert.equal(height.value, '1120'); assert.equal(input.hidden, true); assert.equal(input.disabled, true);
+  assert.deepEqual([...height.options].map(option => option.value), ['672', '896', '1120', '1344', '1792', 'custom']);
+  for (const value of ['672', '896', '1120', '1344', '1792']) {
+    const count = h.transactions.length; choose(height, value);
+    assert.equal(record.controller.state.size.body_height, Number(value));
+    assert.equal(height.value, value); assert.equal(input.hidden, true);
+    assert.equal(h.transactions.length, count + 2);
+  }
+  const count = h.transactions.length; choose(height, '1792'); assert.equal(h.transactions.length, count);
+});
+
+domTest('custom height is explicit, focuses its editor, and Escape cancels without saving', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const input = customHeight(root), height = root.querySelector('[data-height-presets]');
+  assert.equal(input.hidden, false); assert.equal(input.disabled, false); assert.equal(document.activeElement, input);
+  assert.equal(record.controller.raw, DEFAULT_JSON); assert.equal(h.transactions.length, 0);
+  input.value = '999'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
+  assert.equal(record.controller.raw, DEFAULT_JSON); assert.equal(h.transactions.length, 0);
+  assert.equal(height.value, '1120'); assert.equal(input.hidden, true); assert.equal(document.activeElement, height);
+});
+
+domTest('custom heights survive save/restore and are not replaced by the nearest dropdown preset', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const input = customHeight(root); input.value = '1024'; input.dispatchEvent(new Event('input', {bubbles: true}));
+  input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true}));
+  assert.equal(record.controller.state.size.body_height, 1024); assert.equal(h.transactions.length, 2);
+  const saved = record.widget.value; record.widget.value = saved;
+  assert.equal(root.querySelector('[data-height-presets]').value, 'custom'); assert.equal(input.hidden, false); assert.equal(input.value, '1024');
+  record.widget.value = DEFAULT_JSON; assert.equal(input.hidden, true); assert.equal(root.querySelector('[data-height-presets]').value, '1120');
+});
+
+domTest('choosing a preset discards an invalid custom draft and restores normal validation state', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const input = customHeight(root); input.value = '673'; input.dispatchEvent(new Event('input', {bubbles: true})); input.dispatchEvent(new Event('blur'));
+  assert.equal(input.getAttribute('aria-invalid'), 'true');
+  choose(root.querySelector('[data-height-presets]'), '672');
+  assert.equal(input.hidden, true); assert.equal(input.getAttribute('aria-invalid'), 'false');
+  assert.equal(root.querySelector('.h3-draft-note').textContent, ''); assert.equal(record.controller.state.size.body_height, 672);
+});
+
+domTest('every view preset selects its documented views and Manual dimensions survive', async t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  h.resolve(); await tick(); root.querySelector('[data-mode="manual"]').click();
+  const size = {...record.controller.state.size};
+  for (const [name, expected] of Object.entries(PRESETS)) {
+    choose(root.querySelector('#' + root.dataset.instance + '-preset'), name);
+    assert.deepEqual(record.controller.state.views, expected); assert.deepEqual(record.controller.state.size, size);
+    assert.equal(root.querySelector('select.h3-select').value, name);
+  }
+  assert.equal(root.querySelector('[data-height-presets]').disabled, true);
+  root.querySelector('.h3-link-button').click(); assert.equal(record.controller.state.size.mode, 'auto');
+  assert.equal(root.querySelector('[data-height-presets]').disabled, false);
+});
+
+domTest('all six view buttons stay selectable, update Custom, and protect the final view', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  choose(root.querySelector('select.h3-select'), 'detail');
+  const cards = [...root.querySelectorAll('.h3-card')]; assert.equal(cards.length, 6);
+  for (const card of cards.slice(0, -1)) { card.click(); assert.equal(card.getAttribute('aria-pressed'), 'false'); }
+  const last = cards.at(-1); last.click(); assert.equal(last.getAttribute('aria-pressed'), 'true');
+  assert.equal(record.controller.state.views.length, 1); assert.equal(root.querySelector('select.h3-select').value, 'custom');
+  assert.equal(root.querySelector('select.h3-select option[value="custom"]').disabled, true);
+});
+
+domTest('locale updates both dropdown labels without losing a custom draft or adding history', t => {
+  const h = setup(); t.after(h.cleanup); const {record} = h.node(); const root = record.ui.root;
+  const input = customHeight(root); input.value = '1024'; input.dispatchEvent(new Event('input', {bubbles: true})); h.locale('ja');
+  const height = root.querySelector('[data-height-presets]');
+  assert.equal(height.value, 'custom'); assert.equal(height.selectedOptions[0].textContent, '手入力…');
+  assert.equal(input.getAttribute('aria-label'), '基準高を手入力'); assert.equal(input.value, '1024'); assert.equal(h.transactions.length, 0);
+});
+
+domTest('invalid saved state disables every selection control; disposed controls cannot commit', t => {
+  const h = setup(); t.after(h.cleanup); const {record, item} = h.node('{broken'); const root = record.ui.root;
+  for (const control of root.querySelectorAll('.h3-card, .h3-mode, select')) assert.equal(control.disabled, true);
+  record.widget.value = DEFAULT_JSON; const select = root.querySelector('[data-height-presets]'); item.onRemoved();
+  choose(select, '672'); assert.equal(record.widget.value, DEFAULT_JSON); assert.equal(h.transactions.length, 0);
+});
+
+domTest('CSS contract keeps dropdowns full-width and key text readable (not a layout test)', t => {
+  const h = setup(); t.after(h.cleanup);
+  const style = document.createElement('style'); style.textContent = readFileSync(new URL('../../web/style.css', import.meta.url), 'utf8'); document.head.append(style);
+  const {record} = h.node(); const root = record.ui.root;
+  assert.equal(window.getComputedStyle(root).fontSize, '18px');
+  assert.equal(window.getComputedStyle(root.querySelector('.h3-card-label')).fontSize, '16px');
+  assert.equal(window.getComputedStyle(root.querySelector('.h3-number-field label')).fontSize, '16px');
+  for (const select of root.querySelectorAll('select')) {
+    const css = window.getComputedStyle(select); assert.equal(css.width, '100%'); assert.equal(css.height, '40px'); assert.equal(css.appearance, 'auto');
+  }
 });

@@ -4,6 +4,7 @@ A standalone ComfyUI custom node for designing a multi-view character sheet and 
 
 - Six illustrated view selectors: portrait, full-body front, anatomical left profile, full-body back, hands, and footwear
 - Four presets, automatic layout sizing, editable manual dimensions, and a large live layout preview
+- Readable 870 × 930 default node, full-width dropdowns, and explicit custom panel-height entry
 - Default **2208 × 1280** experimental layout; choose a 672-pixel panel height for **1344 × 768**
 - Deterministic local Python compiler, with **no LLM, external API, additional model, or Python package dependency** for the designer itself
 - One versioned JSON STRING input; `prompt: STRING`, `width: INT`, `height: INT` outputs
@@ -31,7 +32,7 @@ Suggested experimental downstream settings are `length=5` **frames**, not five s
 ## Using the designer
 
 1. Select views or a preset. Every view click immediately commits the saved node input, even while the preview is loading
-2. In Auto mode choose the requested full-body panel height. Dimensions are calculated in Python and rounded upward to a 32-pixel grid
+2. In Auto mode choose the requested full-body panel height directly from its full-width dropdown. Choose **Custom…** for any other 32-pixel-grid height; press Enter or leave the custom field to commit. Escape discards an unfinished edit. Dimensions are calculated in Python and rounded upward to a 32-pixel grid
 3. To edit width and height, switch to Manual once the current preview has returned. The current Auto dimensions are copied first. Presets preserve Manual dimensions
 4. Press Enter or leave a number field to commit a valid edit. Uncommitted drafts are not saved or queued
 5. Queue your normal H3 workflow. Preview networking is optional for execution: the node independently validates and compiles the current saved JSON

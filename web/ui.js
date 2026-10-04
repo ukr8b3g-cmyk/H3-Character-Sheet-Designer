@@ -1,12 +1,14 @@
 import {VIEW_IDS, PRESETS, presetOf, StateError} from './state.js';
 import {createArtwork} from './artwork.js';
 let sequence = 0;
+export const HEIGHT_PRESETS = [672, 896, 1120, 1344, 1792];
 const EN = {
   intro: 'Choose the views for your character sheet', selected: 'selected',
   face_front: 'Portrait', body_front: 'Front', body_left: 'Left side', body_back: 'Back', hands: 'Hands', feet: 'Footwear',
   face_front_tip: 'Front-facing face to chest', body_front_tip: 'Full body, head to soles', body_left_tip: "Camera looks directly at the subject’s anatomical left side", body_back_tip: 'Direct rear view, full body', hands_tip: 'Both hands; retain gloves from the reference', feet_tip: 'Both feet; retain footwear and boot shafts',
   preset: 'Preset', basic: 'Basic · 4 views', detail: 'Detail · 6 views', turnaround: 'Turnaround · 3', single: 'Single view', custom: 'Custom',
   auto: 'Auto', manual: 'Manual', size: 'Output size', bodyHeight: 'Panel height', width: 'Width', height: 'Height', returnAuto: 'Back to Auto', updating: 'Updating dimensions…',
+  customHeight: 'Custom panel height', customHeightChoice: 'Custom…',
   autoHint: 'Auto keeps the requested full-body panel height.', manualHint: 'Manual keeps your canvas size when views change.',
   layout: 'SHEET PREVIEW', diagram: 'Layout guide', experimental: 'Experimental', pixels: 'pixels',
   caveat: 'A prompt layout guide. Exact geometry and generation quality are not guaranteed.',
@@ -23,6 +25,7 @@ const JA = {
   face_front_tip: '正面の顔から胸まで', body_front_tip: '頭頂から靴底までの全身正面', body_left_tip: 'カメラが人物の解剖学的左側を正面から見る', body_back_tip: '真後ろから見た全身', hands_tip: '左右の手。参照にある手袋を保持', feet_tip: '左右の足。履物とブーツの筒を保持',
   preset: 'プリセット', basic: '基本4面', detail: '6面・ディテール', turnaround: '三面図のみ', single: '1カット', custom: 'カスタム',
   auto: 'Auto', manual: 'Manual', size: '出力サイズ', bodyHeight: '基準高', width: '幅', height: '高さ', returnAuto: 'Autoに戻す', updating: '寸法更新中…',
+  customHeight: '基準高を手入力', customHeightChoice: '手入力…',
   autoHint: 'Autoは指定した全身パネルの高さを維持します。', manualHint: 'Manualはビューを変えても幅・高さを維持します。',
   layout: 'シートプレビュー', diagram: '配置ガイド', experimental: 'Experimental', pixels: '画素',
   caveat: '配置はプロンプト上の指示です。正確な形状や生成品質は保証しません。',
@@ -57,7 +60,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   const root = element('section', 'h3-designer'); root.dataset.instance = id; root.setAttribute('aria-label', 'H3 Character Sheet Designer');
   const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
   let language = locale, t = translations[locale] ?? EN, disposed = false;
-  const drafts = new Map(); let localError = null, lastRaw = Symbol(), lastPreviewKey = null;
+  const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null;
   const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
   const cards = element('div', 'h3-cards'), cardMap = new Map();
   for (const view of VIEW_IDS) {
@@ -81,16 +84,25 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     const message = element('span', 'h3-draft-note'); message.id = `${input.id}-note`; input.setAttribute('aria-describedby', message.id);
     const line = element('div', 'h3-input-line'); line.append(input);
     if (field === 'body_height') {
-      const choices = element('select', 'h3-height-choices'); choices.dataset.heightPresets = '';
-      const blank = element('option', '', '⌄'); blank.value = ''; choices.append(blank);
-      for (const height of [672, 896, 1120, 1344, 1792]) { const option = element('option', '', String(height)); option.value = String(height); choices.append(option); }
-      listen(choices, 'change', () => { if (choices.value) { drafts.delete(field); act(() => controller.setSize(field, choices.value)); choices.value = ''; } });
-      line.append(choices); fields.set(field, {wrap, label, input, message, labelKey, choices});
+      // The value and arrow are one full-width native select. A tiny separate
+      // select anchors its popup to the arrow instead of the displayed value.
+      const choices = element('select', 'h3-select h3-height-choices'); choices.dataset.heightPresets = '';
+      choices.id = `${input.id}-choices`; label.htmlFor = choices.id;
+      for (const height of HEIGHT_PRESETS) { const option = element('option', '', String(height)); option.value = String(height); choices.append(option); }
+      const custom = element('option'); custom.value = 'custom'; choices.append(custom);
+      listen(choices, 'change', () => {
+        if (choices.value === 'custom') {
+          customHeight = true; renderFields(); input.focus(); input.select();
+        } else {
+          customHeight = false; drafts.delete(field); act(() => controller.setSize(field, choices.value));
+        }
+      });
+      line.prepend(choices); fields.set(field, {wrap, label, input, message, labelKey, choices, custom});
     } else fields.set(field, {wrap, label, input, message, labelKey});
     wrap.append(label, line, message); numberRow.append(wrap);
     listen(input, 'input', () => { drafts.set(field, {text: input.value, error: null}); renderFields(); });
     listen(input, 'blur', () => commitDraft(field));
-    listen(input, 'keydown', event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitDraft(field); } if (event.key === 'Escape') { event.preventDefault(); drafts.delete(field); renderFields(); } });
+    listen(input, 'keydown', event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitDraft(field); } if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); drafts.delete(field); if (field === 'body_height') customHeight = false; renderFields(); fields.get(field).choices?.focus(); } });
   }
   const returnAuto = button('h3-link-button'); listen(returnAuto, 'click', () => act(() => controller.setMode('auto')));
   const modeHint = element('div', 'h3-mode-hint'); controls.append(modeRow, numberRow, returnAuto, modeHint);
@@ -130,7 +142,14 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
       item.input.setAttribute('aria-invalid', String(Boolean(draft?.error)));
       item.message.textContent = draft ? `${draft.error ? `${errorText(draft.error, language)} ` : ''}${t.draft}` : '';
       item.wrap.classList.toggle('h3-has-draft', Boolean(draft));
-      if (item.choices) { item.choices.disabled = !active; item.choices.title = t.bodyHeight; item.choices.setAttribute('aria-label', t.bodyHeight); }
+      if (item.choices) {
+        const showCustom = Boolean(state && (customHeight || !HEIGHT_PRESETS.includes(state.size.body_height)));
+        item.choices.disabled = !active; item.choices.title = t.bodyHeight;
+        item.choices.value = showCustom ? 'custom' : state ? String(state.size.body_height) : '';
+        item.custom.textContent = t.customHeightChoice;
+        item.input.hidden = !showCustom; item.input.disabled = !active || !showCustom;
+        item.input.setAttribute('aria-label', t.customHeight);
+      }
     }
   }
   function fitSheet() {
@@ -163,7 +182,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   }
   function render(reason) {
     if (disposed) return;
-    if (reason === 'restore') { drafts.clear(); localError = null; }
+    if (reason === 'restore') { drafts.clear(); customHeight = false; localError = null; }
     t = translations[language] ?? EN; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
     intro.textContent = t.intro; count.textContent = `${state?.views.length ?? 0} / 6 ${t.selected}`;

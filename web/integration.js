@@ -2,6 +2,7 @@ import {DesignerController, getLocale, subscribeLocale} from './state.js';
 import {createDesignerUI, translations} from './ui.js';
 const instances = new WeakMap();
 export const NODE_TYPE = 'H3CharacterSheetDesigner';
+export const DEFAULT_NODE_SIZE = [870, 930];
 
 export function previewRequester(api) {
   return async (raw, signal) => {
@@ -55,7 +56,7 @@ export function installDesigner(node, app, api) {
     widget = node.addDOMWidget('state_json', 'STRING', ui.root, {
       getValue: () => controller.raw,
       setValue: value => controller.restore(value),
-      getMinHeight: () => 600, getHeight: () => 600,
+      getMinHeight: () => 760, getHeight: () => 840,
       hideOnZoom: false, serialize: true, dynamicPrompts: false,
     });
     if (!widget || !node.widgets.includes(widget)) throw new Error('addDOMWidget did not return an installed widget');
@@ -74,7 +75,7 @@ export function installDesigner(node, app, api) {
     chain(node, 'onConfigure', () => record.afterConfigure());
     chain(node, 'onRemoved', () => record.dispose());
     node.h3DesignerCompatibility = {graphical: true, undoTransactions: typeof node.graph?.beforeChange === 'function' && typeof node.graph?.afterChange === 'function'};
-    if (typeof node.setSize === 'function') node.setSize([Math.max(560, node.size?.[0] || 0), Math.max(650, node.size?.[1] || 0)]);
+    if (typeof node.setSize === 'function') node.setSize([Math.max(DEFAULT_NODE_SIZE[0], node.size?.[0] || 0), Math.max(DEFAULT_NODE_SIZE[1], node.size?.[1] || 0)]);
     ui.render();
     original.onRemove?.(); original.element?.remove?.(); original.inputEl?.remove?.();
     return record;
