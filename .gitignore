@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+tests/browser/artifacts/

@@ -1,0 +1,199 @@
+import {VIEW_IDS, PRESETS, presetOf, StateError} from './state.js';
+import {createArtwork} from './artwork.js';
+let sequence = 0;
+const EN = {
+  intro: 'Choose the views for your character sheet', selected: 'selected',
+  face_front: 'Portrait', body_front: 'Front', body_left: 'Left side', body_back: 'Back', hands: 'Hands', feet: 'Footwear',
+  face_front_tip: 'Front-facing face to chest', body_front_tip: 'Full body, head to soles', body_left_tip: "Camera looks directly at the subject’s anatomical left side", body_back_tip: 'Direct rear view, full body', hands_tip: 'Both hands; retain gloves from the reference', feet_tip: 'Both feet; retain footwear and boot shafts',
+  preset: 'Preset', basic: 'Basic · 4 views', detail: 'Detail · 6 views', turnaround: 'Turnaround · 3', single: 'Single view', custom: 'Custom',
+  auto: 'Auto', manual: 'Manual', size: 'Output size', bodyHeight: 'Panel height', width: 'Width', height: 'Height', returnAuto: 'Back to Auto', updating: 'Updating dimensions…',
+  autoHint: 'Auto keeps the requested full-body panel height.', manualHint: 'Manual keeps your canvas size when views change.',
+  layout: 'SHEET PREVIEW', diagram: 'Layout guide', experimental: 'Experimental', pixels: 'pixels',
+  caveat: 'A prompt layout guide. Exact geometry and generation quality are not guaranteed.',
+  resolutionWarning: 'High resolution uses the full H3 generation path. VRAM and processing time vary.',
+  committed: 'Saved immediately', pending: 'Updating layout…', stale: 'Previous layout · updating', previous: 'Previous layout', unavailable: 'Preview unavailable', retry: 'Retry preview', empty: 'Waiting for Python layout',
+  draft: 'Uncommitted values are not saved or queued.', invalid: 'Saved JSON is invalid. Its original value is preserved.', editJSON: 'Repair saved JSON', apply: 'Apply valid JSON', rawHint: 'Only Apply changes the saved input.',
+  lastView: 'Keep at least one view selected.', sizeError: 'Enter a whole number of at least 32, in steps of 32.', maxSize: 'Exceeds the ComfyUI resolution limit.', integer: 'JSON integer fields cannot use decimal or exponent notation.', version: 'Only schema_version 1 is supported.', views: 'Select one or more of the six known view IDs.', json: 'The JSON syntax is invalid.', duplicateKey: 'Duplicate JSON key', keys: 'Unknown or missing JSON keys', oversize: 'JSON must be no larger than 16 KiB.', mode: 'Size mode must be auto or manual.', object: 'Expected a JSON object', string: 'state_json must be a string.', preview: 'The server returned an invalid preview.', timeout: 'Preview timed out. The saved selection is unchanged.', network: 'Could not reach the preview endpoint. Queue still validates on the server.',
+  fallback: 'Graphical designer unavailable. Edit the normal state_json string; Python compilation is still available.',
+  undoWarning: 'This frontend does not expose the expected Undo transaction API.',
+};
+const JA = {
+  intro: 'キャラクターシートに使うビューを選択', selected: '選択中',
+  face_front: '顔・胸', body_front: '全身正面', body_left: '左側面', body_back: '全身背面', hands: '両手', feet: '足・履物',
+  face_front_tip: '正面の顔から胸まで', body_front_tip: '頭頂から靴底までの全身正面', body_left_tip: 'カメラが人物の解剖学的左側を正面から見る', body_back_tip: '真後ろから見た全身', hands_tip: '左右の手。参照にある手袋を保持', feet_tip: '左右の足。履物とブーツの筒を保持',
+  preset: 'プリセット', basic: '基本4面', detail: '6面・ディテール', turnaround: '三面図のみ', single: '1カット', custom: 'カスタム',
+  auto: 'Auto', manual: 'Manual', size: '出力サイズ', bodyHeight: '基準高', width: '幅', height: '高さ', returnAuto: 'Autoに戻す', updating: '寸法更新中…',
+  autoHint: 'Autoは指定した全身パネルの高さを維持します。', manualHint: 'Manualはビューを変えても幅・高さを維持します。',
+  layout: 'シートプレビュー', diagram: '配置ガイド', experimental: 'Experimental', pixels: '画素',
+  caveat: '配置はプロンプト上の指示です。正確な形状や生成品質は保証しません。',
+  resolutionWarning: '高解像度は通常のH3生成経路を使います。VRAM・処理時間は環境に依存します。',
+  committed: '選択は即時保存', pending: '配置更新中…', stale: '前の配置・更新中', previous: '前の配置', unavailable: 'プレビュー取得失敗', retry: '再試行', empty: 'Pythonの配置を取得中',
+  draft: '未確定の値は保存・実行されません。', invalid: '保存JSONが不正です。原文を保持しています。', editJSON: '保存JSONを修正', apply: '有効なJSONを適用', rawHint: '「適用」を押したときだけ保存値を変更します。',
+  lastView: '最低1つのビューを選択してください。', sizeError: '32以上の32倍数を整数で入力してください。', maxSize: 'ComfyUIの解像度上限を超えています。', integer: 'JSONの整数項目に小数・指数表記は使えません。', version: 'schema_versionは整数の1のみ対応しています。', views: '既知の6種類から1つ以上のビューを指定してください。', json: 'JSONの構文が不正です。', duplicateKey: 'JSONキーが重複しています', keys: 'JSONキーの不足または未知のキー', oversize: 'JSONは16 KiB以内にしてください。', mode: 'size.modeはautoまたはmanualにしてください。', object: 'JSONオブジェクトが必要です', string: 'state_jsonは文字列で指定してください。', preview: 'サーバーからのプレビューが不正です。', timeout: 'プレビューがタイムアウトしました。保存済み選択は維持しています。', network: 'プレビューを取得できません。Queue時にはサーバーで検証されます。',
+  fallback: 'GUIデザイナーを利用できません。通常のstate_json文字列を編集してください。Python実行は利用可能です。',
+  undoWarning: 'このfrontendでは必要なUndoトランザクションAPIを確認できません。',
+};
+export const translations = {en: EN, ja: JA};
+export function errorText(error, locale = 'en') {
+  const t = translations[locale] ?? EN;
+  if (error instanceof StateError) {
+    const key = error.code === 'size' ? 'sizeError' : error.code;
+    return `${t[key] ?? t.network}${['duplicateKey', 'keys', 'object', 'maxSize'].includes(error.code) && error.detail ? ` (${error.detail})` : ''}`;
+  }
+  const serverCodes = {duplicate_key: 'duplicateKey', non_finite: 'integer', invalid_integer: 'integer', invalid_size: 'sizeError', size_limit: 'maxSize', unsupported_schema: 'version', empty_views: 'views', unknown_view: 'views', invalid_mode: 'mode', missing_key: 'keys', unknown_key: 'keys', invalid_json: 'json', invalid_utf8: 'json', state_too_large: 'oversize', request_too_large: 'oversize'};
+  return error?.serverCode && serverCodes[error.serverCode] ? t[serverCodes[error.serverCode]] : error?.serverMessage || t.network;
+}
+function element(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text) el.textContent = text; return el; }
+const button = className => { const el = element('button', className); el.type = 'button'; return el; };
+export function loadStyles() {
+  if (document.querySelector('link[data-h3-character-sheet]')) return;
+  const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = new URL('./style.css', import.meta.url).href; link.dataset.h3CharacterSheet = ''; document.head.append(link);
+}
+
+/** Real UI renderer shared by the ComfyUI extension and the browser test harness. */
+export function createDesignerUI({controller, locale = 'en', compatibilityWarning = false}) {
+  loadStyles();
+  const id = `h3-sheet-${++sequence}`;
+  const root = element('section', 'h3-designer'); root.dataset.instance = id; root.setAttribute('aria-label', 'H3 Character Sheet Designer');
+  const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
+  let language = locale, t = translations[locale] ?? EN, disposed = false;
+  const drafts = new Map(); let localError = null, lastRaw = Symbol(), lastPreviewKey = null;
+  const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
+  const cards = element('div', 'h3-cards'), cardMap = new Map();
+  for (const view of VIEW_IDS) {
+    const card = button('h3-card'); card.dataset.view = view;
+    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`));
+    const check = element('span', 'h3-check', '✓'); check.setAttribute('aria-hidden', 'true');
+    const label = element('span', 'h3-card-label'); card.append(figure, check, label);
+    listen(card, 'click', () => act(() => controller.toggle(view)));
+    cards.append(card); cardMap.set(view, {card, label});
+  }
+  const presetRow = element('div', 'h3-preset-row'), presetLabel = element('label'), preset = element('select', 'h3-select'); preset.id = `${id}-preset`; presetLabel.htmlFor = preset.id;
+  for (const name of [...Object.keys(PRESETS), 'custom']) { const option = element('option'); option.value = name; option.disabled = name === 'custom'; preset.append(option); }
+  presetRow.append(presetLabel, preset); listen(preset, 'change', () => act(() => controller.preset(preset.value)));
+  const controls = element('div', 'h3-controls');
+  const modeRow = element('div', 'h3-mode-row'), sizeLabel = element('span', 'h3-field-title'), modeGroup = element('div', 'h3-mode-group');
+  const auto = button('h3-mode'), manual = button('h3-mode'); auto.dataset.mode = 'auto'; manual.dataset.mode = 'manual'; modeGroup.append(auto, manual); modeRow.append(sizeLabel, modeGroup);
+  listen(auto, 'click', () => act(() => controller.setMode('auto'))); listen(manual, 'click', () => act(() => controller.setMode('manual')));
+  const numberRow = element('div', 'h3-number-row'), fields = new Map();
+  for (const [field, labelKey] of [['body_height', 'bodyHeight'], ['manual_width', 'width'], ['manual_height', 'height']]) {
+    const wrap = element('div', 'h3-number-field'), label = element('label'), input = element('input'); input.type = 'text'; input.inputMode = 'numeric'; input.autocomplete = 'off'; input.spellcheck = false; input.id = `${id}-${field}`; input.dataset.field = field; label.htmlFor = input.id;
+    const message = element('span', 'h3-draft-note'); message.id = `${input.id}-note`; input.setAttribute('aria-describedby', message.id);
+    const line = element('div', 'h3-input-line'); line.append(input);
+    if (field === 'body_height') {
+      const choices = element('select', 'h3-height-choices'); choices.dataset.heightPresets = '';
+      const blank = element('option', '', '⌄'); blank.value = ''; choices.append(blank);
+      for (const height of [672, 896, 1120, 1344, 1792]) { const option = element('option', '', String(height)); option.value = String(height); choices.append(option); }
+      listen(choices, 'change', () => { if (choices.value) { drafts.delete(field); act(() => controller.setSize(field, choices.value)); choices.value = ''; } });
+      line.append(choices); fields.set(field, {wrap, label, input, message, labelKey, choices});
+    } else fields.set(field, {wrap, label, input, message, labelKey});
+    wrap.append(label, line, message); numberRow.append(wrap);
+    listen(input, 'input', () => { drafts.set(field, {text: input.value, error: null}); renderFields(); });
+    listen(input, 'blur', () => commitDraft(field));
+    listen(input, 'keydown', event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); commitDraft(field); } if (event.key === 'Escape') { event.preventDefault(); drafts.delete(field); renderFields(); } });
+  }
+  const returnAuto = button('h3-link-button'); listen(returnAuto, 'click', () => act(() => controller.setMode('auto')));
+  const modeHint = element('div', 'h3-mode-hint'); controls.append(modeRow, numberRow, returnAuto, modeHint);
+  const metrics = element('div', 'h3-metrics'), dimensions = element('strong', 'h3-dimensions'), pixels = element('span', 'h3-pixels'), badge = element('span', 'h3-experimental'); metrics.append(dimensions, pixels, badge);
+  const warning = element('div', 'h3-resolution-note');
+  const status = element('div', 'h3-status'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  const errorBox = element('div', 'h3-error'); errorBox.setAttribute('role', 'alert');
+  const retry = button('h3-retry'); listen(retry, 'click', () => { localError = null; void controller.refreshPreview(); });
+  const previewHead = element('div', 'h3-preview-head'), previewLabel = element('span'), previewTag = element('span', 'h3-preview-tag'); previewHead.append(previewLabel, previewTag);
+  const stage = element('div', 'h3-stage'); stage.dataset.previewStage = ''; const canvas = element('div', 'h3-sheet'); const empty = element('div', 'h3-empty'); stage.append(canvas, empty);
+  const footer = element('div', 'h3-footer');
+  const jsonDetails = element('details', 'h3-json-editor'), summary = element('summary'), rawInput = element('textarea'), rawHint = element('p'), apply = button('h3-apply'); rawInput.spellcheck = false; rawInput.setAttribute('aria-label', 'state_json');
+  listen(apply, 'click', () => act(() => controller.applyRaw(rawInput.value))); jsonDetails.append(summary, rawInput, rawHint, apply);
+  root.append(header, cards, presetRow, controls, metrics, warning, status, errorBox, retry, previewHead, stage, footer, jsonDetails);
+  // Keep node dragging out of text controls, but let browser keyboard accessibility work.
+  listen(root, 'pointerdown', event => event.stopPropagation());
+  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitSheet()) : null;
+  resizeObserver?.observe(stage);
+  function act(fn) { try { localError = null; fn(); } catch (error) { localError = error; } render(); }
+  function commitDraft(field) {
+    const draft = drafts.get(field); if (!draft) return;
+    try {
+      // Remove only this draft before the synchronous commit rerenders the UI.
+      drafts.delete(field); controller.setSize(field, draft.text);
+    } catch (error) { drafts.set(field, {...draft, error}); }
+    render();
+  }
+  function renderFields() {
+    const state = controller.state;
+    for (const [field, item] of fields) {
+      const draft = drafts.get(field), active = state && (field === 'body_height' ? state.size.mode === 'auto' : state.size.mode === 'manual');
+      item.label.textContent = t[item.labelKey]; item.input.disabled = !active;
+      const autoDimension = state?.size.mode === 'auto' && field !== 'body_height';
+      const displayValue = autoDimension ? (controller.preview ? String(field === 'manual_width' ? controller.preview.width : controller.preview.height) : '—') : state ? String(state.size[field]) : '';
+      item.input.value = draft ? draft.text : displayValue;
+      item.input.title = autoDimension && !controller.isCurrentPreview ? t.updating : ''; 
+      item.input.setAttribute('aria-invalid', String(Boolean(draft?.error)));
+      item.message.textContent = draft ? `${draft.error ? `${errorText(draft.error, language)} ` : ''}${t.draft}` : '';
+      item.wrap.classList.toggle('h3-has-draft', Boolean(draft));
+      if (item.choices) { item.choices.disabled = !active; item.choices.title = t.bodyHeight; item.choices.setAttribute('aria-label', t.bodyHeight); }
+    }
+  }
+  function fitSheet() {
+    const p = controller.preview; if (!p || !stage.clientWidth) return;
+    const availableW = Math.max(1, stage.clientWidth - 30), availableH = Math.max(1, stage.clientHeight - 28);
+    const scale = Math.min(availableW / p.width, availableH / p.height);
+    canvas.style.width = `${p.width * scale}px`; canvas.style.height = `${p.height * scale}px`;
+  }
+  function renderPreview() {
+    const p = controller.preview, valid = Boolean(p && controller.state);
+    canvas.hidden = !valid; empty.hidden = valid;
+    empty.textContent = controller.error ? t.invalid : controller.previewError ? t.unavailable : t.empty;
+    const key = valid ? JSON.stringify(p.layout) : null;
+    if (key !== lastPreviewKey) {
+      canvas.replaceChildren(); lastPreviewKey = key;
+      if (valid) {
+        for (const panel of p.layout.panels) {
+          const box = element('div', 'h3-panel'); box.dataset.panel = panel.id;
+          const [left, top, width, height] = panel.rect;
+          Object.assign(box.style, {left: `${left * 100}%`, top: `${top * 100}%`, width: `${width * 100}%`, height: `${height * 100}%`});
+          box.append(createArtwork(panel.id, `${id}-preview-${panel.id}`));
+          canvas.append(box);
+        }
+        if (p.layout.feet_y !== null) { const line = element('div', 'h3-baseline'); line.style.top = `${p.layout.feet_y * 100}%`; canvas.append(line); }
+      }
+    }
+    for (const box of canvas.querySelectorAll('[data-panel]')) box.setAttribute('aria-label', t[box.dataset.panel]);
+    stage.classList.toggle('h3-stale', !controller.isCurrentPreview && valid);
+    stage.setAttribute('aria-busy', String(controller.pending)); fitSheet();
+  }
+  function render(reason) {
+    if (disposed) return;
+    if (reason === 'restore') { drafts.clear(); localError = null; }
+    t = translations[language] ?? EN; root.lang = language;
+    const state = controller.state, current = controller.isCurrentPreview;
+    intro.textContent = t.intro; count.textContent = `${state?.views.length ?? 0} / 6 ${t.selected}`;
+    for (const [view, {card, label}] of cardMap) { card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state; card.title = t[`${view}_tip`]; card.setAttribute('aria-label', `${t[view]}: ${t[`${view}_tip`]}`); label.textContent = t[view]; }
+    presetLabel.textContent = t.preset; preset.disabled = !state; preset.value = presetOf(state);
+    for (const option of preset.options) option.textContent = t[option.value];
+    auto.textContent = t.auto; manual.textContent = state?.size.mode === 'auto' && !current ? t.updating : t.manual;
+    auto.disabled = !state; manual.disabled = !state || (state.size.mode === 'auto' && !current);
+    auto.setAttribute('aria-pressed', String(state?.size.mode === 'auto')); manual.setAttribute('aria-pressed', String(state?.size.mode === 'manual'));
+    sizeLabel.textContent = t.size; returnAuto.textContent = t.returnAuto; returnAuto.hidden = state?.size.mode !== 'manual';
+    modeHint.textContent = state?.size.mode === 'manual' ? t.manualHint : t.autoHint;
+    renderFields();
+    const p = controller.preview, displayP = p && state;
+    dimensions.textContent = displayP ? `${p.width.toLocaleString('en-US')} × ${p.height.toLocaleString('en-US')}` : '— × —';
+    const pixelCount = displayP ? p.width * p.height : 0;
+    pixels.textContent = displayP ? `${pixelCount.toLocaleString(language)} ${t.pixels} · ${(pixelCount / 1e6).toFixed(2)} MP` : '';
+    badge.textContent = t.experimental; badge.hidden = !displayP || pixelCount <= 1032192;
+    warning.textContent = t.resolutionWarning; warning.hidden = badge.hidden;
+    metrics.classList.toggle('h3-stale', Boolean(displayP && !current));
+    status.textContent = controller.pending ? (displayP ? t.stale : t.pending) : controller.previewError ? `${t.unavailable}${displayP ? ` · ${t.previous}` : ''}` : compatibilityWarning ? t.undoWarning : t.committed;
+    const problem = controller.error || localError || controller.previewError;
+    errorBox.textContent = problem ? `${controller.error ? `${t.invalid} ` : ''}${errorText(problem, language)}` : ''; errorBox.hidden = !problem;
+    retry.textContent = t.retry; retry.hidden = !controller.previewError || !state;
+    previewLabel.textContent = t.layout; previewTag.textContent = t.diagram; footer.textContent = t.caveat;
+    summary.textContent = t.editJSON; rawHint.textContent = t.rawHint; apply.textContent = t.apply;
+    jsonDetails.hidden = !controller.error;
+    if (lastRaw !== controller.raw) { rawInput.value = typeof controller.raw === 'string' ? controller.raw : String(controller.raw); lastRaw = controller.raw; }
+    if (controller.error) jsonDetails.open = true;
+    renderPreview();
+  }
+  render();
+  return {root, render, setLocale(value) { language = value === 'ja' ? 'ja' : 'en'; render('locale'); }, dispose() { disposed = true; abort.abort(); resizeObserver?.disconnect(); drafts.clear(); root.remove(); }, controller};
+}

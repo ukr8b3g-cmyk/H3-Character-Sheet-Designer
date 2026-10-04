@@ -1,0 +1,2 @@
+# Developer HTTP integration tests only. ComfyUI supplies aiohttp at runtime.
+aiohttp==3.13.5

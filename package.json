@@ -1,0 +1,17 @@
+{
+  "name": "h3-character-sheet-designer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/js/*.test.js tests/dom/*.test.js",
+    "test:js": "node --test tests/js/*.test.js",
+    "demo": "python tests/serve_demo.py",
+    "test:dom": "node --test tests/dom/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.1"
+  }
+}

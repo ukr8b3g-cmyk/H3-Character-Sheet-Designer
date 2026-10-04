@@ -1,0 +1,29 @@
+subject_definitions:
+<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view.
+
+summary:
+[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: front portrait; full-body front; full-body anatomical left profile; full-body back. Every panel depicts the same person from <Picture 1>.
+
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details.
+
+detailed_description:
+Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet.
+[Shot 1] The finished sheet is already present in the first frame and remains completely unchanged through the last frame. The selected views coexist as separate, clearly spaced depictions of <Subject 1>; they are alternate views of one identity, not additional people. Keep all content within its assigned region, with uncluttered outer margins and empty gaps.
+Layout specification (semantic guidance, not visible text): {"canvas":[2208,1280],"panels":[{"id":"face_front","rect":[0.038406,0.062500,0.253623,0.875000],"view":"front portrait","content":"Show <Subject 1> directly from the front, from the face through the chest; retain the complete hairstyle and visible upper clothing."},{"id":"body_front","rect":[0.312319,0.062500,0.202899,0.875000],"view":"full-body front","content":"Show <Subject 1> directly from the front in a neutral standing pose, entirely visible from the top of the head to the soles of the footwear."},{"id":"body_left","rect":[0.535507,0.062500,0.202899,0.875000],"view":"full-body anatomical left profile","content":"Show <Subject 1> in a strict left-profile neutral standing pose, camera looking directly at the subject's anatomical left side, entirely visible from the top of the head to the soles of the footwear."},{"id":"body_back","rect":[0.758696,0.062500,0.202899,0.875000],"view":"full-body back","content":"Show <Subject 1> directly from behind in a neutral standing pose, entirely visible from the top of the head to the soles of the footwear."}],"feet_y":0.937500}
+Read rect coordinates as normalized [left, top, width, height], measured from the upper-left corner of the canvas. The canvas dimensions are in pixels. Use the specified placement and proportions without drawing the layout data into the image.
+Place the selected portrait and/or detail views in the leftmost auxiliary column.
+The single selected auxiliary view uses the full height of its column.
+Arrange the full-body columns from left to right as full-body front, then full-body anatomical left profile, then full-body back, to the right of the auxiliary column.
+Keep a common subject scale and identical panel top and bottom limits across the full-body views, with the footwear soles aligned to the shared feet_y baseline. Leave room for the complete head and footwear without cropping.
+Panel face_front occupies [left, top, width, height] = [0.038406, 0.062500, 0.253623, 0.875000]. Show <Subject 1> directly from the front, from the face through the chest; retain the complete hairstyle and visible upper clothing.
+Panel body_front occupies [left, top, width, height] = [0.312319, 0.062500, 0.202899, 0.875000]. Show <Subject 1> directly from the front in a neutral standing pose, entirely visible from the top of the head to the soles of the footwear.
+Panel body_left occupies [left, top, width, height] = [0.535507, 0.062500, 0.202899, 0.875000]. Show <Subject 1> in a strict left-profile neutral standing pose, camera looking directly at the subject's anatomical left side, entirely visible from the top of the head to the soles of the footwear.
+Panel body_back occupies [left, top, width, height] = [0.758696, 0.062500, 0.202899, 0.875000]. Show <Subject 1> directly from behind in a neutral standing pose, entirely visible from the top of the head to the soles of the footwear.
+Show exactly the selected views and preserve the same identity, colors, materials, and reference-consistent asymmetries throughout. Do not add unselected views or extra people. Do not add captions, labels, lettering, watermarks, panel borders, or drawn alignment lines. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent.
+
+overall_soundscape:
+None. No speech, vocalization, ambience, or sound effects.
+
+non_diegetic_music:
+None.

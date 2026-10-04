@@ -1,0 +1,24 @@
+subject_definitions:
+<Subject 1> is the person in <Picture 1>, which is the identity, appearance, clothing, accessories, and visual-style reference for every selected view.
+
+summary:
+[reference generation] Create one completed, static character sheet of <Subject 1> showing only these selected views simultaneously: left and right hand details. Every panel depicts the same person from <Picture 1>.
+
+retention_analysis:
+<Subject 1> (appears in [Shot 1]): fully_preserved - retain the reference person's face, hair, physique, skin appearance, visual style, clothing, and accessories consistently wherever visible in the selected crops. Preserve reference gloves and footwear; do not substitute bare hands or bare feet for them. Infer any unseen surfaces conservatively, without inventing new costume elements or unsupported details.
+
+detailed_description:
+Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet.
+[Shot 1] The finished sheet is already present in the first frame and remains completely unchanged through the last frame. The selected views coexist as separate, clearly spaced depictions of <Subject 1>; they are alternate views of one identity, not additional people. Keep all content within its assigned region, with uncluttered outer margins and empty gaps.
+Layout specification (semantic guidance, not visible text): {"canvas":[736,1280],"panels":[{"id":"hands","rect":[0.119565,0.062500,0.760870,0.875000],"view":"left and right hand details","content":"Show close details of both of <Subject 1>'s hands with their reference-consistent accessories; keep any gloves from the reference rather than replacing them with bare hands."}],"feet_y":null}
+Read rect coordinates as normalized [left, top, width, height], measured from the upper-left corner of the canvas. The canvas dimensions are in pixels. Use the specified placement and proportions without drawing the layout data into the image.
+Place the selected portrait and/or detail views in the leftmost auxiliary column.
+The single selected auxiliary view uses the full height of its column.
+Panel hands occupies [left, top, width, height] = [0.119565, 0.062500, 0.760870, 0.875000]. Show close details of both of <Subject 1>'s hands with their reference-consistent accessories; keep any gloves from the reference rather than replacing them with bare hands.
+Show exactly the selected views and preserve the same identity, colors, materials, and reference-consistent asymmetries throughout. Do not add unselected views or extra people. Do not add captions, labels, lettering, watermarks, panel borders, or drawn alignment lines. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent.
+
+overall_soundscape:
+None. No speech, vocalization, ambience, or sound effects.
+
+non_diegetic_music:
+None.
