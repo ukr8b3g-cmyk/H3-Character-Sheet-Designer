@@ -1,6 +1,7 @@
 # H3 Character Sheet Designer
 
-<img width="3020" height="1160" alt="workflow (17)" src="https://github.com/user-attachments/assets/859548f9-2d2c-4092-aa48-fc868c12a7b2" />
+<img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
+
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 
