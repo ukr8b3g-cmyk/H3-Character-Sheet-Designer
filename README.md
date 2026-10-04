@@ -49,7 +49,7 @@ The [official GUI workflow](workflows/H3_Character_Sheet_Designer_wf.json) is th
 1. Install this custom node as described above. The file records **ComfyUI Core 0.38.0 / frontend 1.53.6** as its saved baseline; use a build with native `MiniMaxH3ReferenceToVideo`, `SaveImageAdvanced`, and subgraph support. If a node is missing, update ComfyUI and its frontend.
 2. In **Load Image**, select your own character reference. The saved `h3-cyberpunk-courier.png` filename is a placeholder; the image is not bundled.
 3. Open the H3 subgraph and select the H3 diffusion model, text encoder, and video VAE installed in your `models/diffusion_models`, `models/text_encoders`, and `models/vae` folders. The workflow's **Model Links** note lists model files. Reselect the loaders for your filenames and platform; the saved diffusion-model name includes a Windows-style `minimax\` subfolder.
-4. Choose views and sizes in the Designer, then queue. The saved seven-view Auto selection compiles to **2816 × 1280** with the current compiler. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
+4. Choose views and sizes in the Designer, then queue. The saved five-view Auto selection (front/left portraits and front/left/back full-body views) compiles to **2816 × 1280** with the current compiler. Hands and footwear detail panels are unselected in this template. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
 
 JSON structure and the saved Designer state have been checked locally. End-to-end loading, queue execution, and GPU output quality have not been re-verified for this publication. Large sheets can require substantial VRAM and time.
 
@@ -60,7 +60,7 @@ JSON structure and the saved Designer state have been checked locally. End-to-en
 1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.6** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
 2. **Load Image** でご自身の参照画像を選択してください。保存済みの `h3-cyberpunk-courier.png` は仮のファイル名で、画像は同梱していません。
 3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
-4. Designerでビューとサイズを選んで実行します。保存済みの7面・Auto設定は現行コンパイラーで **2816×1280** です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
+4. Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
 
 JSON構造とDesignerの保存状態はローカルで確認済みです。今回の公開作業では、ComfyUIでの読み込みからキュー実行までの通し動作とGPU生成品質は再検証していません。大きなシートは多くのVRAMと処理時間を必要とする場合があります。
 

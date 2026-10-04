@@ -91,10 +91,10 @@
         "Node name for S&R": "H3CharacterSheetDesigner"
       },
       "widgets_values": [
-        "{\"schema_version\":1,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\",\"hands\",\"feet\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280}}"
+        "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}"
       ],
       "widgets_values_named": {
-        "state_json": "{\"schema_version\":1,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\",\"hands\",\"feet\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280}}"
+        "state_json": "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}"
       }
     },
     {
@@ -172,7 +172,7 @@
         2240,
         "minimax_h3_video_vae_fp16.safetensors",
         "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+        "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
         "res_multistep",
         "simple",
         20,
@@ -183,7 +183,7 @@
         "width": 2240,
         "vae_name": "minimax_h3_video_vae_fp16.safetensors",
         "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "unet_name": "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+        "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
         "sampler_name": "res_multistep",
         "scheduler": "simple",
         "steps": 20,
@@ -194,7 +194,7 @@
       "id": 19,
       "type": "MarkdownNote",
       "pos": [
-        -800,
+        -810,
         70
       ],
       "size": [
@@ -503,7 +503,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "source",
+                "localized_name": "ソース",
                 "name": "source",
                 "type": "*",
                 "link": 20
@@ -511,7 +511,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "STRING",
+                "localized_name": "文字列",
                 "name": "STRING",
                 "type": "STRING",
                 "links": null
@@ -541,13 +541,13 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "model",
+                "localized_name": "モデル",
                 "name": "model",
                 "type": "MODEL",
                 "link": 2
               },
               {
-                "localized_name": "scheduler",
+                "localized_name": "スケジューラ",
                 "name": "scheduler",
                 "type": "COMBO",
                 "widget": {
@@ -556,7 +556,7 @@
                 "link": 30
               },
               {
-                "localized_name": "steps",
+                "localized_name": "ステップ",
                 "name": "steps",
                 "type": "INT",
                 "widget": {
@@ -567,7 +567,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "SIGMAS",
+                "localized_name": "シグマ",
                 "name": "SIGMAS",
                 "type": "SIGMAS",
                 "links": [
@@ -607,7 +607,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "sampler_name",
+                "localized_name": "サンプラー名",
                 "name": "sampler_name",
                 "type": "COMBO",
                 "widget": {
@@ -618,7 +618,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "SAMPLER",
+                "localized_name": "サンプラー",
                 "name": "SAMPLER",
                 "type": "SAMPLER",
                 "links": [
@@ -654,7 +654,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "samples",
+                "localized_name": "サンプル",
                 "name": "samples",
                 "type": "LATENT",
                 "link": 13
@@ -668,7 +668,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "IMAGE",
+                "localized_name": "画像",
                 "name": "IMAGE",
                 "type": "IMAGE",
                 "links": [
@@ -698,13 +698,13 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "model",
+                "localized_name": "モデル",
                 "name": "model",
                 "type": "MODEL",
                 "link": 1
               },
               {
-                "localized_name": "conditioning",
+                "localized_name": "コンディショニング",
                 "name": "conditioning",
                 "type": "CONDITIONING",
                 "link": 7
@@ -712,7 +712,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "GUIDER",
+                "localized_name": "ガイダー",
                 "name": "GUIDER",
                 "type": "GUIDER",
                 "links": [
@@ -743,7 +743,7 @@
             "inputs": [],
             "outputs": [
               {
-                "localized_name": "NOISE",
+                "localized_name": "ノイズ",
                 "name": "NOISE",
                 "type": "NOISE",
                 "links": [
@@ -781,7 +781,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "image",
+                "localized_name": "画像",
                 "name": "image",
                 "type": "IMAGE",
                 "link": 14
@@ -789,7 +789,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "IMAGE",
+                "localized_name": "画像",
                 "name": "IMAGE",
                 "type": "IMAGE",
                 "links": [
@@ -867,7 +867,7 @@
               90
             ],
             "size": [
-              250,
+              280,
               390
             ],
             "flags": {},
@@ -948,7 +948,7 @@
                 "link": null
               },
               {
-                "localized_name": "prompt",
+                "localized_name": "プロンプト",
                 "name": "prompt",
                 "type": "STRING",
                 "widget": {
@@ -957,7 +957,7 @@
                 "link": 36
               },
               {
-                "localized_name": "width",
+                "localized_name": "幅",
                 "name": "width",
                 "type": "INT",
                 "widget": {
@@ -966,7 +966,7 @@
                 "link": 35
               },
               {
-                "localized_name": "height",
+                "localized_name": "高さ",
                 "name": "height",
                 "type": "INT",
                 "widget": {
@@ -977,7 +977,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "positive",
+                "localized_name": "ポジティブ",
                 "name": "positive",
                 "type": "CONDITIONING",
                 "links": [
@@ -985,7 +985,7 @@
                 ]
               },
               {
-                "localized_name": "LATENT",
+                "localized_name": "潜在",
                 "name": "LATENT",
                 "type": "LATENT",
                 "links": [
@@ -1029,31 +1029,31 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "noise",
+                "localized_name": "ノイズ",
                 "name": "noise",
                 "type": "NOISE",
                 "link": 9
               },
               {
-                "localized_name": "guider",
+                "localized_name": "ガイダー",
                 "name": "guider",
                 "type": "GUIDER",
                 "link": 10
               },
               {
-                "localized_name": "sampler",
+                "localized_name": "サンプラー",
                 "name": "sampler",
                 "type": "SAMPLER",
                 "link": 11
               },
               {
-                "localized_name": "sigmas",
+                "localized_name": "シグマ",
                 "name": "sigmas",
                 "type": "SIGMAS",
                 "link": 12
               },
               {
-                "localized_name": "latent_image",
+                "localized_name": "潜在イメージ",
                 "name": "latent_image",
                 "type": "LATENT",
                 "link": 8
@@ -1061,7 +1061,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "output",
+                "localized_name": "出力",
                 "name": "output",
                 "type": "LATENT",
                 "links": [
@@ -1069,7 +1069,7 @@
                 ]
               },
               {
-                "localized_name": "denoised_output",
+                "localized_name": "ノイズ除去出力",
                 "name": "denoised_output",
                 "type": "LATENT",
                 "links": []
@@ -1097,7 +1097,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "clip_name",
+                "localized_name": "clip名",
                 "name": "clip_name",
                 "type": "COMBO",
                 "widget": {
@@ -1159,7 +1159,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "MODEL",
+                "localized_name": "モデル",
                 "name": "MODEL",
                 "type": "MODEL",
                 "links": [
@@ -1393,10 +1393,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.5598372807017546,
+      "scale": 0.7513148009015778,
       "offset": [
-        1156.3786628806486,
-        266.80590694542985
+        728.4048238081059,
+        198.0081206247849
       ]
     },
     "frontendVersion": "1.53.6",
