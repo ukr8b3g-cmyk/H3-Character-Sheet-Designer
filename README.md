@@ -1,5 +1,9 @@
 # H3 Character Sheet Designer
 
+Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** This Designer is the only custom node in the bundled workflow; the remaining generation nodes are ComfyUI Core. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
+
+The setup is simple: load the template, choose your reference image and models, select the views you want, and generate. To generate a single view, leave only that view selected in the Designer and queue it manually.
+
 ## Official template / 公式テンプレート
 
 **[Download the workflow JSON / ワークフローJSONをダウンロード](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [View in repository / リポジトリで開く](workflows/H3_Character_Sheet_Designer_wf.json)
