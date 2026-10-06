@@ -1,2 +1,5 @@
-# Developer HTTP integration tests only. ComfyUI supplies aiohttp at runtime.
+# Standalone developer tests; ComfyUI already supplies these at runtime.
 aiohttp==3.13.5
+numpy>=1.24
+Pillow>=9.1
+torch>=2.4

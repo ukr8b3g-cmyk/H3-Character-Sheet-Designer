@@ -67,6 +67,7 @@ PART_RULES = {
 # ECMAScript String.trim whitespace, for exact Python/browser normalization parity.
 _BLANK_CHARACTERS = "\u0009\u000a\u000b\u000c\u000d\u0020\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff"
 PRESETS = {
+    "five": ("face_front", "face_left", "body_front", "body_left", "body_back"),
     "basic": ("face_front", "body_front", "body_left", "body_back"),
     "detail": VIEW_IDS,
     "turnaround": BODY_IDS,
@@ -425,7 +426,7 @@ def _layout_prose(state: dict[str, Any], layout: dict[str, Any]) -> list[str]:
     return lines
 
 
-def compile_prompt(state: dict[str, Any], layout: dict[str, Any]) -> str:
+def compile_prompt(state: dict[str, Any], layout: dict[str, Any], *, style_instruction: str = "") -> str:
     """Compile canonical panel rules; preserve the legacy template without overrides."""
     active = _active_part_prompts(state)
     labels = "; ".join(VIEW_DETAILS[view][0] for view in state["views"])
@@ -444,6 +445,11 @@ def compile_prompt(state: dict[str, Any], layout: dict[str, Any]) -> str:
         if "feet" in state["views"] and _part_is_modified(active, "footwear"):
             footwear_summary = " Include the dedicated feet/footwear close-up as its own visible panel, consistent with the applicable appearance directives and the other selected views."
         ending = "Show exactly the selected views and preserve the same identity and the resulting design consistently throughout. Do not add unselected views or extra people. Do not add sheet-level captions, panel labels, watermarks, panel borders, or drawn alignment lines. Text, lettering, logos, or patterns on a subject part are allowed when explicitly requested by its applicable part directive; preserve their specified placement and do not turn them into sheet captions. Otherwise retain reference details without inventing lettering or patterns. Keep the subject and camera still: no gestures, movement, camera motion, cuts, transitions, or temporal switching between views. The sheet is silent."
+    rendering = ("Keep the rendering style of <Picture 1> except for appearance changes explicitly requested by the other directive, with consistent lighting and a plain, unobtrusive background across the sheet." if "other" in active else "Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet.")
+    if style_instruction:
+        subject_definition = "<Subject 1> is the person in <Picture 1>. Use <Picture 1> for identity and default appearance, clothing and accessories; explicit part directives take precedence only for their applicable appearance details and selected views."
+        retention = retention.replace("fully_preserved -", "selectively_modified -").replace("skin appearance, visual style, clothing", "skin appearance, clothing")
+        rendering = "Change rendering technique only. " + style_instruction + " Retain the character's face, proportions, outfit, accessories, colors and materials unless changed by an applicable part directive. Apply the same rendering to every selected view; do not add scenery, props, decorative motifs or lettering because of the style. Use consistent soft lighting and a plain, unobtrusive background across the sheet."
     lines = [
         "subject_definitions:",
         subject_definition,
@@ -455,7 +461,7 @@ def compile_prompt(state: dict[str, Any], layout: dict[str, Any]) -> str:
         retention,
         "",
         "detailed_description:",
-        ("Keep the rendering style of <Picture 1> except for appearance changes explicitly requested by the other directive, with consistent lighting and a plain, unobtrusive background across the sheet." if "other" in active else "Keep the rendering style of <Picture 1>, with consistent soft lighting and a plain, unobtrusive background across the sheet."),
+        rendering,
         "[Shot 1] The finished sheet is already present in the first frame and remains completely unchanged through the last frame. The selected views coexist as separate, clearly spaced depictions of <Subject 1>; they are alternate views of one identity, not additional people. Keep all content within its assigned region, with uncluttered outer margins and empty gaps.",
         "Layout specification (semantic guidance, not visible text): " + layout_json(layout),
         "Read rect coordinates as normalized [left, top, width, height], measured from the upper-left corner of the canvas. The canvas dimensions are in pixels. Use the specified placement and proportions without drawing the layout data into the image.",

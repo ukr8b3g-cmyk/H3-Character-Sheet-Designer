@@ -414,7 +414,7 @@ class PromptTests(unittest.TestCase):
         directory = Path(__file__).with_name("snapshots")
         for name, views in cases.items():
             with self.subTest(snapshot=name):
-                expected = (directory / f"{name}.txt").read_bytes()
+                expected = (directory / f"{name}.txt").read_text(encoding="utf-8").encode("utf-8")
                 actual = compile_state(state_json(views))["prompt"].encode("utf-8")
                 self.assertEqual(actual, expected)
 

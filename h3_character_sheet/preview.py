@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from .compiler import STATE_MAX_BYTES, StateValidationError, compile_state, decode_json
 from .node import runtime_max_resolution
+from .reference_compiler import compile_reference_state
 
 PREVIEW_PATH = "/h3_character_sheet_designer/preview"
+REFERENCE_PREVIEW_PATH = "/h3_character_sheet_designer/reference_preview"
 # The envelope JSON re-escapes state_json. Reserve room for even a fully escaped
 # valid state at its independent byte limit, with a bounded transport overhead.
 HTTP_MAX_BYTES = 3 * STATE_MAX_BYTES
@@ -25,7 +27,28 @@ def compile_preview_request(body: bytes, *, max_resolution: int) -> dict:
     return compile_state(envelope["state_json"], max_resolution=max_resolution)
 
 
+def compile_reference_preview_request(body: bytes, *, max_resolution: int) -> dict:
+    if len(body) > HTTP_MAX_BYTES:
+        raise StateValidationError(f"Preview request exceeds the {HTTP_MAX_BYTES}-byte limit.", "request_too_large")
+    try:
+        text = body.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise StateValidationError("Preview request must be valid UTF-8.", "invalid_utf8") from exc
+    envelope = decode_json(text, byte_limit=HTTP_MAX_BYTES)
+    if type(envelope) is not dict or "state_json" not in envelope or set(envelope) - {"state_json", "use_layout_image", "style"}:
+        raise StateValidationError("Invalid reference preview request.", "invalid_request")
+    return compile_reference_state(**envelope, max_resolution=max_resolution)
+
+
 async def preview(request):
+    return await _preview(request, compile_preview_request)
+
+
+async def reference_preview(request):
+    return await _preview(request, compile_reference_preview_request)
+
+
+async def _preview(request, compile_request):
     # aiohttp is supplied by ComfyUI; keep it out of the pure compiler's imports.
     from aiohttp import web
 
@@ -40,7 +63,7 @@ async def preview(request):
         if len(body) > HTTP_MAX_BYTES:
             return web.json_response({"error": {"code": "request_too_large", "message": f"Preview request exceeds the {HTTP_MAX_BYTES}-byte limit."}}, status=413)
     try:
-        result = compile_preview_request(bytes(body), max_resolution=runtime_max_resolution())
+        result = compile_request(bytes(body), max_resolution=runtime_max_resolution())
     except StateValidationError as exc:
         status = 413 if exc.code in ("state_too_large", "request_too_large") else 400
         return web.json_response({"error": {"code": exc.code, "message": str(exc)}}, status=status)
@@ -62,5 +85,6 @@ def register_routes() -> bool:
     if getattr(instance, "_h3_character_sheet_designer_route_registered", False):
         return True
     instance.routes.post(PREVIEW_PATH)(preview)
+    instance.routes.post(REFERENCE_PREVIEW_PATH)(reference_preview)
     instance._h3_character_sheet_designer_route_registered = True
     return True

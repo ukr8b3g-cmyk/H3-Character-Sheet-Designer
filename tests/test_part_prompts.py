@@ -136,16 +136,16 @@ class PartStateTests(unittest.TestCase):
 
 
 class PartPromptTests(unittest.TestCase):
-    def test_v2_empty_matches_all_fifteen_existing_prompt_snapshots(self):
+    def test_v2_empty_matches_all_sixteen_prompt_snapshots(self):
         cases = {f"preset_{name}": views for name, views in PRESETS.items()}
         cases.update({f"single_{view}": [view] for view in VIEW_IDS})
         cases.update(hands_and_feet=["hands", "feet"], both_portraits=PORTRAIT_IDS,
                      left_portrait_and_feet=["face_left", "feet"],
                      legacy_six_views=[view for view in VIEW_IDS if view != "face_left"])
-        self.assertEqual(len(cases), 15)
+        self.assertEqual(len(cases), 16)
         for name, views in cases.items():
             with self.subTest(snapshot=name):
-                expected = (Path(__file__).with_name("snapshots") / f"{name}.txt").read_bytes()
+                expected = (Path(__file__).with_name("snapshots") / f"{name}.txt").read_text(encoding="utf-8").encode("utf-8")
                 self.assertEqual(compile_parts({}, views)["prompt"].encode("utf-8"), expected)
 
     def test_all_127_geometries_remain_unchanged_empty_or_all_parts(self):

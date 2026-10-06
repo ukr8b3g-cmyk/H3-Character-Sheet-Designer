@@ -4,12 +4,17 @@ const instances = new WeakMap();
 const textareaRecovery = new WeakMap();
 const pendingReinstall = new WeakMap();
 export const NODE_TYPE = 'H3CharacterSheetDesigner';
+export const REFERENCE_NODE_TYPE = 'H3CharacterSheetDesignerReference';
 export const DEFAULT_NODE_SIZE = [870, 930];
+export const REFERENCE_NODE_SIZE = [870, 1100];
 
-export function previewRequester(api) {
+export function previewRequester(api, useLayoutImage = () => false, readStyle = () => 'none', reference = false) {
   return async (raw, signal) => {
-    const response = await api.fetchApi('/h3_character_sheet_designer/preview', {
-      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({state_json: raw}), signal,
+    const envelope = {state_json: raw};
+    if (reference && useLayoutImage()) envelope.use_layout_image = true;
+    const style = readStyle(); if (reference && style !== 'none') envelope.style = style;
+    const response = await api.fetchApi(reference ? '/h3_character_sheet_designer/reference_preview' : '/h3_character_sheet_designer/preview', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(envelope), signal,
     });
     let data;
     try { data = await response.json(); } catch { throw new Error(`Preview HTTP ${response.status}`); }
@@ -87,6 +92,7 @@ function armReinstall(node, app, api) {
 export function installDesigner(node, app, api) {
   if (instances.has(node)) return instances.get(node);
   pendingReinstall.get(node)?.(); pendingReinstall.delete(node);
+  const reference = node.comfyClass === REFERENCE_NODE_TYPE || node.type === REFERENCE_NODE_TYPE;
   const original = node.widgets?.find(widget => widget.name === 'state_json');
   if (!original || typeof node.addDOMWidget !== 'function' || typeof document === 'undefined') return fallback(node, original, app, 'DOM widget API unavailable');
   const originalIndex = node.widgets.indexOf(original);
@@ -107,16 +113,31 @@ export function installDesigner(node, app, api) {
   const previousCallback = original.callback;
   let ui, widget, record, installedHooks, observer, frame, ready = false;
   let unsubscribe = () => {}, restoreValueHook = () => {};
+  const useLayoutImage = () => reference && node.widgets.find(widget => widget.name === 'use_layout_image')?.value === true;
+  const styleWidget = reference ? node.widgets.find(widget => widget.name === 'style') : null;
+  const previousStyleHidden = styleWidget?.options?.hidden ?? styleWidget?.hidden;
+  const readStyle = () => styleWidget?.value ?? 'none';
+  let observedLayoutImage = useLayoutImage(), observedStyle = readStyle();
   const controller = new DesignerController({
     raw: original.value, readRaw: () => original.value, writeRaw: value => { original.value = value; },
-    requestPreview: previewRequester(api),
+    requestPreview: previewRequester(api, useLayoutImage, readStyle, reference),
     transaction: change => graphTransaction(node, change, app?.canvas),
     onCommit: (next, previous) => { node.onWidgetChanged?.('state_json', next, previous, original); },
     onChange: (_, reason) => ui?.render(reason),
   });
-  const sync = () => { if (ready && !record?.disposed) controller.syncFromSource(); };
+  const sync = () => {
+    if (!ready || record?.disposed) return;
+    controller.syncFromSource();
+    const next = useLayoutImage(), style = readStyle();
+    if (next !== observedLayoutImage || style !== observedStyle) { observedLayoutImage = next; observedStyle = style; void controller.refreshPreview(); }
+  };
+  const writeStyle = styleWidget ? value => {
+    const previous = readStyle(); if (value === previous) return;
+    graphTransaction(node, () => { styleWidget.value = value; node.onWidgetChanged?.('style', value, previous, styleWidget); }, app?.canvas);
+    sync();
+  } : null;
   try {
-    ui = createDesignerUI({controller, locale: getLocale(app), compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
+    ui = createDesignerUI({controller, locale: getLocale(app), reference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
     let name = 'h3_designer_ui', suffix = 1;
     while (node.widgets.some(candidate => candidate.name === name)) name = `h3_designer_ui_${suffix++}`;
     widget = node.addDOMWidget(name, 'H3_DESIGNER_UI', ui.root, {
@@ -124,7 +145,7 @@ export function installDesigner(node, app, api) {
       // addDOMWidget may restore positional data before it returns. That data
       // belongs to canonical widgets, never to this presentation-only widget.
       setValue: value => { if (ready && !record?.disposed) controller.restore(value); },
-      getMinHeight: () => 760, getHeight: () => 840,
+      getMinHeight: () => reference ? 870 : 760, getHeight: () => reference ? 950 : 840,
       hideOnZoom: false, serialize: false, dynamicPrompts: false,
     });
     if (!widget || !node.widgets.includes(widget)) throw new Error('addDOMWidget did not return an installed widget');
@@ -142,8 +163,9 @@ export function installDesigner(node, app, api) {
       restoreValueHook = () => { if (original.callback === callback) { if (previousCallback === undefined) delete original.callback; else original.callback = previousCallback; } };
     }
     original.hidden = true;
+    if (styleWidget) styleWidget.hidden = true;
     if (element) element.hidden = true;
-    const unhide = () => { original.hidden = previousHidden; if (element) element.hidden = previousElementHidden; };
+    const unhide = () => { original.hidden = previousHidden; if (element) element.hidden = previousElementHidden; if (styleWidget) styleWidget.hidden = previousStyleHidden; };
     unsubscribe = subscribeLocale(app, value => { sync(); ui.setLocale(value); });
     record = {controller, ui, widget, original, originalIndex, sync, dispose({reinstall = true} = {}) {
       if (record.disposed) return; record.disposed = true; ready = false;
@@ -152,7 +174,7 @@ export function installDesigner(node, app, api) {
       unsubscribe(); restoreValueHook(); unhide(); controller.dispose(); ui.dispose();
       removeVisualWidget(node, widget); restoreHooks(installedHooks); instances.delete(node);
       if (reinstall) armReinstall(node, app, api);
-    }, afterConfigure() { if (!record.disposed) controller.restore(original.value); }};
+    }, afterConfigure() { if (!record.disposed) { observedLayoutImage = useLayoutImage(); observedStyle = readStyle(); controller.restore(original.value); } }};
     instances.set(node, record);
     chain(node, 'onConfigure', () => record.afterConfigure());
     chain(node, 'onRemoved', () => record.dispose());
@@ -161,7 +183,8 @@ export function installDesigner(node, app, api) {
     chain(node, 'onAdded', () => { if (record.disposed) widget.onRemove?.(); else sync(); });
     installedHooks = Object.fromEntries(hookNames.map(name => [name, node[name]]));
     node.h3DesignerCompatibility = {graphical: true, undoTransactions: typeof node.graph?.beforeChange === 'function' && typeof node.graph?.afterChange === 'function'};
-    if (typeof node.setSize === 'function') node.setSize([Math.max(DEFAULT_NODE_SIZE[0], node.size?.[0] || 0), Math.max(DEFAULT_NODE_SIZE[1], node.size?.[1] || 0)]);
+    const nodeSize = reference ? REFERENCE_NODE_SIZE : DEFAULT_NODE_SIZE;
+    if (typeof node.setSize === 'function') node.setSize([Math.max(nodeSize[0], node.size?.[0] || 0), Math.max(nodeSize[1], node.size?.[1] || 0)]);
     ready = true;
     // Direct store edits do not call widget callbacks. Read only the public
     // canonical value, at most once per frame (timer fallback in nonvisual hosts).
@@ -178,6 +201,7 @@ export function installDesigner(node, app, api) {
     if (observer !== undefined) clearInterval(observer);
     unsubscribe(); restoreValueHook(); controller.dispose(); ui?.dispose(); instances.delete(node);
     original.hidden = previousHidden;
+    if (styleWidget) styleWidget.hidden = previousStyleHidden;
     if (element) element.hidden = previousElementHidden;
     // addDOMWidget may append/register a widget and then throw before returning.
     for (const added of [...node.widgets]) if (!existingWidgets.has(added)) {
@@ -191,7 +215,7 @@ export function getDesigner(node) { return instances.get(node); }
 export function createExtension(app, api) {
   return {
     name: 'h3.CharacterSheetDesigner',
-    nodeCreated(node) { if (node.comfyClass === NODE_TYPE || node.type === NODE_TYPE) installDesigner(node, app, api); },
+    nodeCreated(node) { if ([NODE_TYPE, REFERENCE_NODE_TYPE].includes(node.comfyClass) || [NODE_TYPE, REFERENCE_NODE_TYPE].includes(node.type)) installDesigner(node, app, api); },
     afterConfigureGraph() {
       for (const node of app.graph?._nodes ?? []) getDesigner(node)?.afterConfigure();
     },

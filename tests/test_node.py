@@ -83,7 +83,7 @@ class NodeTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         with mock.patch.dict(sys.modules, {name: module, "server": None}):
             spec.loader.exec_module(module)
-        self.assertEqual(list(module.NODE_CLASS_MAPPINGS), ["H3CharacterSheetDesigner"])
+        self.assertEqual(list(module.NODE_CLASS_MAPPINGS), ["H3CharacterSheetDesigner", "H3CharacterSheetDesignerReference"])
         self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesigner"], "H3 Character Sheet Designer")
         self.assertEqual(module.WEB_DIRECTORY, "./web")
 
@@ -94,7 +94,7 @@ class NodeTests(unittest.TestCase):
         with mock.patch.dict(sys.modules, {"server": fake}):
             self.assertTrue(register_routes())
             self.assertTrue(register_routes())
-        routes.post.assert_called_once_with(PREVIEW_PATH)
+        self.assertEqual(routes.post.call_args_list, [mock.call(PREVIEW_PATH), mock.call("/h3_character_sheet_designer/reference_preview")])
 
     def test_no_server_import_is_required_for_compiler(self):
         with mock.patch.dict(sys.modules, {"server": None}):

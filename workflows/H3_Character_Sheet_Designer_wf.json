@@ -1,19 +1,19 @@
 {
   "id": "090c94ad-9b27-4dba-b357-4fc7cb019f4e",
   "revision": 0,
-  "last_node_id": 22,
-  "last_link_id": 37,
+  "last_node_id": 24,
+  "last_link_id": 49,
   "nodes": [
     {
       "id": 4,
       "type": "LoadImage",
       "pos": [
-        530,
-        400
+        540,
+        430
       ],
       "size": [
-        560,
-        600
+        640,
+        730
       ],
       "flags": {},
       "order": 0,
@@ -39,62 +39,12 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "h3-cyberpunk-courier.png",
+        "krea2_00327_.webp",
         "image"
       ],
       "widgets_values_named": {
-        "image": "h3-cyberpunk-courier.png",
+        "image": "krea2_00327_.webp",
         "upload": "image"
-      }
-    },
-    {
-      "id": 15,
-      "type": "H3CharacterSheetDesigner",
-      "pos": [
-        -350,
-        70
-      ],
-      "size": [
-        870,
-        930
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "prompt",
-          "type": "STRING",
-          "links": [
-            21
-          ]
-        },
-        {
-          "name": "width",
-          "type": "INT",
-          "links": [
-            23
-          ]
-        },
-        {
-          "name": "height",
-          "type": "INT",
-          "links": [
-            24
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "ukr8b3g-cmyk/H3-Character-Sheet-Designer",
-        "ver": "e4add270f7d5c3fc96d72c8064062e30aaa3917e",
-        "Node name for S&R": "H3CharacterSheetDesigner"
-      },
-      "widgets_values": [
-        "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}"
-      ],
-      "widgets_values_named": {
-        "state_json": "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}"
       }
     },
     {
@@ -105,8 +55,8 @@
         70
       ],
       "size": [
-        550,
-        280
+        630,
+        300
       ],
       "flags": {},
       "order": 3,
@@ -118,7 +68,7 @@
           "widget": {
             "name": "source"
           },
-          "link": 21
+          "link": 46
         },
         {
           "name": "width",
@@ -126,7 +76,7 @@
           "widget": {
             "name": "width"
           },
-          "link": 23
+          "link": 47
         },
         {
           "label": " Diffusion Model",
@@ -150,7 +100,13 @@
           "widget": {
             "name": "height"
           },
-          "link": 24
+          "link": 48
+        },
+        {
+          "name": "ref_images.ref_image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 49
         }
       ],
       "outputs": [
@@ -170,10 +126,10 @@
       "widgets_values": [
         "subject_definitions:\n<Subject 1> is the single character depicted in <Picture 1>. Preserve the source identity, facial proportions, hair shape and color, skin tone, body proportions, clothing, accessories, palette, linework and rendering style.\n\nsummary:\n[reference generation] Create one static three-view character turnaround sheet showing only <Subject 1> from <Picture 1>. All panels are simultaneous parts of the same sheet, not successive shots.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - retain the visible identity, drawing style and outfit from <Picture 1> across every view and crop. Infer unseen back and side details conservatively from visible evidence; these details are design estimates rather than information supplied by the image.\n\ndetailed_description:\nThe sheet follows the illustration or photographic rendering style present in <Picture 1>, with the same color palette and material treatment. A clean, plain white studio background keeps every silhouette and detail readable.\nLayout instruction metadata follows. This compact JSON describes approximate composition, not a coordinate-control API or visible scene content.\nBEGIN_LAYOUT_JSON\n\\{\"coordinates\":\"normalized 0..1; rect=[left,top,width,height]; origin=canvas top-left\",\"purpose\":\"instruction regions only; do not draw boxes, panel IDs, labels or JSON text\",\"appearance_reference\":\"<Picture 1> only\",\"full_body_alignment\":\\{\"feet_y\":0.92,\"scale\":\"one shared aspect-preserving character scale fitting every full-body region; preserve source anatomy\"\\},\"circle_rule\":\"for details, fit a true circle inside the region in pixel space; diameter=min(region pixel width,region pixel height); show the specified image detail, not a plain disk\",\"panels\":[\\{\"id\":\"front\",\"rect\":[0.02,0.03,0.31,0.94],\"view\":\"front facing viewer\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"left_side\",\"rect\":[0.345,0.03,0.31,0.94],\"view\":\"strict anatomical left side; nose and toes point sheet-left\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"back\",\"rect\":[0.67,0.03,0.31,0.94],\"view\":\"back facing viewer; face turned away\",\"content\":\"same character; full body; head to soles\"\\}]\\}\nEND_LAYOUT_JSON\n\n[Shot 1] From the first frame to the final frame of this five-frame output, display one finished, completely stationary reference sheet of <Subject 1>. Arrange exactly three equally wide vertical panels side by side with consistent gutters: front view on the left, anatomical left side view in the middle, and back view on the right. All three panels have the same height, white background, camera distance, body scale, and ground line. The central view is a strict ninety-degree profile showing the character's left side, with the nose pointing toward the left edge of the sheet. The right view shows the back of the head, torso, clothing and heels. The left view faces directly toward the viewer. Keep each silhouette fully separated from the neighboring panel; no overlaps and no fourth view.\nIn every full-body panel, show the entire character from the top of the head to the soles of both feet, with comfortable clear margins above the hair and below the shoes. Use the same neutral upright pose, relaxed arms, proportions, outfit and accessory placement in the front, side and back views. Keep the feet on one consistent baseline and avoid wide-angle distortion. No foot, hand, hair tip or garment hem is cropped by a panel boundary. The portrait and detail crops, if present, intentionally show only the specified body region.\nMatch the face and recognizable features to <Picture 1> instead of substituting a generic face. Preserve the source head-to-body ratio, shoulder width, torso-to-leg proportions, silhouette and build in every view. The regions allocate space; never stretch or squash the person to fill a region. Choose one common aspect-preserving character scale that fits all three full-body regions, with the same head height and soles on the same baseline. The strict left-side profile shows the anatomical left side; the face, nose and toes all point to the sheet's left. In the back view the character faces away from the viewer, with no front-facing face or torso. Maintain the same hair volume, garment construction, visible fabric pattern and characteristic color relationships. Lighting is soft, even and consistent across all panels. Represent unavailable back details as a restrained continuation of the visible costume and hairstyle, without extra decorations. Each panel depicts the same character, not a group of distinct people. No unrelated people, duplicate limbs or extra heads occur within a panel. If circular details are present, they contain identifiable close-up imagery of the specified features, not plain filled disks, blank circles or color swatches. Circular crops have no drawn outline. The layout regions are invisible planning information: draw no rectangular frames, grid lines, IDs or JSON characters. The panel layout is present immediately and remains identical throughout the output. The character does not turn, walk, blink, speak or change expression. There is no animation, camera motion, zoom, transition, cut or time-dependent transformation. Do not add labels, captions, numbers, letters, logos, watermarks or other visible text anywhere on the sheet.\n\noverall_soundscape:\nSilence. No dialogue, singing, ambience or sound effects.\n\nnon_diegetic_music:\nN/A",
         2240,
-        "minimax_h3_video_vae_fp16.safetensors",
+        "minimax_h3_video_vae_int8_convrot.safetensors",
         "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
-        "res_multistep",
+        "minimax\\DasiwaMinimaxH3_dasiwaHybridV2_int8.safetensors",
+        "euler",
         "simple",
         20,
         1280
@@ -181,10 +137,10 @@
       "widgets_values_named": {
         "source": "subject_definitions:\n<Subject 1> is the single character depicted in <Picture 1>. Preserve the source identity, facial proportions, hair shape and color, skin tone, body proportions, clothing, accessories, palette, linework and rendering style.\n\nsummary:\n[reference generation] Create one static three-view character turnaround sheet showing only <Subject 1> from <Picture 1>. All panels are simultaneous parts of the same sheet, not successive shots.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - retain the visible identity, drawing style and outfit from <Picture 1> across every view and crop. Infer unseen back and side details conservatively from visible evidence; these details are design estimates rather than information supplied by the image.\n\ndetailed_description:\nThe sheet follows the illustration or photographic rendering style present in <Picture 1>, with the same color palette and material treatment. A clean, plain white studio background keeps every silhouette and detail readable.\nLayout instruction metadata follows. This compact JSON describes approximate composition, not a coordinate-control API or visible scene content.\nBEGIN_LAYOUT_JSON\n\\{\"coordinates\":\"normalized 0..1; rect=[left,top,width,height]; origin=canvas top-left\",\"purpose\":\"instruction regions only; do not draw boxes, panel IDs, labels or JSON text\",\"appearance_reference\":\"<Picture 1> only\",\"full_body_alignment\":\\{\"feet_y\":0.92,\"scale\":\"one shared aspect-preserving character scale fitting every full-body region; preserve source anatomy\"\\},\"circle_rule\":\"for details, fit a true circle inside the region in pixel space; diameter=min(region pixel width,region pixel height); show the specified image detail, not a plain disk\",\"panels\":[\\{\"id\":\"front\",\"rect\":[0.02,0.03,0.31,0.94],\"view\":\"front facing viewer\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"left_side\",\"rect\":[0.345,0.03,0.31,0.94],\"view\":\"strict anatomical left side; nose and toes point sheet-left\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"back\",\"rect\":[0.67,0.03,0.31,0.94],\"view\":\"back facing viewer; face turned away\",\"content\":\"same character; full body; head to soles\"\\}]\\}\nEND_LAYOUT_JSON\n\n[Shot 1] From the first frame to the final frame of this five-frame output, display one finished, completely stationary reference sheet of <Subject 1>. Arrange exactly three equally wide vertical panels side by side with consistent gutters: front view on the left, anatomical left side view in the middle, and back view on the right. All three panels have the same height, white background, camera distance, body scale, and ground line. The central view is a strict ninety-degree profile showing the character's left side, with the nose pointing toward the left edge of the sheet. The right view shows the back of the head, torso, clothing and heels. The left view faces directly toward the viewer. Keep each silhouette fully separated from the neighboring panel; no overlaps and no fourth view.\nIn every full-body panel, show the entire character from the top of the head to the soles of both feet, with comfortable clear margins above the hair and below the shoes. Use the same neutral upright pose, relaxed arms, proportions, outfit and accessory placement in the front, side and back views. Keep the feet on one consistent baseline and avoid wide-angle distortion. No foot, hand, hair tip or garment hem is cropped by a panel boundary. The portrait and detail crops, if present, intentionally show only the specified body region.\nMatch the face and recognizable features to <Picture 1> instead of substituting a generic face. Preserve the source head-to-body ratio, shoulder width, torso-to-leg proportions, silhouette and build in every view. The regions allocate space; never stretch or squash the person to fill a region. Choose one common aspect-preserving character scale that fits all three full-body regions, with the same head height and soles on the same baseline. The strict left-side profile shows the anatomical left side; the face, nose and toes all point to the sheet's left. In the back view the character faces away from the viewer, with no front-facing face or torso. Maintain the same hair volume, garment construction, visible fabric pattern and characteristic color relationships. Lighting is soft, even and consistent across all panels. Represent unavailable back details as a restrained continuation of the visible costume and hairstyle, without extra decorations. Each panel depicts the same character, not a group of distinct people. No unrelated people, duplicate limbs or extra heads occur within a panel. If circular details are present, they contain identifiable close-up imagery of the specified features, not plain filled disks, blank circles or color swatches. Circular crops have no drawn outline. The layout regions are invisible planning information: draw no rectangular frames, grid lines, IDs or JSON characters. The panel layout is present immediately and remains identical throughout the output. The character does not turn, walk, blink, speak or change expression. There is no animation, camera motion, zoom, transition, cut or time-dependent transformation. Do not add labels, captions, numbers, letters, logos, watermarks or other visible text anywhere on the sheet.\n\noverall_soundscape:\nSilence. No dialogue, singing, ambience or sound effects.\n\nnon_diegetic_music:\nN/A",
         "width": 2240,
-        "vae_name": "minimax_h3_video_vae_fp16.safetensors",
+        "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors",
         "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
-        "sampler_name": "res_multistep",
+        "unet_name": "minimax\\DasiwaMinimaxH3_dasiwaHybridV2_int8.safetensors",
+        "sampler_name": "euler",
         "scheduler": "simple",
         "steps": 20,
         "height": 1280
@@ -202,7 +158,7 @@
         430
       ],
       "flags": {},
-      "order": 2,
+      "order": 1,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -221,12 +177,12 @@
       "id": 20,
       "type": "SaveImageAdvanced",
       "pos": [
-        1110,
+        1200,
         70
       ],
       "size": [
-        910,
-        930
+        1170,
+        1080
       ],
       "flags": {},
       "order": 4,
@@ -262,25 +218,70 @@
         "format.bit_depth": "8-bit",
         "format.input_color_space": "sRGB"
       }
+    },
+    {
+      "id": 23,
+      "type": "H3CharacterSheetDesignerReference",
+      "pos": [
+        -360,
+        80
+      ],
+      "size": [
+        870,
+        1100
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "links": [
+            46
+          ]
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            47
+          ]
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            48
+          ]
+        },
+        {
+          "name": "layout_image",
+          "type": "IMAGE",
+          "links": [
+            49
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "ukr8b3g-cmyk/H3-Character-Sheet-Designer",
+        "ver": "bf792c652a9f50e895409e49fce667fef0f73c25",
+        "Node name for S&R": "H3CharacterSheetDesignerReference"
+      },
+      "widgets_values": [
+        "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}",
+        false,
+        "none"
+      ],
+      "widgets_values_named": {
+        "state_json": "{\"schema_version\":2,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{}}",
+        "use_layout_image": false,
+        "style": "none"
+      }
     }
   ],
   "links": [
-    [
-      21,
-      15,
-      0,
-      18,
-      0,
-      "STRING"
-    ],
-    [
-      23,
-      15,
-      1,
-      18,
-      1,
-      "INT"
-    ],
     [
       22,
       4,
@@ -290,12 +291,36 @@
       "IMAGE"
     ],
     [
-      24,
-      15,
+      46,
+      23,
+      0,
+      18,
+      0,
+      "STRING"
+    ],
+    [
+      47,
+      23,
+      1,
+      18,
+      1,
+      "INT"
+    ],
+    [
+      48,
+      23,
       2,
       18,
       4,
       "INT"
+    ],
+    [
+      49,
+      23,
+      3,
+      18,
+      5,
+      "IMAGE"
     ],
     [
       37,
@@ -314,8 +339,8 @@
         "version": 1,
         "state": {
           "lastGroupId": 0,
-          "lastNodeId": 22,
-          "lastLinkId": 37,
+          "lastNodeId": 24,
+          "lastLinkId": 49,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -326,8 +351,8 @@
           "bounding": [
             -1330,
             280,
-            130.564453125,
-            248
+            178.798828125,
+            268
           ]
         },
         "outputNode": {
@@ -350,7 +375,7 @@
             ],
             "localized_name": "ソース",
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               304
             ]
           },
@@ -363,7 +388,7 @@
             ],
             "localized_name": "幅",
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               324
             ]
           },
@@ -375,7 +400,7 @@
               26
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               344
             ]
           },
@@ -387,7 +412,7 @@
               27
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               364
             ]
           },
@@ -399,7 +424,7 @@
               28
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               384
             ]
           },
@@ -411,7 +436,7 @@
               32
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               404
             ]
           },
@@ -423,7 +448,7 @@
               30
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               424
             ]
           },
@@ -435,7 +460,7 @@
               31
             ],
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               444
             ]
           },
@@ -450,7 +475,7 @@
             "label": "ref_image_0",
             "shape": 7,
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               464
             ]
           },
@@ -463,8 +488,20 @@
             ],
             "localized_name": "高さ",
             "pos": [
-              -1223.435546875,
+              -1175.201171875,
               484
+            ]
+          },
+          {
+            "id": "cc0d47b0-d4fe-4cb3-8443-1d3b64dacf4b",
+            "name": "ref_images.ref_image_1",
+            "type": "IMAGE",
+            "linkIds": [
+              41
+            ],
+            "pos": [
+              -1175.201171875,
+              504
             ]
           }
         ],
@@ -503,7 +540,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "ソース",
+                "localized_name": "source",
                 "name": "source",
                 "type": "*",
                 "link": 20
@@ -511,7 +548,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "文字列",
+                "localized_name": "STRING",
                 "name": "STRING",
                 "type": "STRING",
                 "links": null
@@ -541,13 +578,13 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "モデル",
+                "localized_name": "model",
                 "name": "model",
                 "type": "MODEL",
                 "link": 2
               },
               {
-                "localized_name": "スケジューラ",
+                "localized_name": "scheduler",
                 "name": "scheduler",
                 "type": "COMBO",
                 "widget": {
@@ -556,7 +593,7 @@
                 "link": 30
               },
               {
-                "localized_name": "ステップ",
+                "localized_name": "steps",
                 "name": "steps",
                 "type": "INT",
                 "widget": {
@@ -567,7 +604,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "シグマ",
+                "localized_name": "SIGMAS",
                 "name": "SIGMAS",
                 "type": "SIGMAS",
                 "links": [
@@ -607,7 +644,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "サンプラー名",
+                "localized_name": "sampler_name",
                 "name": "sampler_name",
                 "type": "COMBO",
                 "widget": {
@@ -618,7 +655,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "サンプラー",
+                "localized_name": "SAMPLER",
                 "name": "SAMPLER",
                 "type": "SAMPLER",
                 "links": [
@@ -654,7 +691,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "サンプル",
+                "localized_name": "samples",
                 "name": "samples",
                 "type": "LATENT",
                 "link": 13
@@ -668,7 +705,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "画像",
+                "localized_name": "IMAGE",
                 "name": "IMAGE",
                 "type": "IMAGE",
                 "links": [
@@ -698,13 +735,13 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "モデル",
+                "localized_name": "model",
                 "name": "model",
                 "type": "MODEL",
                 "link": 1
               },
               {
-                "localized_name": "コンディショニング",
+                "localized_name": "conditioning",
                 "name": "conditioning",
                 "type": "CONDITIONING",
                 "link": 7
@@ -712,7 +749,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "ガイダー",
+                "localized_name": "GUIDER",
                 "name": "GUIDER",
                 "type": "GUIDER",
                 "links": [
@@ -743,7 +780,7 @@
             "inputs": [],
             "outputs": [
               {
-                "localized_name": "ノイズ",
+                "localized_name": "NOISE",
                 "name": "NOISE",
                 "type": "NOISE",
                 "links": [
@@ -757,12 +794,12 @@
               "Node name for S&R": "RandomNoise"
             },
             "widgets_values": [
-              42,
-              "fixed"
+              210327198872129,
+              "randomize"
             ],
             "widgets_values_named": {
-              "noise_seed": 42,
-              "control_after_generate": "fixed"
+              "noise_seed": 210327198872129,
+              "control_after_generate": "randomize"
             }
           },
           {
@@ -781,7 +818,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "画像",
+                "localized_name": "image",
                 "name": "image",
                 "type": "IMAGE",
                 "link": 14
@@ -789,7 +826,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "画像",
+                "localized_name": "IMAGE",
                 "name": "IMAGE",
                 "type": "IMAGE",
                 "links": [
@@ -868,7 +905,7 @@
             ],
             "size": [
               280,
-              390
+              410
             ],
             "flags": {},
             "order": 4,
@@ -905,6 +942,13 @@
               {
                 "localized_name": "ref_image_1",
                 "name": "ref_images.ref_image_1",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": 41
+              },
+              {
+                "localized_name": "ref_image_2",
+                "name": "ref_images.ref_image_2",
                 "shape": 7,
                 "type": "IMAGE",
                 "link": null
@@ -948,7 +992,7 @@
                 "link": null
               },
               {
-                "localized_name": "プロンプト",
+                "localized_name": "prompt",
                 "name": "prompt",
                 "type": "STRING",
                 "widget": {
@@ -957,7 +1001,7 @@
                 "link": 36
               },
               {
-                "localized_name": "幅",
+                "localized_name": "width",
                 "name": "width",
                 "type": "INT",
                 "widget": {
@@ -966,7 +1010,7 @@
                 "link": 35
               },
               {
-                "localized_name": "高さ",
+                "localized_name": "height",
                 "name": "height",
                 "type": "INT",
                 "widget": {
@@ -977,7 +1021,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "ポジティブ",
+                "localized_name": "positive",
                 "name": "positive",
                 "type": "CONDITIONING",
                 "links": [
@@ -985,7 +1029,7 @@
                 ]
               },
               {
-                "localized_name": "潜在",
+                "localized_name": "LATENT",
                 "name": "LATENT",
                 "type": "LATENT",
                 "links": [
@@ -1029,31 +1073,31 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "ノイズ",
+                "localized_name": "noise",
                 "name": "noise",
                 "type": "NOISE",
                 "link": 9
               },
               {
-                "localized_name": "ガイダー",
+                "localized_name": "guider",
                 "name": "guider",
                 "type": "GUIDER",
                 "link": 10
               },
               {
-                "localized_name": "サンプラー",
+                "localized_name": "sampler",
                 "name": "sampler",
                 "type": "SAMPLER",
                 "link": 11
               },
               {
-                "localized_name": "シグマ",
+                "localized_name": "sigmas",
                 "name": "sigmas",
                 "type": "SIGMAS",
                 "link": 12
               },
               {
-                "localized_name": "潜在イメージ",
+                "localized_name": "latent_image",
                 "name": "latent_image",
                 "type": "LATENT",
                 "link": 8
@@ -1061,7 +1105,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "出力",
+                "localized_name": "output",
                 "name": "output",
                 "type": "LATENT",
                 "links": [
@@ -1069,7 +1113,7 @@
                 ]
               },
               {
-                "localized_name": "ノイズ除去出力",
+                "localized_name": "denoised_output",
                 "name": "denoised_output",
                 "type": "LATENT",
                 "links": []
@@ -1079,7 +1123,9 @@
               "cnr_id": "comfy-core",
               "ver": "0.38.0",
               "Node name for S&R": "SamplerCustomAdvanced"
-            }
+            },
+            "widgets_values": [],
+            "widgets_values_named": {}
           },
           {
             "id": 2,
@@ -1097,7 +1143,7 @@
             "mode": 0,
             "inputs": [
               {
-                "localized_name": "clip名",
+                "localized_name": "clip_name",
                 "name": "clip_name",
                 "type": "COMBO",
                 "widget": {
@@ -1159,7 +1205,7 @@
             ],
             "outputs": [
               {
-                "localized_name": "モデル",
+                "localized_name": "MODEL",
                 "name": "MODEL",
                 "type": "MODEL",
                 "links": [
@@ -1362,11 +1408,19 @@
             "type": "IMAGE"
           },
           {
+            "id": 41,
+            "origin_id": -10,
+            "origin_slot": 10,
+            "target_id": 5,
+            "target_slot": 4,
+            "type": "IMAGE"
+          },
+          {
             "id": 36,
             "origin_id": -10,
             "origin_slot": 0,
             "target_id": 5,
-            "target_slot": 10,
+            "target_slot": 11,
             "type": "STRING"
           },
           {
@@ -1374,7 +1428,7 @@
             "origin_id": -10,
             "origin_slot": 1,
             "target_id": 5,
-            "target_slot": 11,
+            "target_slot": 12,
             "type": "INT"
           },
           {
@@ -1382,7 +1436,7 @@
             "origin_id": -10,
             "origin_slot": 9,
             "target_id": 5,
-            "target_slot": 12,
+            "target_slot": 13,
             "type": "INT"
           }
         ],
@@ -1392,18 +1446,17 @@
   },
   "config": {},
   "extra": {
+    "frontendVersion": "1.53.10",
     "ds": {
-      "scale": 0.7513148009015778,
+      "scale": 0.5989500000000024,
       "offset": [
-        728.4048238081059,
-        198.0081206247849
+        935.7408074785519,
+        293.24526444976834
       ]
-    },
-    "frontendVersion": "1.53.6",
-    "VHS_latentpreview": false,
-    "VHS_latentpreviewrate": 0,
-    "VHS_MetadataImage": false,
-    "VHS_KeepIntermediate": true
+    }
+  },
+  "extensions": {
+    "seed_widgets": {}
   },
   "version": 0.4,
   "seed_widgets": {}

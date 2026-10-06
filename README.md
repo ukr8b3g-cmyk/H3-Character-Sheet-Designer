@@ -1,5 +1,18 @@
 # H3 Character Sheet Designer
 
+**Recommended: `H3 Character Sheet Designer Reference` with `Use Layout Image = OFF`.**
+OFF uses the character reference and an optimized prompt based on the original
+Designer, preserving its layout geometry. The layout output becomes `None`, so H3
+automatically skips it while both image wires stay connected. ON supplies the
+framed mannequin sheet when closer layout matching is needed; it can also pull
+the result toward the mannequin's body proportions or leave mannequin parts.
+The original three-output node remains available.
+
+**推奨はReferenceノードの `Use Layout Image = OFF` です。** 人物参照と旧版を基本に
+最適化したプロンプトで生成します。ONは黒枠付き配置図を参照し、配置を強く指定したい
+場合に使います。マネキンの体型・比率に引っ張られたり、一部が残る場合があります。
+[接続・画風・検証済み範囲](docs/REFERENCE_LOCAL_JA.md)をご覧ください。
+
 Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** This Designer is the only custom node in the bundled workflow; the remaining generation nodes are ComfyUI Core. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
 
 The setup is simple: load the template, choose your reference image and models, select the views you want, and generate. To generate a single view, leave only that view selected in the Designer and queue it manually.
@@ -21,15 +34,15 @@ Load this GUI workflow in ComfyUI, then choose your reference image and installe
 A standalone ComfyUI custom node for designing a multi-view character sheet and compiling a MiniMax H3 reference prompt plus output dimensions. The template is English; free-form part instructions are preserved in their original language.
 
 - Seven illustrated view selectors: front portrait, anatomical-left portrait, full-body front, anatomical-left body profile, full-body back, hands, and footwear
-- Four presets, automatic layout sizing, editable manual dimensions, and a large live layout preview
-- **Layout / Part prompts** tabs with eight body-part choices and one free-text editor; part instructions are shared across related views
-- Readable 870 × 930 default node, full-width dropdowns, and explicit custom panel-height entry
-- Default **2208 × 1280** experimental layout; choose a 672-pixel panel height for **1344 × 768**
+- Five presets including the standard five-view sheet, automatic layout sizing, editable manual dimensions, and a large live layout preview
+- **Layout / Part prompts / Style** tabs on the Reference node; eight body-part choices and nine optional styles, with the selected style visible outside its tab
+- Reference node: **870 × 1100**, matching the template; original node: 870 × 930
+- Reference default: **five views, 2816 × 1280**, layout reference OFF and style None; the original node retains its four-view default
 - Deterministic local Python compiler, with **no LLM, external API, additional model, or Python package dependency** for the designer itself
-- One versioned JSON STRING input; `prompt: STRING`, `width: INT`, `height: INT` outputs
+- Versioned `state_json`; Reference outputs `prompt / width / height / layout_image`, with `layout_image=None` when OFF; original node retains three outputs
 - Japanese interface when ComfyUI's language is Japanese; English for other languages
 
-The bundled low-poly, bald, gender-neutral GPT Image mannequin artwork is displayed locally in the interface, with a simple SVG fallback only if the bitmap cannot load. These mannequins are interface illustrations only. They never become generation inputs. Coordinates in the prompt are semantic guidance, not hard image constraints. Identity, anatomy, unseen surfaces, clothing fidelity, exact geometry, and high-resolution generation quality are not guaranteed.
+The bundled low-poly, bald, gender-neutral GPT Image mannequin artwork is displayed locally in the interface, with a simple SVG fallback only if the bitmap cannot load. With Use Layout Image OFF, these mannequins are interface illustrations only. ON sends a rendered mannequin sheet as the second H3 reference. Coordinates in the prompt are semantic guidance, not hard image constraints. Identity, anatomy, unseen surfaces, clothing fidelity, exact geometry, and high-resolution generation quality are not guaranteed.
 
 ## Installation
 
@@ -40,29 +53,29 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-Restart ComfyUI and refresh its browser page. Add **H3 Character Sheet Designer** from the node menu. No `pip install` is required. Keep this repository as a custom-node folder; this is not a standalone image generator.
+Restart ComfyUI and refresh its browser page. Add **H3 Character Sheet Designer Reference** from the node menu, or load the official template. No `pip install` is required. Keep this repository as a custom-node folder; this is not a standalone image generator.
 
 ## Official template setup
 
 The [official GUI workflow](workflows/H3_Character_Sheet_Designer_wf.json) is the maintainer-provided character-sheet template, preserved as supplied. Download the JSON using the link above, then drag it onto the ComfyUI canvas or open it with ComfyUI's workflow loader. It is a GUI workflow, not API-format JSON.
 
-1. Install this custom node as described above. The file records **ComfyUI Core 0.38.0 / frontend 1.53.6** as its saved baseline; use a build with native `MiniMaxH3ReferenceToVideo`, `SaveImageAdvanced`, and subgraph support. If a node is missing, update ComfyUI and its frontend.
-2. In **Load Image**, select your own character reference. The saved `h3-cyberpunk-courier.png` filename is a placeholder; the image is not bundled.
-3. Open the H3 subgraph and select the H3 diffusion model, text encoder, and video VAE installed in your `models/diffusion_models`, `models/text_encoders`, and `models/vae` folders. The workflow's **Model Links** note lists model files. Reselect the loaders for your filenames and platform; the saved diffusion-model name includes a Windows-style `minimax\` subfolder.
-4. Choose views and sizes in the Designer, then queue. The saved five-view Auto selection (front/left portraits and front/left/back full-body views) compiles to **2816 × 1280** with the current compiler. Hands and footwear detail panels are unselected in this template. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
+1. Install this custom node as described above. The file records **ComfyUI Core 0.38.0 / frontend 1.53.10** as its saved baseline; use a build with native `MiniMaxH3ReferenceToVideo`, `SaveImageAdvanced`, and subgraph support. If a node is missing, update ComfyUI and its frontend.
+2. In **Load Image**, select your own character reference. The saved `krea2_00327_.webp` filename is a placeholder; the image is not bundled.
+3. Open the H3 subgraph and select the H3 diffusion model, text encoder, and video VAE installed in your `models/diffusion_models`, `models/text_encoders`, and `models/vae` folders. The saved subgraph uses Dasiwa Hybrid V2 INT8, Qwen3-VL 32B NVFP4/AWQ, an INT8/ConvRot VAE, and Euler / simple / 20 steps. These are template choices, not a universal optimum. The **Model Links** note lists model files. Reselect the loaders for your filenames and platform; the saved diffusion-model name includes a Windows-style `minimax\` subfolder.
+4. Keep **Use Layout Image OFF** to prioritize the character reference; style defaults to **None**. Choose views and sizes in the Designer, then queue. The saved five-view Auto selection (front/left portraits and front/left/back full-body views) compiles to **2816 × 1280** with the current compiler. Hands and footwear detail panels are unselected in this template. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
 
-JSON structure and the saved Designer state have been checked locally. End-to-end loading, queue execution, and GPU output quality have not been re-verified for this publication. Large sheets can require substantial VRAM and time.
+The saved connections and state are checked by local tests. The current Reference OFF node has run on native H3 after restart; actual prompts and reference bypass were verified. Controlled GPU comparisons retained five views, but later-frame darkening and narrow foot margins remain. The template saves frame 0. See the [test scope and limits](docs/REFERENCE_LOCAL_JA.md); large sheets can require substantial VRAM and time.
 
 ### 公式テンプレートの使い方
 
 上のリンクからJSONをダウンロードし、ComfyUIのキャンバスへドラッグ＆ドロップするか、ワークフロー読み込み機能で開いてください。添付されたシート用ワークフローをそのまま収録しています（API形式ではありません）。
 
-1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.6** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
-2. **Load Image** でご自身の参照画像を選択してください。保存済みの `h3-cyberpunk-courier.png` は仮のファイル名で、画像は同梱していません。
-3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
-4. Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
+1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.10** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
+2. **Load Image** でご自身の参照画像を選択してください。保存済みの `krea2_00327_.webp` は仮のファイル名で、画像は同梱していません。
+3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。保存済み設定はDasiwa Hybrid V2 INT8、Qwen3-VL 32B NVFP4/AWQ、INT8/ConvRot VAE、Euler／simple／20 stepsです。共通の最適設定を保証するものではありません。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
+4. 人物参照を優先する通常用途では **Use Layout ImageをOFF**、画風は **指定なし**から始めます。Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
 
-JSON構造とDesignerの保存状態はローカルで確認済みです。今回の公開作業では、ComfyUIでの読み込みからキュー実行までの通し動作とGPU生成品質は再検証していません。大きなシートは多くのVRAMと処理時間を必要とする場合があります。
+保存状態と接続をローカル試験で確認しています。再起動後の実Reference OFFノードで、実行プロンプトと配置参照のバイパスも確認済みです。GPU比較では5ビューを維持しましたが、後半フレームの暗化と足元の余白は未解決です。このテンプレートは先頭フレームを保存します。[検証範囲と制約](docs/REFERENCE_LOCAL_JA.md)をご確認ください。
 
 ## Connect to native H3
 
@@ -79,7 +92,7 @@ Suggested experimental downstream settings are `length=5` **frames**, not five s
 5. Optionally open **Part prompts**, select a body part, and enter a free-form instruction. It saves as you type; Enter adds a line. Switch parts to keep separate instructions. The dot and count show which parts have saved instructions. Clear a field to remove that instruction
 6. Queue your normal H3 workflow. Preview networking is optional for execution: the node independently validates and compiles the current saved JSON
 
-The default Basic preset stays at the original four views and 2208 × 1280. The optional Left portrait is a head-to-chest anatomical-left profile. Detail now selects all seven views and produces 2816 × 1280 at the default panel height (1696 × 768 at 672). Existing saved six-view selections retain their geometry and display as Custom; they are never automatically expanded.
+The Reference node starts with the standard five views. The original node's default Basic preset stays at the original four views and 2208 × 1280. The optional Left portrait is a head-to-chest anatomical-left profile. Detail now selects all seven views and produces 2816 × 1280 at the default panel height (1696 × 768 at 672). Existing saved six-view selections retain their geometry and display as Custom; they are never automatically expanded.
 
 The final view cannot be deselected. Either portrait alone, both portraits, hands-only, feet-only, left-body-profile-only, and hands-plus-feet layouts are supported. A missing or invalid saved value remains visible as an error; it is never silently reset. A failed preview can be retried without losing the committed selection.
 
@@ -170,15 +183,15 @@ The harness uses the production compiler and UI renderer with a simulated ComfyU
 
 ## 日本語
 
-ComfyUI用の独立ノードです。7種類のビュー、4つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡すプロンプトと幅・高さを作ります。固定テンプレートは英文、部位の自由入力は日本語も原文のまま保持します。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
+ComfyUI用の独立ノードです。7種類のビュー、5つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡すプロンプトと幅・高さを作ります。固定テンプレートは英文、部位の自由入力は日本語も原文のまま保持します。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
 
 `custom_nodes` にcloneしてComfyUIを再起動してください。Designerの3出力を `MiniMaxH3ReferenceToVideo` に接続し、参照画像は別のLoad Imageから最初の画像参照へ渡します。H3モデルと通常の生成ワークフローは別途必要です。
 
-既定の基本4面は2208×1280のままです。新しい「横顔・左」は人物の解剖学的左側から見た顔～胸のポートレイトです。7面・ディテールは2816×1280になります。保存済みの6面は配置を維持し、カスタムとして表示されます。基本4面の基準高を672にすると1344×768になります（7面は1696×768）。画面のマネキンは操作用の図であり、生成用画像には送信しません。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
+既定の基本4面は2208×1280のままです。新しい「横顔・左」は人物の解剖学的左側から見た顔～胸のポートレイトです。7面・ディテールは2816×1280になります。保存済みの6面は配置を維持し、カスタムとして表示されます。基本4面の基準高を672にすると1344×768になります（7面は1696×768）。旧版ノードとReferenceのOFFでは画面のマネキンは操作用です。ReferenceのONでは黒枠付き配置画像をH3の2枚目の参照へ送ります。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
 
 「足・履物」は全身内の靴とは別の拡大枠を要求します。関連する部位指定がない場合は、参照の靴・見えているブーツの筒・素足を保持し、見えない靴の意匠は発明しない指示です。選択が出力プロンプトへ届くことはローカル試験済みですが、GPUで効きが改善したかは未検証です。
 
-下部の「レイアウト｜部位指定」を切り替え、部位ドロップダウンと自由入力1欄で指示を保存できます。頭・髪、顔、上半身の服、背面の服、下半身、手・手袋、足・履物、全体・その他の8部位です。柄・文字・位置も同じ欄に書きます。部位ごとに保持され、関連する選択ビューへ共通反映します。**手・足の拡大ビューが未選択でも、手・手袋と足・履物の指示は全身図のプロンプトへ届きます。** 背面の柄は背面のみに指定されますが、生成結果での再現を保証するものではありません。未入力の旧ワークフローと配置は維持します。プレビューは配置確認用で、指定した服や柄には変わりません。
+下部の「レイアウト｜部位指定」（Reference版は「画風」も追加）を切り替え、部位ドロップダウンと自由入力1欄で指示を保存できます。頭・髪、顔、上半身の服、背面の服、下半身、手・手袋、足・履物、全体・その他の8部位です。柄・文字・位置も同じ欄に書きます。部位ごとに保持され、関連する選択ビューへ共通反映します。**手・足の拡大ビューが未選択でも、手・手袋と足・履物の指示は全身図のプロンプトへ届きます。** 背面の柄は背面のみに指定されますが、生成結果での再現を保証するものではありません。未入力の旧ワークフローと配置は維持します。プレビューは配置確認用で、指定した服や柄には変わりません。
 
 ### 短い英語プロンプトから始める
 

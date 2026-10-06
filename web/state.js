@@ -3,6 +3,7 @@ export const VIEW_IDS = Object.freeze(['face_front', 'face_left', 'body_front', 
 export const PART_IDS = Object.freeze(['head_hair', 'face', 'upper_clothing', 'back_clothing', 'lower_body', 'hands', 'footwear', 'other']);
 export const PART_PROMPT_MAX_LENGTH = 1000; // UTF-16 code units, matching textarea maxlength.
 export const PRESETS = Object.freeze({
+  five: ['face_front', 'face_left', 'body_front', 'body_left', 'body_back'],
   basic: ['face_front', 'body_front', 'body_left', 'body_back'], detail: [...VIEW_IDS], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'],
 });
 export const DEFAULT_STATE = Object.freeze({schema_version: 1, views: PRESETS.basic, size: Object.freeze({mode: 'auto', body_height: 1120, manual_width: 2240, manual_height: 1280})});
