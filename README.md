@@ -217,3 +217,9 @@ ComfyUI用の独立ノードです。7種類のビュー、5つのプリセッ�
 「両手」の選択は拡大枠の追加であり、手袋を着ける指定ではありません。ただし、着物の参照でも意図しない手袋が出たという利用者の報告があります。発生率を測った結果ではありません。必要に応じて素手を明記し、全身図と拡大図の両方を確認してください。拡大ビューをオフにすれば必ず改善する、という意味ではありません。
 
 詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。
+
+## License / ライセンス
+
+Original code and documentation for which ukr8b3g-cmyk holds the applicable rights are available under the [MIT License](LICENSE). Third-party material retains its original terms; images, artwork, screenshots, model weights and user-provided references are outside this MIT grant. See [NOTICE.md](NOTICE.md) before redistributing. This does not guarantee rights to any image or generated output, or replace the terms of ComfyUI, models, dependencies or external services.
+
+ukr8b3g-cmykが権利を有する自作コード・文書には[MIT License](LICENSE)を適用します。第三者由来の素材は元の条件を維持し、画像・アートワーク・スクリーンショット・モデル重み・利用者の参照素材は今回のMIT許諾に含めません。再配布時は[NOTICE.md](NOTICE.md)を確認してください。画像・生成物の権利を保証するものではなく、ComfyUI・モデル・依存先・外部サービスの条件も別途適用されます。

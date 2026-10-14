@@ -10,3 +10,4 @@ Repository = "https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer"
 
 [tool.comfy]
 DisplayName = "H3 Character Sheet Designer"
+PublisherId = "ukr8b3g-cmyk"
