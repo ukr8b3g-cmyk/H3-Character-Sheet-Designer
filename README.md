@@ -1,6 +1,65 @@
 # H3 Character Sheet Designer
 
-**Recommended: `H3 Character Sheet Designer Reference` with `Use Layout Image = OFF`.**
+Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
+
+MiniMax H3の参照画像を使うキャラクターシート作成ノードです。現行の **Reference 13 Views** は人物画像1枚＋追加参照3枚に対応します。**旧4ノードは削除していません。旧ワークフローは元のノードのまま継続利用できます。**
+
+## What's New — v1.2.0
+
+- Add **H3 Character Sheet Designer Reference 13 Views** with 13 selectable views: six head views, three full-body views, front/rear clothing details, paired hands and paired feet/footwear.
+- Add reference-relative Auto choices for clothing shape, worn/garment-only presentation, hand coverage and footwear. Named-part instructions retain their scope and priority; no particular person or outfit is hardcoded.
+- Pass through all four reference images unchanged. Layout OFF returns `None` without reading or rendering a guide; ON supplies the optional layout image.
+- Bundle the tested [four-image GUI workflow](workflows/H3_Character_Sheet_Designer_Reference13_4images.json). **Seed / Noise is outside the subgraph**, so its native `fixed` / `randomize` control stays accessible.
+- Retain Designer, Reference, Multi Reference and Reference V1.1, including their existing workflows. Reference V1.1 keeps its independent-view Batch Out feature.
+- Retain the previous clothing allocation (448×1120 at panel height 1120). The experimental 2:3 layout was reverted after visual comparison.
+
+変更点と既知の制約は [CHANGELOG](CHANGELOG.md) と [v1.2.0 release notes](docs/releases/v1.2.0.md) を参照してください。
+
+## Current workflow / 現行ワークフロー
+
+1. Update the node folder, restart ComfyUI, and reload its browser page. Open [Reference13 · four images](workflows/H3_Character_Sheet_Designer_Reference13_4images.json).
+2. Choose your own character image and installed H3 model, text encoder and video VAE. The template wires all four image loaders: select valid images in each connected loader, or disconnect unused optional reference inputs on the Designer for a single-reference run. Models and reference images are not bundled.
+3. Use **Layout Image OFF** as the current baseline. It passes composition instructions as text; region positions, clothing crops and view counts are not guaranteed. ON uses an extra guide reference and may influence proportions.
+4. Set the external **Seed / Noise** control to `fixed` for comparisons, or `randomize` for variations. The template generates five frames and saves the first decoded frame as the static sheet.
+
+The saved template includes an **empty Power Lora Loader (rgthree)** and therefore requires rgthree-comfy to open unchanged. **No LoRA is selected or required for this character-sheet method.** This node pack itself adds no Python runtime dependency. The template's model filenames are examples; reselect files installed on your machine.
+
+人物・追加参照・モデルは各自の環境で選択してください。テンプレートは4画像とも配線済みなので、接続するLoad Imageには有効な画像を選び、使わない追加参照はDesigner側の接続を外してください。比較時のSeed固定はサブグラフ外の標準RandomNoiseで操作します。テンプレートには未選択のrgthree Power Lora Loaderが残っていますが、今回の生成ではLoRAを使用していません。
+
+### Reference13 wiring
+
+| Designer output | Native H3 input |
+| --- | --- |
+| `prompt`, `width`, `height` | matching prompt and dimension inputs |
+| `character_image` | `ref_images.ref_image_0` |
+| `layout_image` | `ref_images.ref_image_1` |
+| `reference_image_1` / `2` / `3` | `ref_images.ref_image_2` / `3` / `4` |
+
+Keep the guide wire connected when OFF; its output is `None`. Picture numbering skips absent images. Input/output contracts are listed above; the previous nodes retain their original contracts.
+
+## Compatibility and previous workflows / 互換性と旧版
+
+| Node ID | Role | Workflow |
+| --- | --- | --- |
+| `H3CharacterSheetDesignerReference13` | Current 13-view sheet; four image pass-through outputs | [Reference13](workflows/H3_Character_Sheet_Designer_Reference13_4images.json) |
+| `H3CharacterSheetDesigner` | Original prompt/width/height node | Existing saved workflows retained |
+| `H3CharacterSheetDesignerReference` | Previous optional layout-reference node | [Original official workflow](workflows/H3_Character_Sheet_Designer_wf.json) |
+| `H3CharacterSheetDesignerMultiReference` | Previous 13-view, role-reference node | [Multi Reference](workflows/H3_Character_Sheet_Designer_MultiReference_flat_wf.json) |
+| `H3CharacterSheetDesignerReferenceV11` | Adaptive Manual layout and independent-view Batch Out | [Reference V1.1](workflows/H3_Character_Sheet_Designer_Reference_V11_flat_wf.json) |
+
+Compatibility means **the original node IDs and contracts remain available**. It does not mean that all node variants are interchangeable without rewiring, or that generated pixels remain identical after changing node variants. Reference13 can read schema 1/2 states; its schema 3 and Multi Reference's schema 3 are different formats. V1.1 has five list outputs, whereas Reference13 has eight single-value outputs. Use each variant with its own workflow.
+
+互換性は「旧ノードを保持し、旧ワークフローを使える」という意味です。新旧ノードへの無変更の置き換えや、生成結果の完全一致を保証するものではありません。旧ワークフローを新ノードへ自動変換しません。
+
+## Validation and known limits / 確認範囲と制約
+
+The release checks cover deterministic compilation, state compatibility, image pass-through, OFF bypass, geometry, workflow wiring and frontend tests. User-supplied fixed-seed Layout-OFF generations were reviewed separately. Basic/head presets remained stable in that comparison, but clothing details could become full-body views or omit the neckline; all-13 layouts could omit or rearrange details. This is not a general visual-quality or success-rate guarantee. Unseen appearance is inferred by the model.
+
+Layout OFFでの衣装拡大・全13ビューの不安定さは既知の制約です。2:3の実験変更は採用せず、比較前の配置へ戻しています。コード／UIの検証とGPU生成品質の評価を区別します。最新版の検証結果は [release verification](verification/release_v1.2.0.json) に記録します。
+
+## Previous Reference workflow / 従来のReferenceワークフロー
+
+**For the previous Reference node, use `Use Layout Image = OFF` as the starting point.**
 OFF uses the character reference and an optimized prompt based on the original
 Designer, preserving its layout geometry. The layout output becomes `None`, so H3
 automatically skips it while both image wires stay connected. ON supplies the
@@ -8,12 +67,12 @@ framed mannequin sheet when closer layout matching is needed; it can also pull
 the result toward the mannequin's body proportions or leave mannequin parts.
 The original three-output node remains available.
 
-**推奨はReferenceノードの `Use Layout Image = OFF` です。** 人物参照と旧版を基本に
+**従来のReferenceノードでは `Use Layout Image = OFF` を基本に使えます。** 人物参照と旧版を基本に
 最適化したプロンプトで生成します。ONは黒枠付き配置図を参照し、配置を強く指定したい
 場合に使います。マネキンの体型・比率に引っ張られたり、一部が残る場合があります。
 [接続・画風・検証済み範囲](docs/REFERENCE_LOCAL_JA.md)をご覧ください。
 
-Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** This Designer is the only custom node in the bundled workflow; the remaining generation nodes are ComfyUI Core. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
+Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** In the original official workflow linked below, this Designer is the only custom node; the remaining generation nodes are ComfyUI Core. The new four-image template also retains an empty rgthree Power Lora Loader. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
 
 The setup is simple: load the template, choose your reference image and models, select the views you want, and generate. To generate a single view, leave only that view selected in the Designer and queue it manually.
 
@@ -217,6 +276,7 @@ ComfyUI用の独立ノードです。7種類のビュー、5つのプリセッ�
 「両手」の選択は拡大枠の追加であり、手袋を着ける指定ではありません。ただし、着物の参照でも意図しない手袋が出たという利用者の報告があります。発生率を測った結果ではありません。必要に応じて素手を明記し、全身図と拡大図の両方を確認してください。拡大ビューをオフにすれば必ず改善する、という意味ではありません。
 
 詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。
+
 
 ## License / ライセンス
 

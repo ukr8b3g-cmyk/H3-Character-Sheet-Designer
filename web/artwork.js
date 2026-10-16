@@ -17,6 +17,7 @@ export const ARTWORK_RECTS = Object.freeze({
   feet: Object.freeze([860, 820, 380, 340]),
 });
 let artworkSequence = 0;
+const EXTRA_VIEWS = new Set(['face_right', 'face_3q_left', 'face_3q_right', 'face_back', 'clothing_front', 'clothing_back']);
 export const ATLAS_URL = new URL('./assets/mannequin-atlas.png', import.meta.url).href;
 
 export function artworkRect(view) {
@@ -24,10 +25,24 @@ export function artworkRect(view) {
   return ARTWORK_RECTS[view];
 }
 
-export function createArtwork(view, idPrefix) {
-  const rect = artworkRect(view);
+export function createArtwork(view, idPrefix, {mirror = false, crop = null} = {}) {
+  if (EXTRA_VIEWS.has(view)) {
+    const frame = document.createElement('span'); frame.className = 'h3-artwork';
+    if (mirror) frame.style.transform = 'scaleX(-1)';
+    frame.dataset.artwork = view; frame.dataset.artworkSource = 'gpt-image-derived';
+    frame.setAttribute('aria-hidden', 'true');
+    const image = document.createElement('img'); image.alt = ''; image.draggable = false;
+    image.src = new URL('./assets/' + view + '.png', import.meta.url).href;
+    image.addEventListener('error', () => {
+      // Remain selectable if an incomplete installation omitted this local asset.
+      frame.dataset.artworkFallback = 'missing'; image.remove();
+    }, {once: true});
+    frame.append(image); return frame;
+  }
+  const rect = crop ?? artworkRect(view);
   const frame = document.createElement('span');
   frame.className = 'h3-artwork';
+  if (mirror) frame.style.transform = 'scaleX(-1)';
   frame.dataset.artwork = view;
   frame.dataset.artworkSource = 'gpt-image';
   frame.setAttribute('aria-hidden', 'true');

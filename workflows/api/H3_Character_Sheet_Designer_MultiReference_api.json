@@ -1,0 +1,237 @@
+{
+  "4": {
+    "inputs": {
+      "image": "krea2_00327_.webp"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "20": {
+    "inputs": {
+      "filename_prefix": "H3 Character Sheet Designer",
+      "format": "png",
+      "format.bit_depth": "8-bit",
+      "format.input_color_space": "sRGB",
+      "images": [
+        "18:12",
+        0
+      ]
+    },
+    "class_type": "SaveImageAdvanced",
+    "_meta": {
+      "title": "Save Image (Advanced)"
+    }
+  },
+  "23": {
+    "inputs": {
+      "state_json": "{\"schema_version\":3,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{},\"reference_roles\":{\"reference_image_1\":\"same_character\",\"reference_image_2\":\"same_character\"}}",
+      "use_layout_image": false,
+      "style": "none",
+      "character_image": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "H3CharacterSheetDesignerMultiReference",
+    "_meta": {
+      "title": "H3 Character Sheet Designer Multi Reference"
+    }
+  },
+  "18:16": {
+    "inputs": {
+      "source": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "PreviewAny",
+    "_meta": {
+      "title": "Preview as Text"
+    }
+  },
+  "18:9": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 20,
+      "denoise": 1,
+      "model": [
+        "18:1",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "18:8": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "18:11": {
+    "inputs": {
+      "samples": [
+        "18:10",
+        0
+      ],
+      "vae": [
+        "18:3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "18:7": {
+    "inputs": {
+      "model": [
+        "18:1",
+        0
+      ],
+      "conditioning": [
+        "18:5",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Basic Guider"
+    }
+  },
+  "18:6": {
+    "inputs": {
+      "noise_seed": 210327198872129
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "18:12": {
+    "inputs": {
+      "batch_index": 0,
+      "length": 1,
+      "image": [
+        "18:11",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Get Image from Batch"
+    }
+  },
+  "18:3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "18:5": {
+    "inputs": {
+      "prompt": [
+        "23",
+        0
+      ],
+      "width": [
+        "23",
+        1
+      ],
+      "height": [
+        "23",
+        2
+      ],
+      "length": 5,
+      "ref_image_size": "match",
+      "clip": [
+        "18:2",
+        0
+      ],
+      "vae": [
+        "18:3",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "23",
+        4
+      ],
+      "ref_images.ref_image_1": [
+        "23",
+        3
+      ],
+      "ref_images.ref_image_2": [
+        "23",
+        5
+      ],
+      "ref_images.ref_image_3": [
+        "23",
+        6
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Reference to Video"
+    }
+  },
+  "18:10": {
+    "inputs": {
+      "noise": [
+        "18:6",
+        0
+      ],
+      "guider": [
+        "18:7",
+        0
+      ],
+      "sampler": [
+        "18:8",
+        0
+      ],
+      "sigmas": [
+        "18:9",
+        0
+      ],
+      "latent_image": [
+        "18:5",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "18:2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "18:1": {
+    "inputs": {
+      "unet_name": "minimax\\DasiwaMinimaxH3_dasiwaHybridV2_int8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  }
+}

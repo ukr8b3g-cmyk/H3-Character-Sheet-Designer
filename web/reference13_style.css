@@ -1,0 +1,27 @@
+@import url('./style.css');
+.h3-reference13 { min-width: 700px; font-size: 16px; }
+.h3-reference13 .h3-card-label { font-size: 14px; line-height: 18px; }
+.h3-reference13 .h3-card-figure { height: 76px; }
+.h3-reference13 .h3-card-row { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
+.h3-reference13 .h3-cards { gap: 6px; }
+.h3-reference13 .h3-body-row { grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 0; }
+.h3r13-clothing-group { grid-column: 4 / span 2; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.h3r13-clothing-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.h3r13-presentation { display: flex; min-width: 0; border: 1px solid #607183; border-radius: 4px; overflow: hidden; }
+.h3-reference13 .h3r13-presentation-button { flex: 1; min-width: 0; padding: 2px 3px; border: 0; border-radius: 0; background: #242d38; font-size: 12px; line-height: 17px; white-space: nowrap; }
+.h3-reference13 .h3r13-presentation-button + button { border-left: 1px solid #607183; }
+.h3-reference13 .h3r13-presentation-button[aria-pressed=true] { background: #365850; color: #edf3f8; }
+.h3-reference13 .h3r13-presentation-button:focus-visible { outline-offset: -2px; }
+.h3r13-choices { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px 8px; font-size: 13px; }
+.h3r13-choice { min-width: 0; }
+.h3r13-choice label { display: block; color: #bdcbd9; margin-bottom: 2px; }
+.h3r13-choice .h3-select { height: 32px; font-size: 13px; padding: 3px 5px; }
+.h3r13-choice[data-choice-group=clothing_type] { grid-column: 4 / span 2; }
+.h3r13-choice[data-choice-group=hand_state] { grid-column: 6; }
+.h3r13-choice[data-choice-group=footwear_state] { grid-column: 7; }
+.h3r13-choice-hint { color: #bdcbd9; font-size: 12px; }
+.h3-reference13 .h3-sheet > .h3-panel { background: transparent; }
+@container (max-width: 760px) {
+  .h3-reference13 .h3-card-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
+  .h3-reference13 .h3-body-row { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}

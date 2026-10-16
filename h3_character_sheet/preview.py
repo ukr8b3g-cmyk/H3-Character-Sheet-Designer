@@ -5,9 +5,12 @@ from __future__ import annotations
 from .compiler import STATE_MAX_BYTES, StateValidationError, compile_state, decode_json
 from .node import runtime_max_resolution
 from .reference_compiler import compile_reference_state
+from .multi_reference_compiler import compile_multi_state
+from .output_plan import compile_output_preview
 
 PREVIEW_PATH = "/h3_character_sheet_designer/preview"
 REFERENCE_PREVIEW_PATH = "/h3_character_sheet_designer/reference_preview"
+MULTI_REFERENCE_PREVIEW_PATH = "/h3_character_sheet_designer/multi_reference_preview"
 # The envelope JSON re-escapes state_json. Reserve room for even a fully escaped
 # valid state at its independent byte limit, with a bounded transport overhead.
 HTTP_MAX_BYTES = 3 * STATE_MAX_BYTES
@@ -48,6 +51,44 @@ async def reference_preview(request):
     return await _preview(request, compile_reference_preview_request)
 
 
+def compile_multi_reference_preview_request(body: bytes, *, max_resolution: int) -> dict:
+    if len(body) > HTTP_MAX_BYTES:
+        raise StateValidationError("Preview request is too large.", "request_too_large")
+    try:
+        text = body.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise StateValidationError("Preview request must be UTF-8.", "invalid_utf8") from exc
+    envelope = decode_json(text, byte_limit=HTTP_MAX_BYTES)
+    if type(envelope) is not dict or "state_json" not in envelope or set(envelope) - {
+        "state_json", "use_layout_image", "style", "reference_presence",
+    }:
+        raise StateValidationError("Invalid multi-reference preview request.", "invalid_request")
+    return compile_multi_state(**envelope, max_resolution=max_resolution)
+
+
+async def multi_reference_preview(request):
+    return await _preview(request, compile_multi_reference_preview_request)
+
+
+def compile_reference_v11_preview_request(body: bytes, *, max_resolution: int) -> dict:
+    if len(body) > HTTP_MAX_BYTES:
+        raise StateValidationError('Preview request is too large.', 'request_too_large')
+    try:
+        raw = body.decode('utf-8', errors='strict')
+    except UnicodeDecodeError as exc:
+        raise StateValidationError('Preview request must be UTF-8.', 'invalid_utf8') from exc
+    envelope = decode_json(raw, byte_limit=HTTP_MAX_BYTES)
+    if type(envelope) is not dict or 'state_json' not in envelope or set(envelope) - {
+        'state_json', 'use_layout_image', 'style', 'reference_presence', 'batch_out',
+    }:
+        raise StateValidationError('Invalid V1.1 preview request.', 'invalid_request')
+    return compile_output_preview(**envelope, max_resolution=max_resolution)
+
+
+async def reference_v11_preview(request):
+    return await _preview(request, compile_reference_v11_preview_request)
+
+
 async def _preview(request, compile_request):
     # aiohttp is supplied by ComfyUI; keep it out of the pure compiler's imports.
     from aiohttp import web
@@ -86,5 +127,7 @@ def register_routes() -> bool:
         return True
     instance.routes.post(PREVIEW_PATH)(preview)
     instance.routes.post(REFERENCE_PREVIEW_PATH)(reference_preview)
+    instance.routes.post(MULTI_REFERENCE_PREVIEW_PATH)(multi_reference_preview)
+    instance.routes.post('/h3_character_sheet_designer/reference_v11_preview')(reference_v11_preview)
     instance._h3_character_sheet_designer_route_registered = True
     return True

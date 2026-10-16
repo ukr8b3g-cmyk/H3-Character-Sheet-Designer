@@ -1,19 +1,25 @@
 import {DesignerController, getLocale, subscribeLocale} from './state.js';
 import {createDesignerUI, translations} from './ui.js';
+import {MultiReferenceController} from './multi_state.js';
 const instances = new WeakMap();
 const textareaRecovery = new WeakMap();
 const pendingReinstall = new WeakMap();
 export const NODE_TYPE = 'H3CharacterSheetDesigner';
 export const REFERENCE_NODE_TYPE = 'H3CharacterSheetDesignerReference';
+export const MULTI_REFERENCE_NODE_TYPE = 'H3CharacterSheetDesignerMultiReference';
+export const REFERENCE_V11_NODE_TYPE = 'H3CharacterSheetDesignerReferenceV11';
 export const DEFAULT_NODE_SIZE = [870, 930];
 export const REFERENCE_NODE_SIZE = [870, 1100];
+export const MULTI_REFERENCE_NODE_SIZE = [1060, 1350];
 
-export function previewRequester(api, useLayoutImage = () => false, readStyle = () => 'none', reference = false) {
+export function previewRequester(api, useLayoutImage = () => false, readStyle = () => 'none', reference = false, multiReference = false, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false}), outputAware = false, readBatchOut = () => false) {
   return async (raw, signal) => {
     const envelope = {state_json: raw};
     if (reference && useLayoutImage()) envelope.use_layout_image = true;
     const style = readStyle(); if (reference && style !== 'none') envelope.style = style;
-    const response = await api.fetchApi(reference ? '/h3_character_sheet_designer/reference_preview' : '/h3_character_sheet_designer/preview', {
+    if (multiReference) envelope.reference_presence = readReferencePresence();
+    if (outputAware) envelope.batch_out = readBatchOut();
+    const response = await api.fetchApi(outputAware ? '/h3_character_sheet_designer/reference_v11_preview' : multiReference ? '/h3_character_sheet_designer/multi_reference_preview' : reference ? '/h3_character_sheet_designer/reference_preview' : '/h3_character_sheet_designer/preview', {
       method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(envelope), signal,
     });
     let data;
@@ -92,7 +98,9 @@ function armReinstall(node, app, api) {
 export function installDesigner(node, app, api) {
   if (instances.has(node)) return instances.get(node);
   pendingReinstall.get(node)?.(); pendingReinstall.delete(node);
-  const reference = node.comfyClass === REFERENCE_NODE_TYPE || node.type === REFERENCE_NODE_TYPE;
+  const outputAware = node.comfyClass === REFERENCE_V11_NODE_TYPE || node.type === REFERENCE_V11_NODE_TYPE;
+  const multiReference = outputAware || node.comfyClass === MULTI_REFERENCE_NODE_TYPE || node.type === MULTI_REFERENCE_NODE_TYPE;
+  const reference = multiReference || node.comfyClass === REFERENCE_NODE_TYPE || node.type === REFERENCE_NODE_TYPE;
   const original = node.widgets?.find(widget => widget.name === 'state_json');
   if (!original || typeof node.addDOMWidget !== 'function' || typeof document === 'undefined') return fallback(node, original, app, 'DOM widget API unavailable');
   const originalIndex = node.widgets.indexOf(original);
@@ -117,10 +125,17 @@ export function installDesigner(node, app, api) {
   const styleWidget = reference ? node.widgets.find(widget => widget.name === 'style') : null;
   const previousStyleHidden = styleWidget?.options?.hidden ?? styleWidget?.hidden;
   const readStyle = () => styleWidget?.value ?? 'none';
-  let observedLayoutImage = useLayoutImage(), observedStyle = readStyle();
-  const controller = new DesignerController({
+  const readReferencePresence = () => Object.fromEntries(['reference_image_1', 'reference_image_2'].map(name => {
+    const link = node.inputs?.find(input => input.name === name)?.link;
+    return [name, link !== null && link !== undefined];
+  }));
+  const readBatchOut = () => outputAware && node.widgets.find(widget => widget.name === 'batch_out')?.value === true;
+  let observedBatchOut = readBatchOut();
+  let observedLayoutImage = useLayoutImage(), observedStyle = readStyle(), observedPresence = JSON.stringify(readReferencePresence());
+  const Controller = multiReference ? MultiReferenceController : DesignerController;
+  const controller = new Controller({
     raw: original.value, readRaw: () => original.value, writeRaw: value => { original.value = value; },
-    requestPreview: previewRequester(api, useLayoutImage, readStyle, reference),
+    requestPreview: previewRequester(api, useLayoutImage, readStyle, reference, multiReference, readReferencePresence, outputAware, readBatchOut),
     transaction: change => graphTransaction(node, change, app?.canvas),
     onCommit: (next, previous) => { node.onWidgetChanged?.('state_json', next, previous, original); },
     onChange: (_, reason) => ui?.render(reason),
@@ -128,8 +143,10 @@ export function installDesigner(node, app, api) {
   const sync = () => {
     if (!ready || record?.disposed) return;
     controller.syncFromSource();
-    const next = useLayoutImage(), style = readStyle();
-    if (next !== observedLayoutImage || style !== observedStyle) { observedLayoutImage = next; observedStyle = style; void controller.refreshPreview(); }
+    const next = useLayoutImage(), style = readStyle(), presence = JSON.stringify(readReferencePresence());
+    if (readBatchOut() !== observedBatchOut || next !== observedLayoutImage || style !== observedStyle || (multiReference && presence !== observedPresence)) {
+      observedBatchOut = readBatchOut(); observedLayoutImage = next; observedStyle = style; observedPresence = presence; void controller.refreshPreview();
+    }
   };
   const writeStyle = styleWidget ? value => {
     const previous = readStyle(); if (value === previous) return;
@@ -137,7 +154,7 @@ export function installDesigner(node, app, api) {
     sync();
   } : null;
   try {
-    ui = createDesignerUI({controller, locale: getLocale(app), reference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
+    ui = createDesignerUI({controller, locale: getLocale(app), reference, multiReference, outputAware, readBatchOut, readReferencePresence, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
     let name = 'h3_designer_ui', suffix = 1;
     while (node.widgets.some(candidate => candidate.name === name)) name = `h3_designer_ui_${suffix++}`;
     widget = node.addDOMWidget(name, 'H3_DESIGNER_UI', ui.root, {
@@ -145,7 +162,10 @@ export function installDesigner(node, app, api) {
       // addDOMWidget may restore positional data before it returns. That data
       // belongs to canonical widgets, never to this presentation-only widget.
       setValue: value => { if (ready && !record?.disposed) controller.restore(value); },
-      getMinHeight: () => reference ? 870 : 760, getHeight: () => reference ? 950 : 840,
+      getMinHeight: () => multiReference ? 1120 : reference ? 870 : 760, getHeight: () => multiReference ? 1200 : reference ? 950 : 840,
+      // The properties sidebar can leave its preview width on this widget.
+      // Use the public node-width default for the V1.1 canvas presentation.
+      ...(outputAware ? {onDraw: drawn => { drawn.width = undefined; }} : {}),
       hideOnZoom: false, serialize: false, dynamicPrompts: false,
     });
     if (!widget || !node.widgets.includes(widget)) throw new Error('addDOMWidget did not return an installed widget');
@@ -183,7 +203,7 @@ export function installDesigner(node, app, api) {
     chain(node, 'onAdded', () => { if (record.disposed) widget.onRemove?.(); else sync(); });
     installedHooks = Object.fromEntries(hookNames.map(name => [name, node[name]]));
     node.h3DesignerCompatibility = {graphical: true, undoTransactions: typeof node.graph?.beforeChange === 'function' && typeof node.graph?.afterChange === 'function'};
-    const nodeSize = reference ? REFERENCE_NODE_SIZE : DEFAULT_NODE_SIZE;
+    const nodeSize = multiReference ? MULTI_REFERENCE_NODE_SIZE : reference ? REFERENCE_NODE_SIZE : DEFAULT_NODE_SIZE;
     if (typeof node.setSize === 'function') node.setSize([Math.max(nodeSize[0], node.size?.[0] || 0), Math.max(nodeSize[1], node.size?.[1] || 0)]);
     ready = true;
     // Direct store edits do not call widget callbacks. Read only the public
@@ -215,7 +235,7 @@ export function getDesigner(node) { return instances.get(node); }
 export function createExtension(app, api) {
   return {
     name: 'h3.CharacterSheetDesigner',
-    nodeCreated(node) { if ([NODE_TYPE, REFERENCE_NODE_TYPE].includes(node.comfyClass) || [NODE_TYPE, REFERENCE_NODE_TYPE].includes(node.type)) installDesigner(node, app, api); },
+    nodeCreated(node) { if ([NODE_TYPE, REFERENCE_NODE_TYPE, MULTI_REFERENCE_NODE_TYPE, REFERENCE_V11_NODE_TYPE].includes(node.comfyClass) || [NODE_TYPE, REFERENCE_NODE_TYPE, MULTI_REFERENCE_NODE_TYPE, REFERENCE_V11_NODE_TYPE].includes(node.type)) installDesigner(node, app, api); },
     afterConfigureGraph() {
       for (const node of app.graph?._nodes ?? []) getDesigner(node)?.afterConfigure();
     },

@@ -1,0 +1,1569 @@
+{
+  "id": "f5b378db-bf06-5b16-aa0d-9252883410fd",
+  "revision": 0,
+  "last_node_id": 36,
+  "last_link_id": 74,
+  "nodes": [
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        -420,
+        100
+      ],
+      "size": [
+        640,
+        730
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "IMAGE",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            22
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "MASK",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "MASK",
+          "pos": null,
+          "slot_index": null,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "krea2_00327_.webp",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "krea2_00327_.webp",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 19,
+      "type": "MarkdownNote",
+      "pos": [
+        3430,
+        650
+      ],
+      "size": [
+        440,
+        430
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [],
+      "title": "Note: Model Links",
+      "properties": {},
+      "widgets_values": [
+        "## Model Links\n\n**vae**\n\n- [minimax_h3_video_vae_int8_convrot.safetensor](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_int8_convrot.safetensors)\n\n- [minimax_h3_video_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors)\n\n\n**diffusion_models**\n\n- [minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)\n\n- [minimax_h3_ref2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors)\n\n- [dasiwa-minimax-h3](https://civitai.red/models/2877206/dasiwa-minimax-h3?modelVersionId=3374445)\n\n**text_encoders**\n\n- [qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)\n\n\n## Model Storage Location\n\n```\n📂 ComfyUI/\n├── 📂 models/\n│   ├── 📂 vae/\n│   │   ├── minimax_h3_video_vae_fp16.safetensors\n│   │   └── minimax_h3_audio_vae_fp32.safetensors\n│   ├── 📂 diffusion_models/\n│   │   └── minimax_h3_fl2va_pruned_int8_convrot.safetensors\n│   └── 📂 text_encoders/\n│       └── qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors\n```\n"
+      ],
+      "widgets_values_named": {
+        "text": "## Model Links\n\n**vae**\n\n- [minimax_h3_video_vae_int8_convrot.safetensor](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_int8_convrot.safetensors)\n\n- [minimax_h3_video_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors)\n\n\n**diffusion_models**\n\n- [minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)\n\n- [minimax_h3_ref2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors)\n\n- [dasiwa-minimax-h3](https://civitai.red/models/2877206/dasiwa-minimax-h3?modelVersionId=3374445)\n\n**text_encoders**\n\n- [qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)\n\n\n## Model Storage Location\n\n```\n📂 ComfyUI/\n├── 📂 models/\n│   ├── 📂 vae/\n│   │   ├── minimax_h3_video_vae_fp16.safetensors\n│   │   └── minimax_h3_audio_vae_fp32.safetensors\n│   ├── 📂 diffusion_models/\n│   │   └── minimax_h3_fl2va_pruned_int8_convrot.safetensors\n│   └── 📂 text_encoders/\n│       └── qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors\n```\n"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 20,
+      "type": "SaveImageAdvanced",
+      "pos": [
+        3430,
+        100
+      ],
+      "size": [
+        1170,
+        1080
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "images",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 64
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "images",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "SaveImageAdvanced"
+      },
+      "widgets_values": [
+        "H3 Character Sheet Designer",
+        "png",
+        "8-bit",
+        "sRGB"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "H3 Character Sheet Designer",
+        "format": "png",
+        "format.bit_depth": "8-bit",
+        "format.input_color_space": "sRGB"
+      }
+    },
+    {
+      "id": 23,
+      "type": "H3CharacterSheetDesignerMultiReference",
+      "pos": [
+        100,
+        100
+      ],
+      "size": [
+        1060,
+        1350
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "character_image",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 22
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "reference_image_1",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "reference_image_2",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "prompt",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "STRING",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            65,
+            71
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "width",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "INT",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            72
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "height",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "INT",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            73
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "layout_image",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            69
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "character_image",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            68
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "reference_image_1",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            70
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "reference_image_2",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            74
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "H3CharacterSheetDesignerMultiReference",
+        "aux_id": "ukr8b3g-cmyk/H3-Character-Sheet-Designer"
+      },
+      "widgets_values": [
+        "{\"schema_version\":3,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{},\"reference_roles\":{\"reference_image_1\":\"same_character\",\"reference_image_2\":\"same_character\"}}",
+        false,
+        "none"
+      ],
+      "widgets_values_named": {
+        "state_json": "{\"schema_version\":3,\"views\":[\"face_front\",\"face_left\",\"body_front\",\"body_left\",\"body_back\"],\"size\":{\"mode\":\"auto\",\"body_height\":1120,\"manual_width\":2208,\"manual_height\":1280},\"part_prompts\":{},\"reference_roles\":{\"reference_image_1\":\"same_character\",\"reference_image_2\":\"same_character\"}}",
+        "use_layout_image": false,
+        "style": "none"
+      }
+    },
+    {
+      "id": 25,
+      "type": "PreviewAny",
+      "pos": [
+        1320,
+        900
+      ],
+      "size": [
+        1480,
+        750
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 9,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "source",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "*",
+          "pos": null,
+          "link": 65
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "STRING",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "STRING",
+          "pos": null,
+          "slot_index": null,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewAny",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 26,
+      "type": "BasicScheduler",
+      "pos": [
+        2570,
+        730
+      ],
+      "size": [
+        250,
+        110
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "model",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "MODEL",
+          "pos": null,
+          "link": 53
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "SIGMAS",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "SIGMAS",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            62
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicScheduler",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "simple",
+        20,
+        1
+      ],
+      "widgets_values_named": {
+        "scheduler": "simple",
+        "steps": 20,
+        "denoise": 1
+      }
+    },
+    {
+      "id": 27,
+      "type": "KSamplerSelect",
+      "pos": [
+        2570,
+        530
+      ],
+      "size": [
+        250,
+        60
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "SAMPLER",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "SAMPLER",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            61
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "euler"
+      ],
+      "widgets_values_named": {
+        "sampler_name": "euler"
+      }
+    },
+    {
+      "id": 28,
+      "type": "VAEDecode",
+      "pos": [
+        3010,
+        480
+      ],
+      "size": [
+        140,
+        50
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "samples",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "LATENT",
+          "pos": null,
+          "link": 54
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "vae",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "VAE",
+          "pos": null,
+          "link": 55
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "IMAGE",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            58
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      }
+    },
+    {
+      "id": 29,
+      "type": "BasicGuider",
+      "pos": [
+        2570,
+        330
+      ],
+      "size": [
+        210,
+        50
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "model",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "MODEL",
+          "pos": null,
+          "link": 56
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "conditioning",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "CONDITIONING",
+          "pos": null,
+          "link": 57
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "GUIDER",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "GUIDER",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            60
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      }
+    },
+    {
+      "id": 30,
+      "type": "RandomNoise",
+      "pos": [
+        2570,
+        100
+      ],
+      "size": [
+        260,
+        90
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "NOISE",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "NOISE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            59
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        210327198872129,
+        "randomize"
+      ],
+      "widgets_values_named": {
+        "noise_seed": 210327198872129,
+        "control_after_generate": "randomize"
+      }
+    },
+    {
+      "id": 31,
+      "type": "ImageFromBatch",
+      "pos": [
+        3010,
+        700
+      ],
+      "size": [
+        230,
+        90
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "image",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 58
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "IMAGE",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "IMAGE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            64
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageFromBatch",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        0,
+        1
+      ],
+      "widgets_values_named": {
+        "batch_index": 0,
+        "length": 1
+      }
+    },
+    {
+      "id": 32,
+      "type": "VAELoader",
+      "pos": [
+        1320,
+        570
+      ],
+      "size": [
+        500,
+        120
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "VAE",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "VAE",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            55,
+            67
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_int8_convrot.safetensors"
+      ],
+      "widgets_values_named": {
+        "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+      }
+    },
+    {
+      "id": 33,
+      "type": "MiniMaxH3ReferenceToVideo",
+      "pos": [
+        1810,
+        100
+      ],
+      "size": [
+        280,
+        444
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "clip",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "CLIP",
+          "pos": null,
+          "link": 66
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "vae",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "VAE",
+          "pos": null,
+          "link": 67
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "audio_vae",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "VAE",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": "ref_image_0",
+          "locked": null,
+          "name": "ref_images.ref_image_0",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 68
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": "ref_video_0",
+          "locked": null,
+          "name": "ref_videos.ref_video_0",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": "ref_video_audio_0",
+          "locked": null,
+          "name": "ref_video_audios.ref_video_audio_0",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "AUDIO",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": "ref_audio_0",
+          "locked": null,
+          "name": "ref_audios.ref_audio_0",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "AUDIO",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "prompt",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 71
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "width",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 72
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "height",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 73
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_images.ref_image_1",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 69
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_images.ref_image_2",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 70
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_audios.ref_audio_1",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "AUDIO",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_audios.ref_audio_2",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "AUDIO",
+          "pos": null,
+          "link": null
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_images.ref_image_3",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": 74
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "ref_images.ref_image_4",
+          "nameLocked": null,
+          "removable": null,
+          "shape": 7,
+          "type": "IMAGE",
+          "pos": null,
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "positive",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "CONDITIONING",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            57
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "LATENT",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "LATENT",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            63
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MiniMaxH3ReferenceToVideo",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "subject_definitions:\n<Subject 1> is the single character depicted in <Picture 1>. Preserve the source identity, facial proportions, hair shape and color, skin tone, body proportions, clothing, accessories, palette, linework and rendering style.\n\nsummary:\n[reference generation] Create one static three-view character turnaround sheet showing only <Subject 1> from <Picture 1>. All panels are simultaneous parts of the same sheet, not successive shots.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - retain the visible identity, drawing style and outfit from <Picture 1> across every view and crop. Infer unseen back and side details conservatively from visible evidence; these details are design estimates rather than information supplied by the image.\n\ndetailed_description:\nThe sheet follows the illustration or photographic rendering style present in <Picture 1>, with the same color palette and material treatment. A clean, plain white studio background keeps every silhouette and detail readable.\nLayout instruction metadata follows. This compact JSON describes approximate composition, not a coordinate-control API or visible scene content.\nBEGIN_LAYOUT_JSON\n\\{\"coordinates\":\"normalized 0..1; rect=[left,top,width,height]; origin=canvas top-left\",\"purpose\":\"instruction regions only; do not draw boxes, panel IDs, labels or JSON text\",\"appearance_reference\":\"<Picture 1> only\",\"full_body_alignment\":\\{\"feet_y\":0.92,\"scale\":\"one shared aspect-preserving character scale fitting every full-body region; preserve source anatomy\"\\},\"circle_rule\":\"for details, fit a true circle inside the region in pixel space; diameter=min(region pixel width,region pixel height); show the specified image detail, not a plain disk\",\"panels\":[\\{\"id\":\"front\",\"rect\":[0.02,0.03,0.31,0.94],\"view\":\"front facing viewer\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"left_side\",\"rect\":[0.345,0.03,0.31,0.94],\"view\":\"strict anatomical left side; nose and toes point sheet-left\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"back\",\"rect\":[0.67,0.03,0.31,0.94],\"view\":\"back facing viewer; face turned away\",\"content\":\"same character; full body; head to soles\"\\}]\\}\nEND_LAYOUT_JSON\n\n[Shot 1] From the first frame to the final frame of this five-frame output, display one finished, completely stationary reference sheet of <Subject 1>. Arrange exactly three equally wide vertical panels side by side with consistent gutters: front view on the left, anatomical left side view in the middle, and back view on the right. All three panels have the same height, white background, camera distance, body scale, and ground line. The central view is a strict ninety-degree profile showing the character's left side, with the nose pointing toward the left edge of the sheet. The right view shows the back of the head, torso, clothing and heels. The left view faces directly toward the viewer. Keep each silhouette fully separated from the neighboring panel; no overlaps and no fourth view.\nIn every full-body panel, show the entire character from the top of the head to the soles of both feet, with comfortable clear margins above the hair and below the shoes. Use the same neutral upright pose, relaxed arms, proportions, outfit and accessory placement in the front, side and back views. Keep the feet on one consistent baseline and avoid wide-angle distortion. No foot, hand, hair tip or garment hem is cropped by a panel boundary. The portrait and detail crops, if present, intentionally show only the specified body region.\nMatch the face and recognizable features to <Picture 1> instead of substituting a generic face. Preserve the source head-to-body ratio, shoulder width, torso-to-leg proportions, silhouette and build in every view. The regions allocate space; never stretch or squash the person to fill a region. Choose one common aspect-preserving character scale that fits all three full-body regions, with the same head height and soles on the same baseline. The strict left-side profile shows the anatomical left side; the face, nose and toes all point to the sheet's left. In the back view the character faces away from the viewer, with no front-facing face or torso. Maintain the same hair volume, garment construction, visible fabric pattern and characteristic color relationships. Lighting is soft, even and consistent across all panels. Represent unavailable back details as a restrained continuation of the visible costume and hairstyle, without extra decorations. Each panel depicts the same character, not a group of distinct people. No unrelated people, duplicate limbs or extra heads occur within a panel. If circular details are present, they contain identifiable close-up imagery of the specified features, not plain filled disks, blank circles or color swatches. Circular crops have no drawn outline. The layout regions are invisible planning information: draw no rectangular frames, grid lines, IDs or JSON characters. The panel layout is present immediately and remains identical throughout the output. The character does not turn, walk, blink, speak or change expression. There is no animation, camera motion, zoom, transition, cut or time-dependent transformation. Do not add labels, captions, numbers, letters, logos, watermarks or other visible text anywhere on the sheet.\n\noverall_soundscape:\nSilence. No dialogue, singing, ambience or sound effects.\n\nnon_diegetic_music:\nN/A",
+        2240,
+        1280,
+        5,
+        "match"
+      ],
+      "widgets_values_named": {
+        "prompt": "subject_definitions:\n<Subject 1> is the single character depicted in <Picture 1>. Preserve the source identity, facial proportions, hair shape and color, skin tone, body proportions, clothing, accessories, palette, linework and rendering style.\n\nsummary:\n[reference generation] Create one static three-view character turnaround sheet showing only <Subject 1> from <Picture 1>. All panels are simultaneous parts of the same sheet, not successive shots.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - retain the visible identity, drawing style and outfit from <Picture 1> across every view and crop. Infer unseen back and side details conservatively from visible evidence; these details are design estimates rather than information supplied by the image.\n\ndetailed_description:\nThe sheet follows the illustration or photographic rendering style present in <Picture 1>, with the same color palette and material treatment. A clean, plain white studio background keeps every silhouette and detail readable.\nLayout instruction metadata follows. This compact JSON describes approximate composition, not a coordinate-control API or visible scene content.\nBEGIN_LAYOUT_JSON\n\\{\"coordinates\":\"normalized 0..1; rect=[left,top,width,height]; origin=canvas top-left\",\"purpose\":\"instruction regions only; do not draw boxes, panel IDs, labels or JSON text\",\"appearance_reference\":\"<Picture 1> only\",\"full_body_alignment\":\\{\"feet_y\":0.92,\"scale\":\"one shared aspect-preserving character scale fitting every full-body region; preserve source anatomy\"\\},\"circle_rule\":\"for details, fit a true circle inside the region in pixel space; diameter=min(region pixel width,region pixel height); show the specified image detail, not a plain disk\",\"panels\":[\\{\"id\":\"front\",\"rect\":[0.02,0.03,0.31,0.94],\"view\":\"front facing viewer\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"left_side\",\"rect\":[0.345,0.03,0.31,0.94],\"view\":\"strict anatomical left side; nose and toes point sheet-left\",\"content\":\"same character; full body; head to soles\"\\},\\{\"id\":\"back\",\"rect\":[0.67,0.03,0.31,0.94],\"view\":\"back facing viewer; face turned away\",\"content\":\"same character; full body; head to soles\"\\}]\\}\nEND_LAYOUT_JSON\n\n[Shot 1] From the first frame to the final frame of this five-frame output, display one finished, completely stationary reference sheet of <Subject 1>. Arrange exactly three equally wide vertical panels side by side with consistent gutters: front view on the left, anatomical left side view in the middle, and back view on the right. All three panels have the same height, white background, camera distance, body scale, and ground line. The central view is a strict ninety-degree profile showing the character's left side, with the nose pointing toward the left edge of the sheet. The right view shows the back of the head, torso, clothing and heels. The left view faces directly toward the viewer. Keep each silhouette fully separated from the neighboring panel; no overlaps and no fourth view.\nIn every full-body panel, show the entire character from the top of the head to the soles of both feet, with comfortable clear margins above the hair and below the shoes. Use the same neutral upright pose, relaxed arms, proportions, outfit and accessory placement in the front, side and back views. Keep the feet on one consistent baseline and avoid wide-angle distortion. No foot, hand, hair tip or garment hem is cropped by a panel boundary. The portrait and detail crops, if present, intentionally show only the specified body region.\nMatch the face and recognizable features to <Picture 1> instead of substituting a generic face. Preserve the source head-to-body ratio, shoulder width, torso-to-leg proportions, silhouette and build in every view. The regions allocate space; never stretch or squash the person to fill a region. Choose one common aspect-preserving character scale that fits all three full-body regions, with the same head height and soles on the same baseline. The strict left-side profile shows the anatomical left side; the face, nose and toes all point to the sheet's left. In the back view the character faces away from the viewer, with no front-facing face or torso. Maintain the same hair volume, garment construction, visible fabric pattern and characteristic color relationships. Lighting is soft, even and consistent across all panels. Represent unavailable back details as a restrained continuation of the visible costume and hairstyle, without extra decorations. Each panel depicts the same character, not a group of distinct people. No unrelated people, duplicate limbs or extra heads occur within a panel. If circular details are present, they contain identifiable close-up imagery of the specified features, not plain filled disks, blank circles or color swatches. Circular crops have no drawn outline. The layout regions are invisible planning information: draw no rectangular frames, grid lines, IDs or JSON characters. The panel layout is present immediately and remains identical throughout the output. The character does not turn, walk, blink, speak or change expression. There is no animation, camera motion, zoom, transition, cut or time-dependent transformation. Do not add labels, captions, numbers, letters, logos, watermarks or other visible text anywhere on the sheet.\n\noverall_soundscape:\nSilence. No dialogue, singing, ambience or sound effects.\n\nnon_diegetic_music:\nN/A",
+        "width": 2240,
+        "height": 1280,
+        "length": 5,
+        "ref_image_size": "match"
+      }
+    },
+    {
+      "id": 34,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        3010,
+        100
+      ],
+      "size": [
+        240,
+        330
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "noise",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "NOISE",
+          "pos": null,
+          "link": 59
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "guider",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "GUIDER",
+          "pos": null,
+          "link": 60
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "sampler",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "SAMPLER",
+          "pos": null,
+          "link": 61
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "sigmas",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "SIGMAS",
+          "pos": null,
+          "link": 62
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "latent_image",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "LATENT",
+          "pos": null,
+          "link": 63
+        }
+      ],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "output",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "LATENT",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            54
+          ]
+        },
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "denoised_output",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "LATENT",
+          "pos": null,
+          "slot_index": null,
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      }
+    },
+    {
+      "id": 35,
+      "type": "CLIPLoader",
+      "pos": [
+        1320,
+        310
+      ],
+      "size": [
+        500,
+        120
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "CLIP",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "CLIP",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            66
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ],
+      "widgets_values_named": {
+        "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "type": "minimax",
+        "device": "default"
+      }
+    },
+    {
+      "id": 36,
+      "type": "UNETLoader",
+      "pos": [
+        1320,
+        100
+      ],
+      "size": [
+        500,
+        120
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "showAdvanced": null,
+      "inputs": [],
+      "outputs": [
+        {
+          "color_off": null,
+          "color_on": null,
+          "dir": null,
+          "label": null,
+          "locked": null,
+          "name": "MODEL",
+          "nameLocked": null,
+          "removable": null,
+          "shape": null,
+          "type": "MODEL",
+          "pos": null,
+          "slot_index": null,
+          "links": [
+            53,
+            56
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0"
+      },
+      "widgets_values": [
+        "minimax\\DasiwaMinimaxH3_dasiwaHybridV2_int8.safetensors",
+        "default"
+      ],
+      "widgets_values_named": {
+        "unet_name": "minimax\\DasiwaMinimaxH3_dasiwaHybridV2_int8.safetensors",
+        "weight_dtype": "default"
+      }
+    }
+  ],
+  "links": [
+    [
+      22,
+      4,
+      0,
+      23,
+      0,
+      "IMAGE"
+    ],
+    [
+      53,
+      36,
+      0,
+      26,
+      0,
+      "MODEL"
+    ],
+    [
+      54,
+      34,
+      0,
+      28,
+      0,
+      "LATENT"
+    ],
+    [
+      55,
+      32,
+      0,
+      28,
+      1,
+      "VAE"
+    ],
+    [
+      56,
+      36,
+      0,
+      29,
+      0,
+      "MODEL"
+    ],
+    [
+      57,
+      33,
+      0,
+      29,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      58,
+      28,
+      0,
+      31,
+      0,
+      "IMAGE"
+    ],
+    [
+      59,
+      30,
+      0,
+      34,
+      0,
+      "NOISE"
+    ],
+    [
+      60,
+      29,
+      0,
+      34,
+      1,
+      "GUIDER"
+    ],
+    [
+      61,
+      27,
+      0,
+      34,
+      2,
+      "SAMPLER"
+    ],
+    [
+      62,
+      26,
+      0,
+      34,
+      3,
+      "SIGMAS"
+    ],
+    [
+      63,
+      33,
+      1,
+      34,
+      4,
+      "LATENT"
+    ],
+    [
+      64,
+      31,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      65,
+      23,
+      0,
+      25,
+      0,
+      "STRING"
+    ],
+    [
+      66,
+      35,
+      0,
+      33,
+      0,
+      "CLIP"
+    ],
+    [
+      67,
+      32,
+      0,
+      33,
+      1,
+      "VAE"
+    ],
+    [
+      68,
+      23,
+      4,
+      33,
+      3,
+      "IMAGE"
+    ],
+    [
+      69,
+      23,
+      3,
+      33,
+      10,
+      "IMAGE"
+    ],
+    [
+      70,
+      23,
+      5,
+      33,
+      11,
+      "IMAGE"
+    ],
+    [
+      71,
+      23,
+      0,
+      33,
+      7,
+      "STRING"
+    ],
+    [
+      72,
+      23,
+      1,
+      33,
+      8,
+      "INT"
+    ],
+    [
+      73,
+      23,
+      2,
+      33,
+      9,
+      "INT"
+    ],
+    [
+      74,
+      23,
+      6,
+      33,
+      14,
+      "IMAGE"
+    ]
+  ],
+  "floatingLinks": null,
+  "groups": [],
+  "config": {},
+  "extra": {
+    "frontendVersion": "1.55.14",
+    "ds": {
+      "scale": 0.54,
+      "offset": [
+        550,
+        30
+      ]
+    },
+    "reroutes": null
+  },
+  "extensions": {
+    "seed_widgets": {}
+  },
+  "version": 0.4
+}

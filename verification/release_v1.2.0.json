@@ -1,0 +1,165 @@
+{
+  "version": "1.2.0",
+  "date": "2026-10-16",
+  "status": "local candidate verified; not committed or published",
+  "python": {
+    "passed": 141,
+    "failed": 0,
+    "runner": "unittest discover",
+    "runtime": "3.13.12",
+    "adaptive_cases_collected": 8,
+    "new_python_dependencies_added": false
+  },
+  "javascript_dom": {
+    "passed": 84,
+    "failed": 0,
+    "skipped": 0,
+    "node": "24.19.0",
+    "jsdom": "30.1.1"
+  },
+  "workflow_audit": {
+    "node_ids": [
+      "H3CharacterSheetDesigner",
+      "H3CharacterSheetDesignerReference",
+      "H3CharacterSheetDesignerMultiReference",
+      "H3CharacterSheetDesignerReferenceV11",
+      "H3CharacterSheetDesignerReference13"
+    ],
+    "workflows": [
+      {
+        "path": "workflows/api/H3_Character_Sheet_Designer_MultiReference_api.json",
+        "designer_states": [
+          {
+            "id": "23",
+            "type": "H3CharacterSheetDesignerMultiReference",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 0
+      },
+      {
+        "path": "workflows/api/H3_Character_Sheet_Designer_MultiReference_flat_api.json",
+        "designer_states": [
+          {
+            "id": "23",
+            "type": "H3CharacterSheetDesignerMultiReference",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 0
+      },
+      {
+        "path": "workflows/api/H3_Character_Sheet_Designer_Reference_V11_flat_api.json",
+        "designer_states": [
+          {
+            "id": "23",
+            "type": "H3CharacterSheetDesignerReferenceV11",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 0
+      },
+      {
+        "path": "workflows/experimental/H3_Character_Sheet_Designer_MultiReference_wf.json",
+        "designer_states": [
+          {
+            "id": 23,
+            "type": "H3CharacterSheetDesignerMultiReference",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 37
+      },
+      {
+        "path": "workflows/H3_Character_Sheet_Designer_MultiReference_flat_wf.json",
+        "designer_states": [
+          {
+            "id": 23,
+            "type": "H3CharacterSheetDesignerMultiReference",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 23
+      },
+      {
+        "path": "workflows/H3_Character_Sheet_Designer_Reference13_4images.json",
+        "designer_states": [
+          {
+            "id": 43,
+            "type": "H3CharacterSheetDesignerReference13",
+            "width": 3808,
+            "height": 1280
+          }
+        ],
+        "links_checked": 45
+      },
+      {
+        "path": "workflows/H3_Character_Sheet_Designer_Reference_V11_flat_wf.json",
+        "designer_states": [
+          {
+            "id": 23,
+            "type": "H3CharacterSheetDesignerReferenceV11",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 23
+      },
+      {
+        "path": "workflows/H3_Character_Sheet_Designer_wf.json",
+        "designer_states": [
+          {
+            "id": 23,
+            "type": "H3CharacterSheetDesignerReference",
+            "width": 2816,
+            "height": 1280
+          }
+        ],
+        "links_checked": 32
+      }
+    ],
+    "old_workflows_byte_identical": [
+      "workflows\\H3_Character_Sheet_Designer_Reference_V11_flat_wf.json",
+      "workflows\\experimental\\H3_Character_Sheet_Designer_MultiReference_wf.json",
+      "workflows\\api\\H3_Character_Sheet_Designer_MultiReference_api.json",
+      "workflows\\H3_Character_Sheet_Designer_wf.json",
+      "workflows\\api\\H3_Character_Sheet_Designer_Reference_V11_flat_api.json",
+      "workflows\\H3_Character_Sheet_Designer_MultiReference_flat_wf.json",
+      "workflows\\api\\H3_Character_Sheet_Designer_MultiReference_flat_api.json"
+    ],
+    "current_workflow_byte_identical": true,
+    "external_seed_to_inner_sampler_verified": true,
+    "fixed_seed": 672732600220299,
+    "runtime_model_execution": "not performed",
+    "installed_frontend_load": "not repeated"
+  },
+  "compatibility": {
+    "previous_four_ids_retained": true,
+    "node_variant_drop_in_replacement": false,
+    "legacy_workflows_preserved": 7,
+    "all_workflows_checked": 8
+  },
+  "clothing_2_to_3_experiment": "reverted before this candidate",
+  "visual_quality": {
+    "source": "user-supplied fixed-seed Layout OFF comparisons",
+    "known_limits": [
+      "clothing crop noncompliance",
+      "full-body substitution",
+      "missing/rearranged detail views"
+    ],
+    "controlled_multi_subject_acceptance": "not established"
+  },
+  "live_node_registration": "five IDs confirmed read-only on 2026-10-16",
+  "gpu_generation_for_release": "not run",
+  "public_ci": "not run before publication",
+  "old_tags_releases_assets_policy": "preserve all; no deletion",
+  "upstream_base": "99068e7d0fd192c3accee391931d1444ce2b47eb",
+  "upstream_license_and_notice_preserved": true,
+  "local_git_head_unchanged": "652abf0cd185026e986e649086b6189953e8952a",
+  "published": false
+}

@@ -148,7 +148,9 @@ export function validatePreview(data, state) {
 
 /** One persistent value, with separate advisory preview and request identity. */
 export class DesignerController {
-  constructor({raw, requestPreview, transaction = fn => fn(), onChange = () => {}, onCommit = () => {}, timeoutMs = 15000, readRaw = null, writeRaw = null}) {
+  constructor({raw, requestPreview, transaction = fn => fn(), onChange = () => {}, onCommit = () => {}, timeoutMs = 15000, readRaw = null, writeRaw = null, adapter = null}) {
+    this.adapter = adapter; this.viewIds = adapter?.viewIds ?? VIEW_IDS; this.presets = adapter?.presets ?? PRESETS;
+    this.parseState = adapter?.parse ?? parseState; this.serializeState = adapter?.serialize ?? serializeState;
     this.readRaw = readRaw; this.writeRaw = writeRaw; this._raw = raw; this.observedRaw = raw; this.state = null; this.error = null; this.preview = null; this.previewRaw = null;
     this.pending = false; this.previewError = null; this.maxResolution = Infinity;
     this.generation = 0; this.requestNumber = 0; this.disposed = false;
@@ -169,7 +171,7 @@ export class DesignerController {
   restore(raw, notify = true) {
     if (this.disposed) return;
     this.invalidate(); this.observedRaw = raw; if (this.raw !== raw) this.raw = raw; this.previewRaw = null; this.previewError = null;
-    try { this.state = parseState(raw, this.maxResolution); this.error = null; }
+    try { this.state = this.parseState(raw, this.maxResolution); this.error = null; }
     catch (error) { this.state = null; this.error = error; }
     if (notify) this.emit('restore');
     if (this.state) void this.refreshPreview();
@@ -177,11 +179,11 @@ export class DesignerController {
   commit(next) {
     if (this.disposed) return false;
     this.syncFromSource();
-    const raw = serializeState(next, this.maxResolution);
+    const raw = this.serializeState(next, this.maxResolution);
     if (raw === this.raw) return false;
     const previous = this.raw;
     this.transaction(() => {
-      this.invalidate(); this.observedRaw = raw; this.raw = raw; this.state = parseState(raw, this.maxResolution); this.error = null; this.previewError = null; this.previewRaw = null;
+      this.invalidate(); this.observedRaw = raw; this.raw = raw; this.state = this.parseState(raw, this.maxResolution); this.error = null; this.previewError = null; this.previewRaw = null;
       this.onCommit(raw, previous);
     });
     this.emit('commit'); void this.refreshPreview(); return true;
@@ -189,15 +191,16 @@ export class DesignerController {
   change(mutator) {
     this.syncFromSource();
     if (!this.state || this.disposed) return false;
-    const next = structuredClone(this.state); mutator(next); return this.commit(next);
+    const next = this.adapter?.migrate ? this.adapter.migrate(this.state) : structuredClone(this.state);
+    mutator(next); return this.commit(next);
   }
   toggle(view) {
     this.syncFromSource();
-    if (!VIEW_IDS.includes(view)) fail('views');
+    if (!this.viewIds.includes(view)) fail('views');
     if (this.state?.views.length === 1 && this.state.views[0] === view) fail('lastView');
     return this.change(next => { next.views = next.views.includes(view) ? next.views.filter(id => id !== view) : [...next.views, view]; });
   }
-  preset(name) { if (!PRESETS[name]) fail('views'); return this.change(next => { next.views = [...PRESETS[name]]; }); }
+  preset(name) { if (!this.presets[name]) fail('views'); return this.change(next => { next.views = [...this.presets[name]]; }); }
   setMode(mode) {
     this.syncFromSource();
     if (mode === this.state?.size.mode) return false;
@@ -222,12 +225,12 @@ export class DesignerController {
     if (text === this.state.part_prompts?.[part]) return false;
     // Opening an empty editor is not a schema migration or an Undo entry.
     if (!text.trim() && !this.state.part_prompts?.[part]) return false;
-    const next = migratePartState(this.state);
+    const next = this.adapter?.migrate ? this.adapter.migrate(this.state) : migratePartState(this.state);
     if (text.trim()) next.part_prompts[part] = text;
     else delete next.part_prompts[part];
     return this.commit(next);
   }
-  applyRaw(raw) { return this.commit(parseState(raw, this.maxResolution)); }
+  applyRaw(raw) { return this.commit(this.parseState(raw, this.maxResolution)); }
   async refreshPreview() {
     if (this.syncFromSource()) return;
     if (this.disposed || !this.state) return;

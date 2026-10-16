@@ -152,3 +152,24 @@
 }
 
 .h3-baseline { position: absolute; left: 3%; right: 3%; height: 1px; background: #608a8425; pointer-events: none; }
+.h3-multi-reference .h3-cards { display: block; }
+.h3-multi-reference .h3-card-row { display: grid; gap: 8px; margin-bottom: 8px; }
+.h3-multi-reference .h3-head-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.h3-multi-reference .h3-body-row { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.h3-artwork > img { width: 100%; height: 100%; object-fit: contain; }
+.h3-reference-roles { border-top: 1px solid #394753; margin-top: 14px; padding-top: 12px; }
+.h3-reference-role-row { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(0, 1.2fr); gap: 10px; align-items: center; margin: 9px 0; }
+.h3-reference-roles [data-reference-plan] { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .h3-multi-reference .h3-card-label { font-size: 10px; }
+  .h3-reference-role-row { grid-template-columns: 1fr; }
+}
+
+/* Individual output previews are separate canvases, with their real aspect ratios. */
+.h3-batch-stage { display: block; overflow: auto; padding: 10px; box-sizing: border-box; }
+.h3-output-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); align-items: start; gap: 12px; width: 100%; }
+.h3-output-gallery[hidden] { display: none; }
+.h3-output-card { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 6px; border: 1px solid #586f81; border-radius: 5px; background: #1b2630; color: #dcecf7; text-align: left; cursor: pointer; }
+.h3-output-card[aria-pressed="true"] { border-color: #81efdb; box-shadow: 0 0 0 1px #81efdb; }
+.h3-output-title { font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+.h3-output-canvas { position: relative; background: white; width: 100%; flex: none; overflow: hidden; }
