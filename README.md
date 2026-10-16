@@ -1,10 +1,10 @@
 # H3 Character Sheet Designer
+
+[日本語の説明はこちら](#日本語)
+
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-
 Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
-
-MiniMax H3の参照画像を使うキャラクターシート作成ノードです。現行の **Reference 13 Views** は人物画像1枚＋追加参照3枚に対応します。**旧4ノードは削除していません。旧ワークフローは元のノードのまま継続利用できます。**
 
 ## What's New — v1.2.0
 
@@ -15,9 +15,9 @@ MiniMax H3の参照画像を使うキャラクターシート作成ノードで�
 - Retain Designer, Reference, Multi Reference and Reference V1.1, including their existing workflows. Reference V1.1 keeps its independent-view Batch Out feature.
 - Retain the previous clothing allocation (448×1120 at panel height 1120). The experimental 2:3 layout was reverted after visual comparison.
 
-変更点と既知の制約は [CHANGELOG](CHANGELOG.md) と [v1.2.0 release notes](docs/releases/v1.2.0.md) を参照してください。
+See the [CHANGELOG](CHANGELOG.md) and [v1.2.0 release notes](docs/releases/v1.2.0.md) for changes and known limits.
 
-## Current workflow / 現行ワークフロー
+## Current workflow
 
 1. Update the node folder, restart ComfyUI, and reload its browser page. Open [Reference13 · four images](workflows/H3_Character_Sheet_Designer_Reference13_4images.json).
 2. Choose your own character image and installed H3 model, text encoder and video VAE. The template wires all four image loaders: select valid images in each connected loader, or disconnect unused optional reference inputs on the Designer for a single-reference run. Models and reference images are not bundled.
@@ -25,8 +25,6 @@ MiniMax H3の参照画像を使うキャラクターシート作成ノードで�
 4. Set the external **Seed / Noise** control to `fixed` for comparisons, or `randomize` for variations. The template generates five frames and saves the first decoded frame as the static sheet.
 
 The saved template includes an **empty Power Lora Loader (rgthree)** and therefore requires rgthree-comfy to open unchanged. **No LoRA is selected or required for this character-sheet method.** This node pack itself adds no Python runtime dependency. The template's model filenames are examples; reselect files installed on your machine.
-
-人物・追加参照・モデルは各自の環境で選択してください。テンプレートは4画像とも配線済みなので、接続するLoad Imageには有効な画像を選び、使わない追加参照はDesigner側の接続を外してください。比較時のSeed固定はサブグラフ外の標準RandomNoiseで操作します。テンプレートには未選択のrgthree Power Lora Loaderが残っていますが、今回の生成ではLoRAを使用していません。
 
 ### Reference13 wiring
 
@@ -39,7 +37,7 @@ The saved template includes an **empty Power Lora Loader (rgthree)** and therefo
 
 Keep the guide wire connected when OFF; its output is `None`. Picture numbering skips absent images. Input/output contracts are listed above; the previous nodes retain their original contracts.
 
-## Compatibility and previous workflows / 互換性と旧版
+## Compatibility and previous workflows
 
 | Node ID | Role | Workflow |
 | --- | --- | --- |
@@ -51,15 +49,11 @@ Keep the guide wire connected when OFF; its output is `None`. Picture numbering 
 
 Compatibility means **the original node IDs and contracts remain available**. It does not mean that all node variants are interchangeable without rewiring, or that generated pixels remain identical after changing node variants. Reference13 can read schema 1/2 states; its schema 3 and Multi Reference's schema 3 are different formats. V1.1 has five list outputs, whereas Reference13 has eight single-value outputs. Use each variant with its own workflow.
 
-互換性は「旧ノードを保持し、旧ワークフローを使える」という意味です。新旧ノードへの無変更の置き換えや、生成結果の完全一致を保証するものではありません。旧ワークフローを新ノードへ自動変換しません。
+## Validation and known limits
 
-## Validation and known limits / 確認範囲と制約
+The release checks cover deterministic compilation, state compatibility, image pass-through, OFF bypass, geometry, workflow wiring and frontend tests. User-supplied fixed-seed Layout-OFF generations were reviewed separately. Basic/head presets remained stable in that comparison, but clothing details could become full-body views or omit the neckline; all-13 layouts could omit or rearrange details. This is not a general visual-quality or success-rate guarantee. Unseen appearance is inferred by the model. See the [release verification](verification/release_v1.2.0.json) for the local results.
 
-The release checks cover deterministic compilation, state compatibility, image pass-through, OFF bypass, geometry, workflow wiring and frontend tests. User-supplied fixed-seed Layout-OFF generations were reviewed separately. Basic/head presets remained stable in that comparison, but clothing details could become full-body views or omit the neckline; all-13 layouts could omit or rearrange details. This is not a general visual-quality or success-rate guarantee. Unseen appearance is inferred by the model.
-
-Layout OFFでの衣装拡大・全13ビューの不安定さは既知の制約です。2:3の実験変更は採用せず、比較前の配置へ戻しています。コード／UIの検証とGPU生成品質の評価を区別します。最新版の検証結果は [release verification](verification/release_v1.2.0.json) に記録します。
-
-## Previous Reference workflow / 従来のReferenceワークフロー
+## Previous Reference workflow
 
 **For the previous Reference node, use `Use Layout Image = OFF` as the starting point.**
 OFF uses the character reference and an optimized prompt based on the original
@@ -69,22 +63,15 @@ framed mannequin sheet when closer layout matching is needed; it can also pull
 the result toward the mannequin's body proportions or leave mannequin parts.
 The original three-output node remains available.
 
-**従来のReferenceノードでは `Use Layout Image = OFF` を基本に使えます。** 人物参照と旧版を基本に
-最適化したプロンプトで生成します。ONは黒枠付き配置図を参照し、配置を強く指定したい
-場合に使います。マネキンの体型・比率に引っ張られたり、一部が残る場合があります。
-[接続・画風・検証済み範囲](docs/REFERENCE_LOCAL_JA.md)をご覧ください。
-
 Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** In the original official workflow linked below, this Designer is the only custom node; the remaining generation nodes are ComfyUI Core. The new four-image template also retains an empty rgthree Power Lora Loader. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
 
 The setup is simple: load the template, choose your reference image and models, select the views you want, and generate. To generate a single view, leave only that view selected in the Designer and queue it manually.
 
-## Official template / 公式テンプレート
+## Official template
 
-**[Download the workflow JSON / ワークフローJSONをダウンロード](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [View in repository / リポジトリで開く](workflows/H3_Character_Sheet_Designer_wf.json)
+**[Download the workflow JSON](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [View in repository](workflows/H3_Character_Sheet_Designer_wf.json)
 
 Load this GUI workflow in ComfyUI, then choose your reference image and installed models. See [template setup](#official-template-setup) below.
-
-このJSONをComfyUIへ読み込み、参照画像とお使いのモデルを選択してください。導入手順は下の[公式テンプレートの使い方](#公式テンプレートの使い方)をご覧ください。
 
 <img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
 
@@ -126,17 +113,6 @@ The [official GUI workflow](workflows/H3_Character_Sheet_Designer_wf.json) is th
 4. Keep **Use Layout Image OFF** to prioritize the character reference; style defaults to **None**. Choose views and sizes in the Designer, then queue. The saved five-view Auto selection (front/left portraits and front/left/back full-body views) compiles to **2816 × 1280** with the current compiler. Hands and footwear detail panels are unselected in this template. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
 
 The saved connections and state are checked by local tests. The current Reference OFF node has run on native H3 after restart; actual prompts and reference bypass were verified. Controlled GPU comparisons retained five views, but later-frame darkening and narrow foot margins remain. The template saves frame 0. See the [test scope and limits](docs/REFERENCE_LOCAL_JA.md); large sheets can require substantial VRAM and time.
-
-### 公式テンプレートの使い方
-
-上のリンクからJSONをダウンロードし、ComfyUIのキャンバスへドラッグ＆ドロップするか、ワークフロー読み込み機能で開いてください。添付されたシート用ワークフローをそのまま収録しています（API形式ではありません）。
-
-1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.10** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
-2. **Load Image** でご自身の参照画像を選択してください。保存済みの `krea2_00327_.webp` は仮のファイル名で、画像は同梱していません。
-3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。保存済み設定はDasiwa Hybrid V2 INT8、Qwen3-VL 32B NVFP4/AWQ、INT8/ConvRot VAE、Euler／simple／20 stepsです。共通の最適設定を保証するものではありません。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
-4. 人物参照を優先する通常用途では **Use Layout ImageをOFF**、画風は **指定なし**から始めます。Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
-
-保存状態と接続をローカル試験で確認しています。再起動後の実Reference OFFノードで、実行プロンプトと配置参照のバイパスも確認済みです。GPU比較では5ビューを維持しましたが、後半フレームの暗化と足元の余白は未解決です。このテンプレートは先頭フレームを保存します。[検証範囲と制約](docs/REFERENCE_LOCAL_JA.md)をご確認ください。
 
 ## Connect to native H3
 
@@ -214,7 +190,7 @@ The only input is `state_json`:
 Existing version-1 data remains supported without automatic rewriting. The first nonempty part edit explicitly upgrades the saved state to version 2, adding a required `part_prompts` object. For example:
 
 ```json
-{"schema_version":2,"views":["face_front","body_front","body_left","body_back"],"size":{"mode":"auto","body_height":1120,"manual_width":2240,"manual_height":1280},"part_prompts":{"lower_body":"黒いロングパンツ","footwear":"黒いブーツ","back_clothing":"背中に花柄とFLOWERの文字"}}
+{"schema_version":2,"views":["face_front","body_front","body_left","body_back"],"size":{"mode":"auto","body_height":1120,"manual_width":2240,"manual_height":1280},"part_prompts":{"lower_body":"Black long trousers","footwear":"Black boots","back_clothing":"A floral pattern and the word FLOWER on the back"}}
 ```
 
 Allowed part IDs, in canonical order: `head_hair`, `face`, `upper_clothing`, `back_clothing`, `lower_body`, `hands`, `footwear`, `other`. Keys are optional inside the required object. Values must be strings, at most 1000 UTF-16 code units per part (matching the browser counter); whitespace-only values normalize away, while nonblank text is not trimmed. State JSON is limited to 64 KiB; the bounded preview HTTP envelope allows 192 KiB for escaping. Empty version-2 instructions generate the same prompt and geometry as version 1. Unknown versions are retained as visible errors, never silently downgraded or reset.
@@ -242,7 +218,93 @@ python tests/serve_demo.py
 
 The harness uses the production compiler and UI renderer with a simulated ComfyUI boundary. It does **not** demonstrate ComfyUI installation, real frontend Undo/Redo, downstream queue acceptance, or GPU generation. See [verification details](docs/VERIFICATION.md) for tested and untested stages. Legacy frontends, Nodes 2.0, and unspecified ComfyUI versions are not claimed compatible. On unsupported DOM-widget environments, the node retains a standard STRING input and headless compilation.
 
+## License
+
+Original code and documentation for which ukr8b3g-cmyk holds the applicable rights are available under the [MIT License](LICENSE). Third-party material retains its original terms; images, artwork, screenshots, model weights and user-provided references are outside this MIT grant. See [NOTICE.md](NOTICE.md) before redistributing. This does not guarantee rights to any image or generated output, or replace the terms of ComfyUI, models, dependencies or external services.
+
+---
+
 ## 日本語
+
+[English](#h3-character-sheet-designer)
+
+MiniMax H3の参照画像を使うキャラクターシート作成ノードです。現行の **Reference 13 Views** は人物画像1枚＋追加参照3枚に対応します。**旧4ノードと旧ワークフローも、そのまま継続利用できます。**
+
+### v1.2.0の変更点
+
+- **Reference 13 Views** を追加しました。頭部6方向、全身3方向、衣装の前後、両手、足・履物の計13ビューから選択できます。
+- 衣装の形、着用／衣服のみの表示、手の覆い、履物を参照に合わせる自動選択に対応します。部位指定の範囲と優先順位を保持し、特定の人物や衣装は固定しません。
+- 4枚の参照画像を変更せず出力します。レイアウト画像がOFFなら、ガイドを読み込み・描画せず `None` を返します。
+- [人物1枚＋追加参照3枚のワークフロー](workflows/H3_Character_Sheet_Designer_Reference13_4images.json)を同梱しました。**Seed／Noiseをサブグラフ外に配置**し、標準の `fixed`／`randomize` を操作できます。
+- 旧Designer・Reference・Multi Reference・Reference V1.1と各ワークフローを保持します。Reference V1.1のビュー別個別出力も利用できます。
+- 衣装領域は従来の配置（基準高1120で448×1120）を保持しています。比較した2:3の実験変更は取り消しました。
+
+変更履歴は[CHANGELOG](CHANGELOG.md)、リリースの説明は[v1.2.0のリリースノート](docs/releases/v1.2.0.md)をご覧ください。
+
+### 導入と現行ワークフロー
+
+1. リポジトリをComfyUIの `custom_nodes` に配置・更新し、ComfyUIを再起動してブラウザーを再読み込みします。
+2. [Reference13の4画像ワークフロー](workflows/H3_Character_Sheet_Designer_Reference13_4images.json)を開き、人物画像、導入済みのH3モデル・テキストエンコーダー・動画用VAEを選びます。モデルと参照画像は同梱していません。
+3. テンプレートは4枚とも配線済みです。接続するLoad Imageには有効な画像を選び、使わない追加参照はDesigner側の接続を外します。
+4. **レイアウト画像はOFF**から始めます。OFFでは文章で構図を指示しますが、配置・衣装の切り取り・ビュー数の厳密な再現は保証されません。ONはガイド画像も参照し、体型や比率に影響することがあります。
+5. 比較時はサブグラフ外の **Seed／Noise** を `fixed`、変化を付けるときは `randomize` にします。テンプレートは5フレーム生成し、デコード後の先頭フレームを静止画として保存します。
+
+テンプレートを無変更で開くには **rgthree-comfy** が必要です。未選択のPower Lora Loaderが残っていますが、**この生成方法にLoRAは不要で、テンプレートでも選択していません。** このノード自体には追加のPython実行依存関係はありません。保存されたモデル名は例なので、利用環境に合わせて選び直してください。
+
+### Reference13の接続
+
+| Designerの出力 | ネイティブH3の接続先 |
+| --- | --- |
+| `prompt`、`width`、`height` | 対応するプロンプト・幅・高さの入力 |
+| `character_image` | `ref_images.ref_image_0` |
+| `layout_image` | `ref_images.ref_image_1` |
+| `reference_image_1`／`2`／`3` | `ref_images.ref_image_2`／`3`／`4` |
+
+ガイドの配線はOFFでも残せます。出力が `None` になり、参照画像の番号では欠けた画像を飛ばします。
+
+### 互換性と旧ワークフロー
+
+| ノードID | 役割 | ワークフロー |
+| --- | --- | --- |
+| `H3CharacterSheetDesignerReference13` | 現行の13ビューと4画像の出力 | [Reference13](workflows/H3_Character_Sheet_Designer_Reference13_4images.json) |
+| `H3CharacterSheetDesigner` | 元のプロンプト・幅・高さの3出力 | 保存済みの旧ワークフローを利用 |
+| `H3CharacterSheetDesignerReference` | 配置参照画像のON／OFF | [従来の公式版](workflows/H3_Character_Sheet_Designer_wf.json) |
+| `H3CharacterSheetDesignerMultiReference` | 役割別参照画像を使う13ビュー | [Multi Reference](workflows/H3_Character_Sheet_Designer_MultiReference_flat_wf.json) |
+| `H3CharacterSheetDesignerReferenceV11` | 手動配置とビュー別個別出力 | [Reference V1.1](workflows/H3_Character_Sheet_Designer_Reference_V11_flat_wf.json) |
+
+互換性は「旧ノードを保持し、旧ワークフローを使える」という意味です。新旧ノードを配線変更なしで差し替えたり、生成結果が完全に一致したりすることは保証しません。旧ワークフローを新ノードへ自動変換することもありません。
+
+Reference13はスキーマ1／2を読み込めますが、そのスキーマ3とMulti Referenceのスキーマ3は異なります。V1.1はリスト形式の5出力、Reference13は単一値の8出力です。各ノードに対応するワークフローを使ってください。
+
+### 確認範囲と既知の制約
+
+ローカルでは、コンパイルの再現性、保存状態の互換性、画像の受け渡し、OFF時のバイパス、配置、ワークフローの接続、フロントエンドを確認しています。利用者が生成したSeed固定・レイアウトOFFの比較画像は、コード検証とは別に確認しています。
+
+比較時には基本・頭部の構成は安定していましたが、衣装拡大図が全身図になったり、襟元が省略されたり、全13ビューで細部が欠落・再配置されたりしました。画質全般や成功率を保証する結果ではなく、参照にない面はモデルの推測になります。
+
+衣装の2:3実験は採用せず、比較前の配置へ戻しています。コード／UIの検証とGPU生成品質の評価は区別します。[リリース検証記録](verification/release_v1.2.0.json)もご覧ください。
+
+### 従来のReferenceワークフロー
+
+**従来のReferenceノードでは `Use Layout Image = OFF` を基本に使えます。** 人物参照と旧版を基本に
+最適化したプロンプトで生成します。ONは黒枠付き配置図を参照し、配置を強く指定したい
+場合に使います。マネキンの体型・比率に引っ張られたり、一部が残る場合があります。
+[接続・画風・検証済み範囲](docs/REFERENCE_LOCAL_JA.md)をご覧ください。
+
+**[従来の公式ワークフローJSONをダウンロード](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [リポジトリで開く](workflows/H3_Character_Sheet_Designer_wf.json)
+
+### 公式テンプレートの使い方
+
+上のリンクからJSONをダウンロードし、ComfyUIのキャンバスへドラッグ＆ドロップするか、ワークフロー読み込み機能で開いてください。添付されたシート用ワークフローをそのまま収録しています（API形式ではありません）。
+
+1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.10** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
+2. **Load Image** でご自身の参照画像を選択してください。保存済みの `krea2_00327_.webp` は仮のファイル名で、画像は同梱していません。
+3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。保存済み設定はDasiwa Hybrid V2 INT8、Qwen3-VL 32B NVFP4/AWQ、INT8/ConvRot VAE、Euler／simple／20 stepsです。共通の最適設定を保証するものではありません。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
+4. 人物参照を優先する通常用途では **Use Layout ImageをOFF**、画風は **指定なし**から始めます。Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
+
+保存状態と接続をローカル試験で確認しています。再起動後の実Reference OFFノードで、実行プロンプトと配置参照のバイパスも確認済みです。GPU比較では5ビューを維持しましたが、後半フレームの暗化と足元の余白は未解決です。このテンプレートは先頭フレームを保存します。[検証範囲と制約](docs/REFERENCE_LOCAL_JA.md)をご確認ください。
+
+### 従来ノードの基本操作
 
 ComfyUI用の独立ノードです。7種類のビュー、5つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡すプロンプトと幅・高さを作ります。固定テンプレートは英文、部位の自由入力は日本語も原文のまま保持します。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
 
@@ -269,7 +331,12 @@ ComfyUI用の独立ノードです。7種類のビュー、5つのプリセッ�
 
 背面の2例は目的に合わせて選び、両方必要な場合だけ組み合わせます。上半身しか写っていない参照では、下半身と履物をそれぞれの欄で指定できます。見えない部分のデザインを補う指示であり、元画像にない情報を復元する機能ではありません。
 
-短い指定で足りない場合は、上の[詳しい指定例](#short-english-examples)のように形・素材・縫い目を維持する条件や、手袋・手の覆いを付けない条件を追加してください。長い指示が常に優れるわけではありません。変更が反映されない場合やビュー間で色・服・手・靴・背面の柄がそろわない場合もあるため、各ビューを確認してください。成功率や英語と日本語の比較は測定していません。
+短い指定で足りない場合は、形・素材・縫い目を維持する条件や、手袋・手の覆いを付けない条件を追加してください。
+
+- **上半身の服：** `Change only the jacket color to silver-gray. Keep its shape, material, seams, and fasteners unchanged in every view.`
+- **手・手袋：** `Show bare hands with natural skin and short nails in every view. No gloves, hand coverings, or glove-like cuffs.`
+
+長い指示が常に優れるわけではありません。変更が反映されない場合やビュー間で色・服・手・靴・背面の柄がそろわない場合もあるため、各ビューを確認してください。成功率や英語と日本語の比較は測定していません。
 
 ### 手・足の拡大ビューを追加する目安
 
@@ -279,9 +346,6 @@ ComfyUI用の独立ノードです。7種類のビュー、5つのプリセッ�
 
 詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。
 
-
-## License / ライセンス
-
-Original code and documentation for which ukr8b3g-cmyk holds the applicable rights are available under the [MIT License](LICENSE). Third-party material retains its original terms; images, artwork, screenshots, model weights and user-provided references are outside this MIT grant. See [NOTICE.md](NOTICE.md) before redistributing. This does not guarantee rights to any image or generated output, or replace the terms of ComfyUI, models, dependencies or external services.
+### ライセンス
 
 ukr8b3g-cmykが権利を有する自作コード・文書には[MIT License](LICENSE)を適用します。第三者由来の素材は元の条件を維持し、画像・アートワーク・スクリーンショット・モデル重み・利用者の参照素材は今回のMIT許諾に含めません。再配布時は[NOTICE.md](NOTICE.md)を確認してください。画像・生成物の権利を保証するものではなく、ComfyUI・モデル・依存先・外部サービスの条件も別途適用されます。
