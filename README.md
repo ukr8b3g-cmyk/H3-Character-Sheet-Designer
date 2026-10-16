@@ -1,4 +1,6 @@
 # H3 Character Sheet Designer
+<img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
+
 
 Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
 
