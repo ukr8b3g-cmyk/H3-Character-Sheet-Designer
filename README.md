@@ -4,7 +4,7 @@
 
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
+Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional references with individual roles: same character, face, head, outfit, outfit front/back, hands or footwear. Select each role in Part prompts. Roles guide the model through text and do not guarantee perfect separation. Existing workflows default to same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
 
 ## What's New — v1.2.0
 
@@ -25,6 +25,16 @@ See the [CHANGELOG](CHANGELOG.md) and [v1.2.0 release notes](docs/releases/v1.2.
 4. Set the external **Seed / Noise** control to `fixed` for comparisons, or `randomize` for variations. The template generates five frames and saves the first decoded frame as the static sheet.
 
 The saved template includes an **empty Power Lora Loader (rgthree)** and therefore requires rgthree-comfy to open unchanged. **No LoRA is selected or required for this character-sheet method.** This node pack itself adds no Python runtime dependency. The template's model filenames are examples; reselect files installed on your machine.
+
+### Assign roles to additional references
+
+In **Reference 13 Views → Part prompts**, select a role for each of the three extra references: **Same character**, **Face only**, **Head / face / hair**, **Complete outfit**, **Front of outfit**, **Back of outfit**, **Hands**, or **Footwear**.
+
+For example, connect the character to `character_image`, a face reference to `reference_image_1`, and an outfit reference to `reference_image_2`. Select **Face only** for extra reference 1 and **Complete outfit** for extra reference 2. Keep the image-output connections shown below; unused inputs can remain disconnected. Role choices are saved in the workflow. Existing workflows keep the same-character behavior until you change a role.
+
+The node writes role-specific instructions into the prompt; it does not isolate image regions or guarantee exact identity/outfit transfer. Explicit part instructions and appearance choices take priority over dedicated references. For conflicting references with the same role, the later connected reference takes priority.
+
+Update through **ComfyUI Manager**, or open `ComfyUI/custom_nodes/H3-Character-Sheet-Designer` in a terminal and run `git pull`. Restart ComfyUI and reload the browser page afterward. These changes are available on the latest `main` branch.
 
 ### Reference13 wiring
 
@@ -250,6 +260,16 @@ MiniMax H3の参照画像を使うキャラクターシート作成ノードで�
 5. 比較時はサブグラフ外の **Seed／Noise** を `fixed`、変化を付けるときは `randomize` にします。テンプレートは5フレーム生成し、デコード後の先頭フレームを静止画として保存します。
 
 テンプレートを無変更で開くには **rgthree-comfy** が必要です。未選択のPower Lora Loaderが残っていますが、**この生成方法にLoRAは不要で、テンプレートでも選択していません。** このノード自体には追加のPython実行依存関係はありません。保存されたモデル名は例なので、利用環境に合わせて選び直してください。
+
+### 追加参照画像の役割指定
+
+**Reference 13 Views → Part prompts（部位プロンプト）**で、追加参照3枚それぞれに「同じキャラクターの補助参照」「顔のみ」「頭部・顔・髪」「衣装全体」「衣装前面」「衣装背面」「手」「足・履物」を指定できます。
+
+例：人物を `character_image`、顔画像を `reference_image_1`、衣装画像を `reference_image_2` に接続し、追加参照1を「顔のみ」、追加参照2を「衣装全体」にします。画像出力は下表の接続を維持し、未使用の追加入力は未接続にできます。役割はワークフローに保存され、既存ワークフローでは変更するまで従来の同一人物の補助参照として動作します。
+
+役割指定はプロンプトによる誘導で、画像領域の分離や顔・衣装の完全な転写を保証しません。明示的な部位指示と外見設定を優先し、同じ役割の参照が競合する場合は後の接続順の参照を優先します。
+
+**ComfyUI Managerで更新**するか、`ComfyUI/custom_nodes/H3-Character-Sheet-Designer` フォルダーでターミナルを開いて `git pull` を実行してください。その後、ComfyUIを再起動し、ブラウザーを再読み込みします。この機能は最新の `main` ブランチに含まれます。
 
 ### Reference13の接続
 

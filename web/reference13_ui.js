@@ -1,6 +1,6 @@
 import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, presetOf, StateError} from './reference13_state.js';
 import {createArtwork, createGuideArtwork} from './reference13_artwork.js';
-import {MULTI_VIEW_IDS, MULTI_PRESETS, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
+import {MULTI_VIEW_IDS, MULTI_PRESETS, REFERENCE_INPUTS, REFERENCE_ROLES, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
 let sequence = 0;
 export const HEIGHT_PRESETS = [672, 896, 1120, 1344, 1792];
 export const STYLE_IDS = ['none', 'anime', 'photo', 'realistic_painting', 'semi_realistic_anime', 'oil_painting', 'watercolor', 'gouache', 'colored_pencil', '3d'];
@@ -255,6 +255,16 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   partInput.setAttribute('aria-describedby', `${partHint.id} ${partNote.id}`);
   const partBottom = element('div', 'h3-part-bottom'); partBottom.append(partNote, partLength);
   partPanel.append(partRow, partHint, promptLabel, partInput, partBottom);
+  const roleMap = new Map();
+  const rolesBox = element('div', 'h3-reference-roles');
+  for (const [index, input] of REFERENCE_INPUTS.entries()) {
+    const row = element('div', 'h3-reference-role-row'), label = element('label'), select = element('select', 'h3-select');
+    select.id = `${id}-${input}-role`; select.dataset.referenceRole = input; label.htmlFor = select.id;
+    for (const role of REFERENCE_ROLES) { const option = element('option'); option.value = role; select.append(option); }
+    listen(select, 'change', () => act(() => controller.setReferenceRole(input, select.value)));
+    row.append(label, select); rolesBox.append(row); roleMap.set(input, {index, label, select});
+  }
+  partPanel.append(rolesBox);
   const qualityMap = new Map();
   const qualityBox = element('div', 'h3r13-choices');
   for (const field of ['clothing_type', 'hand_state', 'footwear_state']) {
@@ -315,6 +325,11 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   }
   function renderParts() {
     const state = controller.state, prompts = state?.part_prompts ?? {}, draft = partDrafts.get(selectedPart);
+    for (const [input, item] of roleMap) {
+      item.label.textContent = `${language === 'ja' ? '追加参照' : 'Extra reference'} ${item.index + 1}`;
+      item.select.disabled = !state; item.select.value = state?.reference_roles?.[input] ?? 'same_character';
+      for (const option of item.select.options) option.textContent = t[`role_${option.value}`];
+    }
     tabs.setAttribute('aria-label', t.diagram);
     for (const [name, tab] of tabMap) {
       tab.textContent = name === 'layout' ? t.layoutTab : name === 'style' ? t.styleTab : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;

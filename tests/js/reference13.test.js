@@ -71,3 +71,17 @@ test('out-of-order preview cannot restore older choices or unlock stale Manual d
   calls[2].resolve(preview(calls[2].raw,2816)); await new Promise(resolve=>setImmediate(resolve));
   c.setMode('manual'); assert.equal(c.state.size.manual_width,2816);
 });
+
+test('reference roles persist across edits and restore, including legacy promotion', () => {
+  const c = new Reference13Controller(options(OLD_JSON));
+  c.setReferenceRole('reference_image_3', 'clothing');
+  assert.equal(c.state.schema_version, 3);
+  assert.equal(c.state.reference_roles.reference_image_1, 'same_character');
+  assert.equal(c.state.reference_roles.reference_image_3, 'clothing');
+  c.setHandState('gloved');
+  const restored = parseReference13State(JSON.stringify(c.state));
+  assert.equal(restored.reference_roles.reference_image_3, 'clothing');
+  assert.throws(() => c.setReferenceRole('reference_image_4', 'face'));
+  assert.throws(() => c.setReferenceRole('reference_image_1', 'unknown'));
+  c.dispose();
+});

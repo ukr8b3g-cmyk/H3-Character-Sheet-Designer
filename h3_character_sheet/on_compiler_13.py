@@ -5,6 +5,7 @@ from .layout_13 import compute_semantic_layout
 from .off_compiler_13 import compile_extended_prompt, compile_off_prompt_13
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import parse_reference13_state, serialize_reference13_state
+from .multi_reference_compiler import ROLE_INSTRUCTIONS
 EXTRA_INPUTS = ('reference_image_1', 'reference_image_2', 'reference_image_3')
 
 
@@ -29,7 +30,7 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
     # Fixed Core wires, with packed Picture numbering that skips absent images.
     # Keep this independent from the legacy four-wire plan used by older nodes.
     ordered = [('character_image', 'character', True), ('layout_image', 'layout', use_layout_image)]
-    ordered += [(name, 'same_character', reference_presence.get(name, False)) for name in EXTRA_INPUTS]
+    ordered += [(name, state.get('reference_roles', {}).get(name, 'same_character'), reference_presence.get(name, False)) for name in EXTRA_INPUTS]
     references = []
     for slot, (source, role, present) in enumerate(ordered):
         if present:
@@ -39,11 +40,16 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
     extras = [item for item in references if item['source'] in EXTRA_INPUTS]
     if extras:
         instructions = '\n'.join(
+            (f"{item['tag']} has role {item['role']}: {ROLE_INSTRUCTIONS[item['role']]} "
+             'Apply only to relevant visible parts of the same character. Explicit part instructions and appearance choices take precedence, then dedicated references, then same-character supplements and Picture 1. '
+             'Do not transfer source identity, pose, background or layout outside the assigned role. '
+             'If dedicated references for the same role conflict, the later connected reference takes precedence. '
+             if item['role'] != 'same_character' else
             f"{item['tag']} is an additional reference of <Subject 1>, the same person as <Picture 1>. "
             'Use it to supplement consistent identity and unseen appearance details. '
             'Do not introduce another person, transfer its pose, background or layout, or override '
             'explicit clothing, hand, footwear or part instructions. '
-            'Keep <Picture 1> as the baseline where references conflict.' for item in extras)
+            'Keep <Picture 1> as the baseline where references conflict.') for item in extras)
         marker = '\n\nsummary:'
         if marker in prompt:
             prompt = prompt.replace(marker, '\n' + instructions + marker, 1)

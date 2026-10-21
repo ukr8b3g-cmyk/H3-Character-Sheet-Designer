@@ -8,6 +8,8 @@ export const MULTI_VIEW_IDS = Object.freeze(['face_front', 'face_left', 'face_ri
 export const VIEW_IDS = MULTI_VIEW_IDS;
 export const MULTI_PRESETS = Object.freeze({five: ['face_front', 'face_left', 'body_front', 'body_left', 'body_back'], basic: ['face_front', 'body_front', 'body_left', 'body_back'], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'], head: MULTI_VIEW_IDS.slice(0, 6), clothing: ['clothing_front', 'clothing_back'], detail: [...MULTI_VIEW_IDS]});
 export const PRESETS = MULTI_PRESETS;
+export const REFERENCE_INPUTS = ['reference_image_1', 'reference_image_2', 'reference_image_3'];
+export const REFERENCE_ROLES = ['same_character', 'face', 'head', 'clothing', 'clothing_front', 'clothing_back', 'hands', 'footwear'];
 export const SETTINGS = Object.freeze({hand_state: ['reference', 'bare', 'gloved'], clothing_mode: ['worn', 'garment'], clothing_type: ['reference', 'pants', 'skirt_robe'], footwear_state: ['reference', 'shod', 'unshod']});
 export const DEFAULTS = Object.freeze(Object.fromEntries(Object.entries(SETTINGS).map(([field, values]) => [field, values[0]])));
 export const HAND_STATES = SETTINGS.hand_state;
@@ -26,7 +28,11 @@ export function normalizeReference13State(state, max = Infinity) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
   if ([1, 2].includes(state.schema_version)) return normalizeState(state, max);
   if (state.schema_version !== 3) fail('version');
-  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS)], 'state');
+  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : [])], 'state');
+  if (Object.hasOwn(state, 'reference_roles')) {
+    keys(state.reference_roles, REFERENCE_INPUTS, 'reference_roles');
+    if (Object.values(state.reference_roles).some(role => !REFERENCE_ROLES.includes(role))) fail('setting', 'reference_roles');
+  }
   for (const [field, values] of Object.entries(SETTINGS)) if (!values.includes(state[field])) fail('setting', field);
   if (!Array.isArray(state.views) || !state.views.length || state.views.some(view => !VIEW_IDS.includes(view))) fail('views');
   keys(state.size, ['mode', 'body_height', 'manual_width', 'manual_height'], 'size');
@@ -40,7 +46,7 @@ export function normalizeReference13State(state, max = Infinity) {
     const text = validatePartPrompt(state.part_prompts[part]);
     if (text.trim()) parts[part] = text;
   }
-  return {schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]]))};
+  return {schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]]))};
 }
 export const parseReference13State = (raw, max) => normalizeReference13State(parseJSONStrict(raw), max);
 export const serializeReference13State = (state, max) => JSON.stringify(normalizeReference13State(state, max));
@@ -60,6 +66,15 @@ export class Reference13Controller extends DesignerController {
     if (!this.state || (this.state[field] ?? DEFAULTS[field]) === value) return false;
     const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);
     next[field] = value; return this.commit(next);
+  }
+  setReferenceRole(input, role) {
+    if (!REFERENCE_INPUTS.includes(input) || !REFERENCE_ROLES.includes(role)) fail('setting', 'reference_roles');
+    this.syncFromSource();
+    if (!this.state || (this.state.reference_roles?.[input] ?? 'same_character') === role) return false;
+    const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);
+    next.reference_roles ??= Object.fromEntries(REFERENCE_INPUTS.map(key => [key, 'same_character']));
+    next.reference_roles[input] = role;
+    return this.commit(next);
   }
   setHandState(value) { return this.setChoice('hand_state', value); }
   setClothingMode(value) { return this.setChoice('clothing_mode', value); }

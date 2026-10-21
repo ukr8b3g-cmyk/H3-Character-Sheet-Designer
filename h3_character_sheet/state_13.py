@@ -6,6 +6,9 @@ from .compiler import (
 )
 from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, LEGACY_VIEW_IDS, PORTRAIT_IDS, PRESETS, VIEW_IDS
 
+from .reference_plan import REFERENCE_ROLES
+REFERENCE_INPUTS = tuple(f'reference_image_{i}' for i in range(1, 4))
+
 SETTINGS = {
     'hand_state': ('reference', 'bare', 'gloved'),
     'clothing_mode': ('worn', 'garment'),
@@ -32,7 +35,12 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION):
         return {**legacy, 'part_prompts': legacy.get('part_prompts', {}), **DEFAULTS}
     if type(version) is not int or version != 3:
         raise StateValidationError('Reference13 supports schema_version 1, 2 or 3.', 'unsupported_schema')
-    _exact_keys(state, ('schema_version', 'views', 'size', 'part_prompts', *SETTINGS), 'state')
+    optional = ('reference_roles',) if 'reference_roles' in state else ()
+    _exact_keys(state, ('schema_version', 'views', 'size', 'part_prompts', *SETTINGS, *optional), 'state')
+    if optional:
+        _exact_keys(state['reference_roles'], REFERENCE_INPUTS, 'reference_roles')
+        if any(type(role) is not str or role not in REFERENCE_ROLES for role in state['reference_roles'].values()):
+            raise StateValidationError('Unknown reference role.', 'invalid_role')
     for field, values in SETTINGS.items():
         if type(state[field]) is not str or state[field] not in values:
             raise StateValidationError(f'Invalid {field}.', 'invalid_setting')
@@ -65,7 +73,8 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION):
             normalized_prompts[part] = text
     return {'schema_version': 3, 'views': [view for view in VIEW_IDS if view in views],
             'size': normalized_size, 'part_prompts': normalized_prompts,
-            **{field: state[field] for field in SETTINGS}}
+            **{field: state[field] for field in SETTINGS},
+            **({'reference_roles': dict(state['reference_roles'])} if optional else {})}
 
 
 def legacy_state(state):
