@@ -1,5 +1,12 @@
 # What's New / Changelog
 
+## v1.2.1
+
+- Align dedicated Reference13 roles with scoped retention, panel instructions and priority.
+- Validate Batch Out previews against real individual outputs.
+- Add Reference13 DOM serialization/lifecycle and CPU/JS boundary regressions.
+- Preserve existing node IDs, state schemas, workflows and runtime dependencies.
+
 ## v1.2.0
 
 ### Added

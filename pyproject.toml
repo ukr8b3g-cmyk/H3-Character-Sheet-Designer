@@ -1,6 +1,6 @@
 [project]
 name = "h3-character-sheet-designer"
-version = "1.2.0"
+version = "1.2.1"
 description = "Deterministic native MiniMax H3 character-sheet prompt and layout designer for ComfyUI"
 requires-python = ">=3.10"
 dependencies = []

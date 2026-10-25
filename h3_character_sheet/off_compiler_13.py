@@ -2,6 +2,7 @@
 import json
 
 from .compiler import PART_RULES
+from .appearance_policy_13 import applicable_references, reference_sources
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import applicable_settings, part_views
 from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, PORTRAIT_IDS, VIEW_DETAILS
@@ -84,7 +85,7 @@ def region_groups(layout):
         yield (f'{label}: {len(panels)} separate regions in {len(ys)} row(s) and {len(xs)} column(s).', locations)
 
 
-def reference_retention(state, settings):
+def reference_retention(state, settings, appearance_policy=()):
     lines = []
     if any(view in (*PORTRAIT_IDS, *BODY_IDS) for view in state['views']):
         lines.append('Unless an applicable explicit choice or named-part directive changes a feature, '
@@ -107,10 +108,27 @@ def reference_retention(state, settings):
                      'existing openings stay open, and uncovered skin stays uncovered. '
                      'Never invent cutouts or expose skin through previously closed material. '
                      'Infer unseen surfaces conservatively, without inventing a specific unseen shoe design.')
+    features = (
+        (('head_hair',), 'hair and headwear', 'Unless an applicable explicit choice'),
+        (('upper_clothing', 'back_clothing', 'lower_body'), 'garment design', 'Keep exactly the referenced garment'),
+        (('hands',), 'hand appearance and coverage', 'Keep the reference hand coverage'),
+        (('footwear',), 'feet and footwear appearance and coverage', 'Keep referenced socks or tights'),
+    )
+    for parts, label, prefix in features:
+        references = applicable_references(appearance_policy, parts)
+        if not references:
+            continue
+        lines = [line for line in lines if not line.startswith(prefix)]
+        lines.append(f'For {label}, first apply eligible choices and compatible named-part directives, '
+                     f'then use {reference_sources(references)} only for their assigned parts and visible surfaces. '
+                     'Preserve the resulting shared design and all compatible unspecified details across views. '
+                     'Auto retains this resolved design, not a conflicting baseline feature. '
+                     'Outside these dedicated-reference permissions retain <Picture 1>; '
+                     'do not invent extra coverings, garments, openings or accessories.')
     return lines
 
 
-def panel_appearance(state, view):
+def panel_appearance(state, view, appearance_policy=()):
     """Bind each visible region to the shared design, without inspecting image pixels."""
     instructions = []
     if view in (*PORTRAIT_IDS, *BODY_IDS):
@@ -119,14 +137,24 @@ def panel_appearance(state, view):
     if view in BODY_IDS:
         instructions.append('Keep the shared garment construction, layers, lengths, sleeve structure, coverage and openings '
                             'after applying eligible choices and part directives; camera rotation does not redesign the outfit.')
+    references = applicable_references(appearance_policy, ('head_hair',), view)
+    if references and instructions:
+        instructions[0] = ('Keep one shared identity and hair construction after applying eligible choices, '
+                           'named-part details and dedicated references. Do not restyle it for this camera.')
+    references = applicable_references(appearance_policy, tuple(PART_RULES), view)
+    if references:
+        instructions.append(f'For eligible parts in this panel use {reference_sources(references)} after '
+                            'higher-priority choices and named-part details. Retain <Picture 1> for all '
+                            'other attributes; references never change this camera or crop.')
     return ' '.join(instructions)
 
 
-def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None):
+def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None, appearance_policy=()):
     active = {part: text for part, text in state['part_prompts'].items() if part_views(state, part)}
     settings = applicable_settings(state)
     modifications = [f'explicit {part} details' for part in active]
     modifications += [f'{field}={state[field]}' for field in settings]
+    modifications += [f"dedicated {item['tag']} role {item['role']} for " + ', '.join(item['parts']) for item in appearance_policy]
     if style != 'none':
         modifications.append(f'rendering technique {style}')
     retention = ('partially_preserved - change only ' + '; '.join(modifications) +
@@ -159,7 +187,7 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None)
               '[Shot 1] The completed image is present in the first frame and remains unchanged through the last frame. '
               + ('This is one view, not a multi-view sheet. ' if single else 'All selected views coexist in the same finished sheet. ')
               + 'No movement, gestures, camera motion, cuts, transitions or temporal switching. Plain white background and consistent soft lighting.']
-    lines.extend(reference_retention(state, settings))
+    lines.extend(reference_retention(state, settings, appearance_policy))
     if not single:
         lines.append(view_manifest(state))
         lines.extend(description for description, _ in region_groups(layout))
@@ -187,10 +215,14 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None)
         placement = ('guide frame bounds in pixels ' + json.dumps(guide_panels[view]['bounds'], separators=(',', ':'))
                      if guide_geometry is not None else 'rect ' + json.dumps(panel['rect'], separators=(',', ':')))
         location = '' if single else locations[view] + ': '
-        appearance = panel_appearance(state, view)
+        appearance = panel_appearance(state, view, appearance_policy)
         lines.append(f'Panel {view}: {location}{view_label(view)}; {placement}. {panel_instruction(state, view)}'
                      + (' ' + appearance if appearance else ''))
     lines.append('Priority: assigned view, camera, crop and garment-only constraints; applicable clothing structure and hand/foot coverage choices; compatible named-part details; other details; then baseline reference. Change only the attribute controlled by a choice. Back-clothing details take precedence over upper clothing on visible rear surfaces. Never turn the person or widen a crop to reveal a hidden part.')
+    if appearance_policy:
+        lines[-1] = lines[-1].replace('other details; then baseline reference',
+            'eligible dedicated references only for assigned parts and visible surfaces '
+            '(later connected references win within the same role); same-character supplements and other compatible details; then baseline reference')
     overrides = {
         ('hand_state', 'bare'): 'All naturally visible hands are bare, with no gloves or mittens. Retain compatible jewelry and hand details.',
         ('hand_state', 'gloved'): 'All naturally visible hands wear actual gloves. Retain compatible referenced or explicitly requested glove designs and openings.',
@@ -210,5 +242,5 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None)
     return '\n'.join(lines) + '\n'
 
 
-def compile_off_prompt_13(state, layout, *, style='none'):
-    return compile_extended_prompt(state, layout, style=style)
+def compile_off_prompt_13(state, layout, *, style='none', appearance_policy=()):
+    return compile_extended_prompt(state, layout, style=style, appearance_policy=appearance_policy)

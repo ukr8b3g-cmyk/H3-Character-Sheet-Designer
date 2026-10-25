@@ -1,0 +1,53 @@
+name: Publish v1.2.1 after tests
+on:
+  workflow_run:
+    workflows: [Compiler and UI state tests]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: release-v1.2.1
+  cancel-in-progress: false
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_commit.message, 'Fix Reference13 retention and Batch Out preview (v1.2.1)')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Build and publish the tested revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          test "$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')" = '1.2.1'
+          mkdir -p staging/H3-Character-Sheet-Designer dist
+          git archive HEAD | tar -x -C staging/H3-Character-Sheet-Designer
+          (cd staging && 7z a -tzip ../dist/H3-Character-Sheet-Designer-v1.2.1.zip H3-Character-Sheet-Designer >/dev/null)
+          7z t dist/H3-Character-Sheet-Designer-v1.2.1.zip >/dev/null
+          for name in H3_Character_Sheet_Designer_Reference13_4images.json H3_Character_Sheet_Designer_MultiReference_flat_wf.json H3_Character_Sheet_Designer_Reference_V11_flat_wf.json H3_Character_Sheet_Designer_wf.json; do
+            cp "workflows/$name" dist/
+          done
+          (cd dist && sha256sum *.zip *.json > SHA256SUMS.txt)
+          if gh release view v1.2.1 --json tagName >/dev/null 2>&1; then
+            test "$(gh api repos/$GITHUB_REPOSITORY/git/ref/tags/v1.2.1 --jq .object.sha)" = "$RELEASE_SHA"
+          else
+            gh release create v1.2.1 --target "$RELEASE_SHA" --draft --title 'H3 Character Sheet Designer v1.2.1' --notes-file docs/releases/v1.2.1.md
+          fi
+          for asset in dist/*; do
+            name=$(basename "$asset")
+            if gh release view v1.2.1 --json assets --jq '.assets[].name' | grep -Fxq "$name"; then
+              gh release download v1.2.1 --pattern "$name" --dir verify-existing
+              cmp "$asset" "verify-existing/$name"
+            else
+              gh release upload v1.2.1 "$asset"
+            fi
+          done
+          gh release edit v1.2.1 --draft=false --latest

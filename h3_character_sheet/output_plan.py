@@ -41,5 +41,10 @@ def compile_output_preview(state_json, **options):
     else:
         # The root remains a selection overview for canonical state validation;
         # the UI and execution use each output's actual dimensions and geometry.
-        summary = compile_output_plan(state_json, **{**options, 'batch_out': False})['items'][0]
+        state = parse_multi_state(state_json, max_resolution=options.get('max_resolution', DEFAULT_MAX_RESOLUTION))
+        width = max(item['width'] for item in plan['items'])
+        height = max(item['height'] for item in plan['items'])
+        overview = finish_layout(state, compute_adaptive_layout(state['views'], width, height))
+        summary = compile_multi_state(state_json, layout=overview,
+            **{key: value for key, value in options.items() if key != 'batch_out'})
     return {**{key: value for key, value in summary.items() if key not in ('index', 'view_id', 'filename_suffix')}, 'batch_plan': plan}

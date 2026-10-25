@@ -6,7 +6,13 @@
 
 Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional references with individual roles: same character, face, head, outfit, outfit front/back, hands or footwear. Select each role in Part prompts. Roles guide the model through text and do not guarantee perfect separation. Existing workflows default to same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
 
-## What's New — v1.2.0
+## What's New — v1.2.1
+
+Dedicated Reference13 roles now agree with retention instructions while preserving unrelated features. V1.1 Batch Out previews validate each actual output. Reference13 DOM regressions cover save drafts, restore and lifecycle. See [v1.2.1 notes](docs/releases/v1.2.1.md).
+
+専用参照と保持指示の整合、およびBatch Out一覧プレビューの上限判定を修正しました。既存ワークフローと保存形式は維持します。
+
+### v1.2.0 features
 
 - Add **H3 Character Sheet Designer Reference 13 Views** with 13 selectable views: six head views, three full-body views, front/rear clothing details, paired hands and paired feet/footwear.
 - Add reference-relative Auto choices for clothing shape, worn/garment-only presentation, hand coverage and footwear. Named-part instructions retain their scope and priority; no particular person or outfit is hardcoded.
