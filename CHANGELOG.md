@@ -1,5 +1,12 @@
 # What's New / Changelog
 
+## v1.2.2
+
+- Fix stale part and numeric drafts after successful Apply JSON in standard and Reference13 UIs.
+- Preserve invalid input, IME behavior, existing UI, node contracts, saved states and workflows.
+- Add 14 DOM regressions; CPU 157 and JavaScript/DOM 108 pass locally.
+- 通常版・Reference13版のApply JSON後の下書き同期を修正。既存UI・保存互換性を維持。
+
 ## v1.2.1
 
 - Align dedicated Reference13 roles with scoped retention, panel instructions and priority.

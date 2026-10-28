@@ -2,11 +2,17 @@
 
 [日本語の説明はこちら](#日本語)
 
+## What's New — v1.2.2
+
+Fix stale Part prompts after **Apply JSON** in the standard and Reference13 UIs. Valid JSON replaces old part/size drafts, including unchanged JSON; invalid JSON keeps your input. Existing UI, node IDs, saved states and workflows are unchanged. [Release notes](docs/releases/v1.2.2.md).
+
+This frontend fix takes effect after a browser reload (Ctrl+F5); no ComfyUI restart or workflow rewiring is required.
+
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
 Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional references with individual roles: same character, face, head, outfit, outfit front/back, hands or footwear. Select each role in Part prompts. Roles guide the model through text and do not guarantee perfect separation. Existing workflows default to same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
 
-## What's New — v1.2.1
+### Previous — v1.2.1
 
 Dedicated Reference13 roles now agree with retention instructions while preserving unrelated features. V1.1 Batch Out previews validate each actual output. Reference13 DOM regressions cover save drafts, restore and lifecycle. See [v1.2.1 notes](docs/releases/v1.2.1.md).
 
@@ -243,6 +249,12 @@ Original code and documentation for which ukr8b3g-cmyk holds the applicable righ
 ## 日本語
 
 [English](#h3-character-sheet-designer)
+
+### v1.2.2の変更点
+
+通常版・Reference13版で、**Apply JSON**後に部位欄へ古い下書きが残る問題を修正しました。有効なJSONの適用時だけ部位・寸法の下書きを解除し、不正JSONでは入力を保持します。既存UI・ノードID・保存形式・ワークフローは変更していません。[リリースノート](docs/releases/v1.2.2.md)。
+
+この画面修正はブラウザーの再読込（Ctrl+F5）で反映されます。本体再起動や配線変更は不要です。
 
 MiniMax H3の参照画像を使うキャラクターシート作成ノードです。現行の **Reference 13 Views** は人物画像1枚＋追加参照3枚に対応します。**旧4ノードと旧ワークフローも、そのまま継続利用できます。**
 

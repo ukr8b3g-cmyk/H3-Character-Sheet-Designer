@@ -286,7 +286,11 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   const generated = element('details', 'h3-generated-prompt'), generatedSummary = element('summary'), generatedText = element('pre');
   generatedText.dataset.generatedPrompt = ''; generated.append(generatedSummary, generatedText);
   const jsonDetails = element('details', 'h3-json-editor'), summary = element('summary'), rawInput = element('textarea'), rawHint = element('p'), apply = button('h3-apply'); rawInput.spellcheck = false; rawInput.setAttribute('aria-label', 'state_json');
-  listen(apply, 'click', () => act(() => controller.applyRaw(rawInput.value))); jsonDetails.append(summary, rawInput, rawHint, apply);
+  listen(apply, 'click', () => act(() => {
+    controller.applyRaw(rawInput.value);
+    // A valid JSON replacement owns these values, even when the saved JSON is unchanged.
+    drafts.clear(); partDrafts.clear();
+  })); jsonDetails.append(summary, rawInput, rawHint, apply);
   root.append(header, cards, presetRow, controls, metrics, warning, status, errorBox, retry);
   if (reference) root.append(styleStatus);
   root.append(previewHead, stage, partPanel);
