@@ -1,4 +1,5 @@
 # H3 Character Sheet Designer
+<img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
 [日本語](#日本語) · **v1.3** (node/package version `1.3.0`)
 
@@ -25,8 +26,6 @@ See [release notes](docs/releases/v1.3.0.md) and [CHANGELOG](CHANGELOG.md). Prev
 5. Start with **Use Layout Image OFF**, enabling it when composition guidance helps. ON can transfer guide proportions or leave guide content. The UI displays the same guide either way.
 
 The template requires native ComfyUI H3/subgraph support and **[rgthree-comfy](https://github.com/rgthree/rgthree-comfy)** for Power LoRA Loader. The Designer adds no Python runtime dependency. Pika Ref2VA is enabled at 1.0, FL2VA is disabled, and ManualSigmas has eight intervals. These are the supplied comparison settings, not a universal optimum or the original Pika six-NFE sampling contract. Keep the supplied save format unless you intentionally change it.
-
-<img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
 <img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
 
