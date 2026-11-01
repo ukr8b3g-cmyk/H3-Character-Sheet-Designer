@@ -1,389 +1,136 @@
 # H3 Character Sheet Designer
 
-[日本語の説明はこちら](#日本語)
+[日本語](#日本語) · **v1.3** (node/package version `1.3.0`)
 
-## What's New — v1.2.2
+Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
 
-Fix stale Part prompts after **Apply JSON** in the standard and Reference13 UIs. Valid JSON replaces old part/size drafts, including unchanged JSON; invalid JSON keeps your input. Existing UI, node IDs, saved states and workflows are unchanged. [Release notes](docs/releases/v1.2.2.md).
+## What's New — v1.3
 
-This frontend fix takes effect after a browser reload (Ctrl+F5); no ComfyUI restart or workflow rewiring is required.
+- **New:** two versioned nodes: **H3 Character Sheet Designer v1.3.0** and the previous **v1.2.2**. Use v1.3.0 for this release's changes.
+- **New:** MOSS-style preset order, including **7 views · hands and feet**. Seven-view layout has two portraits stacked on the left, three bodies in the center, and hands above feet at the far right.
+- **Updated:** one common guide/layout for ON and OFF. Both display the same arrangement and dimensions. **Use Layout Image** controls whether the guide is passed to H3; OFF still outputs `None` for the guide image.
+- **Updated:** smaller guide margins/gaps and wider Auto full-body columns so the figure can reach the requested panel height without changing its proportions. Auto output width/pixel count can grow, increasing time and VRAM use. Manual keeps the specified canvas size.
+- **Updated:** compact controls and Settings tab; remove the Worn/Garments-only UI switch. Clothing shape retains Auto / Pants / Skirt or robe. V1.3 normalizes saved Worn values to garment extraction.
+- **Small prompt adjustments:** clothing uses extraction, `No human`, and flat-outfit instructions scoped to clothing panels. Clothing-only output retains outfit features rather than person identity. **Clothing and all-13 results have not demonstrated a major general improvement.** Human remnants, missing/duplicate views and outfit/full-body confusion remain possible.
+- **New template:** supplied v1.3 subgraph workflow with four character/part images and eight Designer outputs. Uses Hybrid V4, H3 INT8 TE and Pika Ref2VA; existing node titles are preserved.
+
+See [release notes](docs/releases/v1.3.0.md) and [CHANGELOG](CHANGELOG.md). Previous changes remain recorded there.
+
+## Start here
+
+1. Update/install this node pack, restart ComfyUI, and reload the browser (Ctrl+F5).
+2. Open **[H3_Character_Sheet_Designer_v1.3.json](workflows/H3_Character_Sheet_Designer_v1.3.json)**. [Release download](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.3.0/H3_Character_Sheet_Designer_v1.3.json).
+3. Select installed models and valid images in every connected Load Image node. Disconnect unused optional inputs on the Designer. Models/images are not bundled.
+4. Choose views and optional part instructions/reference roles. Auto retains unspecified reference appearance. Fix the seed for comparisons.
+5. Start with **Use Layout Image OFF**, enabling it when composition guidance helps. ON can transfer guide proportions or leave guide content. The UI displays the same guide either way.
+
+The template requires native ComfyUI H3/subgraph support and **[rgthree-comfy](https://github.com/rgthree/rgthree-comfy)** for Power LoRA Loader. The Designer adds no Python runtime dependency. Pika Ref2VA is enabled at 1.0, FL2VA is disabled, and ManualSigmas has eight intervals. These are the supplied comparison settings, not a universal optimum or the original Pika six-NFE sampling contract. Keep the supplied save format unless you intentionally change it.
 
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-Create character sheets with native MiniMax H3 reference-image conditioning. The current **Reference 13 Views** node supports one character image plus three optional references with individual roles: same character, face, head, outfit, outfit front/back, hands or footwear. Select each role in Part prompts. Roles guide the model through text and do not guarantee perfect separation. Existing workflows default to same-character references. The four previous node IDs remain included, so existing workflows can continue to use their original nodes.
+<img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
 
-### Previous — v1.2.1
+## Models and downloads
 
-Dedicated Reference13 roles now agree with retention instructions while preserving unrelated features. V1.1 Batch Out previews validate each actual output. Reference13 DOM regressions cover save drafts, restore and lifecycle. See [v1.2.1 notes](docs/releases/v1.2.1.md).
+Set the CLIP loader type to **`minimax`** and select an **H3** encoder. Music3 encoders are incompatible and cause sampler matrix-shape errors (for example 32768 versus 5120). Model switching/first loading is separate from layout compilation.
 
-専用参照と保持指示の整合、およびBatch Out一覧プレビューの上限判定を修正しました。既存ワークフローと保存形式は維持します。
+| Component | Download / filename | Folder under models/ |
+| --- | --- | --- |
+| Diffusion / template | [DaSiWa Hybrid V4 INT8](https://civitai.red/models/2877206/dasiwa-minimax-h3?modelVersionId=3391862) — `DasiwaMinimaxH3_dasiwaHybridV4_int8.safetensors` | `diffusion_models/minimax/` |
+| Native alternative | [H3 Ref2VA INT8](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors) — `minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `diffusion_models/` |
+| Text encoder / CLIP | [H3 Qwen3-VL INT8](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors) — `qwen3vl_32b_minimax_h3_int8_convrot.safetensors` | `text_encoders/` |
+| Alternative encoder | [H3 NVFP4 AWQ](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) — `qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` | `text_encoders/` |
+| Video VAE | [H3 VAE INT8](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_int8_convrot.safetensors) — `minimax_h3_video_vae_int8_convrot.safetensors` | `vae/` |
+| Alternative VAE | [H3 VAE FP16](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors) — `minimax_h3_video_vae_fp16.safetensors` | `vae/` |
+| Pika LoRA / enabled | [Ref2VA](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/pika_h3_flex_ref2va_v1_bf16.safetensors) — `pika_h3_flex_ref2va_v1_bf16.safetensors` | `loras/minimax/` |
+| Pika LoRA / disabled | [FL2VA](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/loras/pika_h3_flex_fl2va_v1_bf16.safetensors) — `pika_h3_flex_fl2va_v1_bf16.safetensors` | `loras/minimax/` |
 
-### v1.2.0 features
+Choose the adapter matching your base model and conditioning path. Both Pika links are provided; this template enables Ref2VA only. Follow model licenses/access requirements. The `minimax/` subfolder is template organization, not a required ComfyUI convention.
 
-- Add **H3 Character Sheet Designer Reference 13 Views** with 13 selectable views: six head views, three full-body views, front/rear clothing details, paired hands and paired feet/footwear.
-- Add reference-relative Auto choices for clothing shape, worn/garment-only presentation, hand coverage and footwear. Named-part instructions retain their scope and priority; no particular person or outfit is hardcoded.
-- Pass through all four reference images unchanged. Layout OFF returns `None` without reading or rendering a guide; ON supplies the optional layout image.
-- Bundle the tested [four-image GUI workflow](workflows/H3_Character_Sheet_Designer_Reference13_4images.json). **Seed / Noise is outside the subgraph**, so its native `fixed` / `randomize` control stays accessible.
-- Retain Designer, Reference, Multi Reference and Reference V1.1, including their existing workflows. Reference V1.1 keeps its independent-view Batch Out feature.
-- Retain the previous clothing allocation (448×1120 at panel height 1120). The experimental 2:3 layout was reverted after visual comparison.
-
-See the [CHANGELOG](CHANGELOG.md) and [v1.2.0 release notes](docs/releases/v1.2.0.md) for changes and known limits.
-
-## Current workflow
-
-1. Update the node folder, restart ComfyUI, and reload its browser page. Open [Reference13 · four images](workflows/H3_Character_Sheet_Designer_Reference13_4images.json).
-2. Choose your own character image and installed H3 model, text encoder and video VAE. The template wires all four image loaders: select valid images in each connected loader, or disconnect unused optional reference inputs on the Designer for a single-reference run. Models and reference images are not bundled.
-3. Use **Layout Image OFF** as the current baseline. It passes composition instructions as text; region positions, clothing crops and view counts are not guaranteed. ON uses an extra guide reference and may influence proportions.
-4. Set the external **Seed / Noise** control to `fixed` for comparisons, or `randomize` for variations. The template generates five frames and saves the first decoded frame as the static sheet.
-
-The saved template includes an **empty Power Lora Loader (rgthree)** and therefore requires rgthree-comfy to open unchanged. **No LoRA is selected or required for this character-sheet method.** This node pack itself adds no Python runtime dependency. The template's model filenames are examples; reselect files installed on your machine.
-
-### Assign roles to additional references
-
-In **Reference 13 Views → Part prompts**, select a role for each of the three extra references: **Same character**, **Face only**, **Head / face / hair**, **Complete outfit**, **Front of outfit**, **Back of outfit**, **Hands**, or **Footwear**.
-
-For example, connect the character to `character_image`, a face reference to `reference_image_1`, and an outfit reference to `reference_image_2`. Select **Face only** for extra reference 1 and **Complete outfit** for extra reference 2. Keep the image-output connections shown below; unused inputs can remain disconnected. Role choices are saved in the workflow. Existing workflows keep the same-character behavior until you change a role.
-
-The node writes role-specific instructions into the prompt; it does not isolate image regions or guarantee exact identity/outfit transfer. Explicit part instructions and appearance choices take priority over dedicated references. For conflicting references with the same role, the later connected reference takes priority.
-
-Update through **ComfyUI Manager**, or open `ComfyUI/custom_nodes/H3-Character-Sheet-Designer` in a terminal and run `git pull`. Restart ComfyUI and reload the browser page afterward. These changes are available on the latest `main` branch.
-
-### Reference13 wiring
+## Wiring and reference roles
 
 | Designer output | Native H3 input |
 | --- | --- |
-| `prompt`, `width`, `height` | matching prompt and dimension inputs |
+| `prompt`, `width`, `height` | matching prompt/dimension inputs |
 | `character_image` | `ref_images.ref_image_0` |
 | `layout_image` | `ref_images.ref_image_1` |
 | `reference_image_1` / `2` / `3` | `ref_images.ref_image_2` / `3` / `4` |
 
-Keep the guide wire connected when OFF; its output is `None`. Picture numbering skips absent images. Input/output contracts are listed above; the previous nodes retain their original contracts.
+Keep the guide wire connected when OFF. Picture numbering skips None images. The four image pass-through outputs retain the input tensors unchanged. The template samples five frames and saves the first decoded frame as the static sheet.
 
-## Compatibility and previous workflows
+In Part prompts assign extra references to Same character, Face, Head/face/hair, Complete outfit, Outfit front/back, Hands or Footwear. Explicit choices and part instructions take priority, then dedicated references, then the baseline image; later dedicated references of the same role take priority. These are text-based permissions, not regional attention isolation. Separate panel descriptions and `No human` do not guarantee that instructions stay inside one panel.
 
-| Node ID | Role | Workflow |
-| --- | --- | --- |
-| `H3CharacterSheetDesignerReference13` | Current 13-view sheet; four image pass-through outputs | [Reference13](workflows/H3_Character_Sheet_Designer_Reference13_4images.json) |
-| `H3CharacterSheetDesigner` | Original prompt/width/height node | Existing saved workflows retained |
-| `H3CharacterSheetDesignerReference` | Previous optional layout-reference node | [Original official workflow](workflows/H3_Character_Sheet_Designer_wf.json) |
-| `H3CharacterSheetDesignerMultiReference` | Previous 13-view, role-reference node | [Multi Reference](workflows/H3_Character_Sheet_Designer_MultiReference_flat_wf.json) |
-| `H3CharacterSheetDesignerReferenceV11` | Adaptive Manual layout and independent-view Batch Out | [Reference V1.1](workflows/H3_Character_Sheet_Designer_Reference_V11_flat_wf.json) |
+## Which node / previous workflows
 
-Compatibility means **the original node IDs and contracts remain available**. It does not mean that all node variants are interchangeable without rewiring, or that generated pixels remain identical after changing node variants. Reference13 can read schema 1/2 states; its schema 3 and Multi Reference's schema 3 are different formats. V1.1 has five list outputs, whereas Reference13 has eight single-value outputs. Use each variant with its own workflow.
+| Node ID / display version | Purpose |
+| --- | --- |
+| `H3CharacterSheetDesignerReferenceV13` / **v1.3.0** | Current workflow and common guide |
+| `H3CharacterSheetDesignerReference13` / **v1.2.2** | Previous behavior for existing Reference13 workflows / comparison |
 
-## Validation and known limits
+These are the **two registered nodes**. Earlier Designer, Reference, Multi Reference and Reference V1.1 IDs are not registered in v1.3. Their historical source/workflow files and [old releases](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2) remain available; use an earlier release if those IDs are required. Saved workflows and user node titles are not automatically rewritten. V1.2.2 preserves its compiler/state behavior; its shared UI also has the Worn switch removed.
 
-The release checks cover deterministic compilation, state compatibility, image pass-through, OFF bypass, geometry, workflow wiring and frontend tests. User-supplied fixed-seed Layout-OFF generations were reviewed separately. Basic/head presets remained stable in that comparison, but clothing details could become full-body views or omit the neckline; all-13 layouts could omit or rearrange details. This is not a general visual-quality or success-rate guarantee. Unseen appearance is inferred by the model. See the [release verification](verification/release_v1.2.0.json) for the local results.
+## Limits and validation
 
-## Previous Reference workflow
+- Clothing/all-13 receive small targeted changes, not a demonstrated major visual-quality upgrade. Human remnants, missing/duplicate angles and outfit/body confusion remain possible across photo, anime, CG and seeds.
+- Native image references do not guarantee exact identity, unseen surfaces, garment fidelity, viewpoints, view count or geometry. Guides can affect anatomy or be copied.
+- Tighter margins and larger guide figures are geometric changes, not proof of GPU quality improvement. Increased Auto width can cost time/memory; Manual can remain width-limited.
+- No additional LLM, TE text-generation step, hard BREAK separation or independently encoded regional conditioning was introduced.
+- Packaged compiler/UI tests, guide parity, image pass-through and template wiring are checked separately from GPU quality. Earlier GPU comparisons included failures; final changes have no controlled multi-reference/seed success-rate, VRAM or speed benchmark. User functional confirmation is separate from that evaluation.
 
-**For the previous Reference node, use `Use Layout Image = OFF` as the starting point.**
-OFF uses the character reference and an optimized prompt based on the original
-Designer, preserving its layout geometry. The layout output becomes `None`, so H3
-automatically skips it while both image wires stay connected. ON supplies the
-framed mannequin sheet when closer layout matching is needed; it can also pull
-the result toward the mannequin's body proportions or leave mannequin parts.
-The original three-output node remains available.
-
-Create character sheets using MiniMax H3's built-in reference-image conditioning and prompt understanding. **No character-sheet LoRA or extra custom generation-node pack is required.** In the original official workflow linked below, this Designer is the only custom node; the remaining generation nodes are ComfyUI Core. The new four-image template also retains an empty rgthree Power Lora Loader. You still need a compatible ComfyUI build and the usual H3 diffusion model, text encoder, and video VAE.
-
-The setup is simple: load the template, choose your reference image and models, select the views you want, and generate. To generate a single view, leave only that view selected in the Designer and queue it manually.
-
-## Official template
-
-**[Download the workflow JSON](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [View in repository](workflows/H3_Character_Sheet_Designer_wf.json)
-
-Load this GUI workflow in ComfyUI, then choose your reference image and installed models. See [template setup](#official-template-setup) below.
-
-<img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
-
-<img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
-
-
-
-A standalone ComfyUI custom node for designing a multi-view character sheet and compiling a MiniMax H3 reference prompt plus output dimensions. The template is English; free-form part instructions are preserved in their original language.
-
-- Seven illustrated view selectors: front portrait, anatomical-left portrait, full-body front, anatomical-left body profile, full-body back, hands, and footwear
-- Five presets including the standard five-view sheet, automatic layout sizing, editable manual dimensions, and a large live layout preview
-- **Layout / Part prompts / Style** tabs on the Reference node; eight body-part choices and nine optional styles, with the selected style visible outside its tab
-- Reference node: **870 × 1100**, matching the template; original node: 870 × 930
-- Reference default: **five views, 2816 × 1280**, layout reference OFF and style None; the original node retains its four-view default
-- Deterministic local Python compiler, with **no LLM, external API, additional model, or Python package dependency** for the designer itself
-- Versioned `state_json`; Reference outputs `prompt / width / height / layout_image`, with `layout_image=None` when OFF; original node retains three outputs
-- Japanese interface when ComfyUI's language is Japanese; English for other languages
-
-The bundled low-poly, bald, gender-neutral GPT Image mannequin artwork is displayed locally in the interface, with a simple SVG fallback only if the bitmap cannot load. With Use Layout Image OFF, these mannequins are interface illustrations only. ON sends a rendered mannequin sheet as the second H3 reference. Coordinates in the prompt are semantic guidance, not hard image constraints. Identity, anatomy, unseen surfaces, clothing fidelity, exact geometry, and high-resolution generation quality are not guaranteed.
-
-## Installation
-
-Clone this repository into your ComfyUI `custom_nodes` directory:
+## Installation and updates
 
 ```sh
 cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-Restart ComfyUI and refresh its browser page. Add **H3 Character Sheet Designer Reference** from the node menu, or load the official template. No `pip install` is required. Keep this repository as a custom-node folder; this is not a standalone image generator.
+Update existing installations through your usual Git/Manager workflow, restart ComfyUI, and reload the browser. Model weights are separate downloads. Registry/Manager publication is a separate operation and is not included here.
 
-## Official template setup
-
-The [official GUI workflow](workflows/H3_Character_Sheet_Designer_wf.json) is the maintainer-provided character-sheet template, preserved as supplied. Download the JSON using the link above, then drag it onto the ComfyUI canvas or open it with ComfyUI's workflow loader. It is a GUI workflow, not API-format JSON.
-
-1. Install this custom node as described above. The file records **ComfyUI Core 0.38.0 / frontend 1.53.10** as its saved baseline; use a build with native `MiniMaxH3ReferenceToVideo`, `SaveImageAdvanced`, and subgraph support. If a node is missing, update ComfyUI and its frontend.
-2. In **Load Image**, select your own character reference. The saved `krea2_00327_.webp` filename is a placeholder; the image is not bundled.
-3. Open the H3 subgraph and select the H3 diffusion model, text encoder, and video VAE installed in your `models/diffusion_models`, `models/text_encoders`, and `models/vae` folders. The saved subgraph uses Dasiwa Hybrid V2 INT8, Qwen3-VL 32B NVFP4/AWQ, an INT8/ConvRot VAE, and Euler / simple / 20 steps. These are template choices, not a universal optimum. The **Model Links** note lists model files. Reselect the loaders for your filenames and platform; the saved diffusion-model name includes a Windows-style `minimax\` subfolder.
-4. Keep **Use Layout Image OFF** to prioritize the character reference; style defaults to **None**. Choose views and sizes in the Designer, then queue. The saved five-view Auto selection (front/left portraits and front/left/back full-body views) compiles to **2816 × 1280** with the current compiler. Hands and footwear detail panels are unselected in this template. Connected Designer outputs supply the prompt and dimensions; stored downstream widget values are not a fixed output-size setting. The graph uses **5 frames**, selects the first decoded frame, and saves a PNG through `SaveImageAdvanced`.
-
-The saved connections and state are checked by local tests. The current Reference OFF node has run on native H3 after restart; actual prompts and reference bypass were verified. Controlled GPU comparisons retained five views, but later-frame darkening and narrow foot margins remain. The template saves frame 0. See the [test scope and limits](docs/REFERENCE_LOCAL_JA.md); large sheets can require substantial VRAM and time.
-
-## Connect to native H3
-
-Connect the Designer's `prompt`, `width`, and `height` outputs to the matching inputs on ComfyUI's native `MiniMaxH3ReferenceToVideo` node. Use **Convert widget to input** on the receiving node where necessary. Provide one character reference image separately, through Load Image, as the native node's first image reference (`<Picture 1>`). Use a compatible H3 Ref2VA model and your normal H3 model loading, sampling, decoding, and saving workflow.
-
-Suggested experimental downstream settings are `length=5` **frames**, not five seconds, and `ref_image_size=match`. The Designer does not modify those settings. To save a still, choose a decoded frame downstream. Even at five frames, H3 uses its audiovisual model generation path; this is not a promise of ordinary still-model memory or speed.
-
-## Using the designer
-
-1. Select views or a preset. Every view click immediately commits the saved node input, even while the preview is loading
-2. In Auto mode choose the requested full-body panel height directly from its full-width dropdown. Choose **Custom…** for any other 32-pixel-grid height; press Enter or leave the custom field to commit. Escape discards an unfinished edit. Dimensions are calculated in Python and rounded upward to a 32-pixel grid
-3. To edit width and height, switch to Manual once the current preview has returned. The current Auto dimensions are copied first. Presets preserve Manual dimensions
-4. Press Enter or leave a number field to commit a valid edit. Uncommitted drafts are not saved or queued
-5. Optionally open **Part prompts**, select a body part, and enter a free-form instruction. It saves as you type; Enter adds a line. Switch parts to keep separate instructions. The dot and count show which parts have saved instructions. Clear a field to remove that instruction
-6. Queue your normal H3 workflow. Preview networking is optional for execution: the node independently validates and compiles the current saved JSON
-
-The Reference node starts with the standard five views. The original node's default Basic preset stays at the original four views and 2208 × 1280. The optional Left portrait is a head-to-chest anatomical-left profile. Detail now selects all seven views and produces 2816 × 1280 at the default panel height (1696 × 768 at 672). Existing saved six-view selections retain their geometry and display as Custom; they are never automatically expanded.
-
-The final view cannot be deselected. Either portrait alone, both portraits, hands-only, feet-only, left-body-profile-only, and hands-plus-feet layouts are supported. A missing or invalid saved value remains visible as an error; it is never silently reset. A failed preview can be retried without losing the committed selection.
-
-**Experimental** appears above 1,032,192 pixels. This is a warning, not an artificial H3 size cap. ComfyUI's runtime axis limit is still enforced. Large outputs may require substantial VRAM and time.
-
-## Part prompts
-<img width="1325" height="646" alt="{A223588C-EEB3-453F-8654-B27084426E4D}" src="https://github.com/user-attachments/assets/519bd600-f0cd-408c-8d30-8181a83d8b0a" />
-
-
-The eight parts are **Head / hair**, **Face**, **Upper-body clothing**, **Back of clothing**, **Lower body**, **Hands / gloves**, **Feet / footwear**, and **Overall / other**. The part dropdown is separate from the seven view selectors. There are no clothing presets, change modes, lettering switches, or separate text fields: describe shape, color, patterns, text, and placement in the same prompt.
-
-### Short English examples
-
-**English is recommended for part prompts**, based on the reported successful result. Start with a short instruction in the matching part field. If an attribute is ignored, add only the missing detail and try again. These are copy-ready examples, not inserted defaults or guaranteed results.
-
-| Part field | Example |
-| --- | --- |
-| **Upper-body clothing** | `Change the jacket to silver-gray. Keep its design and material.` |
-| **Hands / gloves** | `Bare hands with natural skin and short nails in every view.` |
-| **Feet / footwear** | `Black high-heeled pumps, consistent in every view.` |
-| **Lower body** (upper-body-only reference) | `Complete the unseen lower body with black tailored trousers.` |
-| **Back of clothing** (matching the jacket) | `Keep the jacket silver-gray on the back as well.` |
-| **Back of clothing** (optional pattern) | `Add a floral pattern only to the back of the jacket.` |
-
-Use the back examples separately or combine them only if both changes are wanted. For an upper-body-only reference, specify missing lower clothing and footwear in their respective fields. This supplies a design for unseen areas; it cannot recover details absent from the image.
-
-If the short prompt is not enough, try a more specific version:
-
-- **Upper-body clothing:** `Change only the jacket color to silver-gray. Keep its shape, material, seams, and fasteners unchanged in every view.`
-- **Hands / gloves:** `Show bare hands with natural skin and short nails in every view. No gloves, hand coverings, or glove-like cuffs.`
-
-Add detail when needed rather than starting with a long list of constraints. Check every generated view: color, clothing, hands, footwear, and rear patterns may still be ignored or vary between views. There is no measured success rate for these examples or controlled English-versus-Japanese comparison.
-
-The compiled prompt gives explicit instructions precedence for the named part and asks to preserve unspecified reference details. **Hands / gloves and Feet / footwear instructions still apply in selected full-body views when the separate Hands and Footwear detail panels are off.** Back-of-clothing instructions apply only to the rear garment surface in back/side views, never the front or portraits. A specific part wins over Overall / other; Back of clothing wins over Upper-body clothing on the rear surface. Instructions stay saved when views, presets, sizes, or tabs change; an instruction with no related selected view is kept but does not affect that prompt.
-
-This is a deterministic local compiler, not image analysis or an LLM translator. **Input is passed through verbatim, with no automatic translation.** Japanese is accepted and retained, as are literal quotes, braces, backslashes, and requested lettering. It does not detect what is visible in the reference or interpret quoted text into a separate field. The mannequin preview shows layout only; it does not visualize the requested appearance. Broad model adherence, exact lettering, and GPU quality have not been systematically evaluated.
-
-### When to add Hands and Footwear detail panels
-
-Usually start with the portrait/full-body views you need and **leave Hands and Footwear off**, as in the official five-view template. Add either panel when you need a separate close-up. These panels can be useful when specifying hand or shoe details missing from an upper-body-only reference; describe the intended design in the corresponding part field.
-
-The **Hands** selector adds a hand-detail panel; it does not ask the character to wear gloves. Unwanted gloves have been reported, even with a kimono reference. This is a user observation, not a measured failure rate. Use a bare-hands instruction when needed and inspect both the full-body and detail views. Leaving detail panels off is a practical starting point, not a guarantee of better results.
-
-## Footwear detail behavior
-
-Footwear selects a separate enlarged detail panel; shoes already visible in a full-body panel do not replace it. Without a relevant part instruction, the prompt preserves the reference's footwear, visible boot shafts, open-toed footwear, or bare feet as applicable. It cannot recover a shoe design absent from the reference. A Feet / footwear instruction can explicitly supply or change that design. The UI mannequin is only an illustration, not evidence of the generated result.
-
-Local regression tests confirm selection reaches the saved input, layout, prompt and Designer output. The stronger detail instructions have not been evaluated on a GPU, so improved model compliance is not yet established. If a generated result omits the panel, retain the current workflow/API input, actual reference image and output for diagnosis.
-
-## API and reproducibility
-
-The only input is `state_json`:
-
-```json
-{"schema_version":1,"views":["face_front","body_front","body_left","body_back"],"size":{"mode":"auto","body_height":1120,"manual_width":2240,"manual_height":1280}}
-```
-
-Existing version-1 data remains supported without automatic rewriting. The first nonempty part edit explicitly upgrades the saved state to version 2, adding a required `part_prompts` object. For example:
-
-```json
-{"schema_version":2,"views":["face_front","body_front","body_left","body_back"],"size":{"mode":"auto","body_height":1120,"manual_width":2240,"manual_height":1280},"part_prompts":{"lower_body":"Black long trousers","footwear":"Black boots","back_clothing":"A floral pattern and the word FLOWER on the back"}}
-```
-
-Allowed part IDs, in canonical order: `head_hair`, `face`, `upper_clothing`, `back_clothing`, `lower_body`, `hands`, `footwear`, `other`. Keys are optional inside the required object. Values must be strings, at most 1000 UTF-16 code units per part (matching the browser counter); whitespace-only values normalize away, while nonblank text is not trimmed. State JSON is limited to 64 KiB; the bounded preview HTTP envelope allows 192 KiB for escaping. Empty version-2 instructions generate the same prompt and geometry as version 1. Unknown versions are retained as visible errors, never silently downgraded or reset.
-
-The compiler rejects missing or unknown keys, duplicate JSON keys, unknown versions/views, empty selections, non-integer dimensions, non-32-grid values, oversize inputs, and values above ComfyUI's runtime maximum. View duplicates are normalized into a fixed order. Equivalent states generate identical prompt bytes regardless of UI language or JSON formatting. Prompt text is not subject to dynamic prompt expansion.
-
-The GUI uses same-server `POST /h3_character_sheet_designer/preview` with `{"state_json":"..."}`. This read-only endpoint performs no file writes, model execution, or external requests. Its response is advisory and never overwrites saved state. API/headless workflows do not call it.
-
-## Tests and verification
-
-```sh
-# Development-only dependencies; not needed to use the custom node
-python -m pip install -r requirements-dev.txt
-npm install --ignore-scripts
-python -m unittest discover -s tests -p 'test_*.py' -v
-npm test
-```
-
-Node.js is needed only for developer tests, not installation or normal use. Without the optional development dependencies, standard-library Python and dependency-free JavaScript tests still run; HTTP/DOM tests explicitly report skips. `npm run test:js` runs the dependency-free frontend suite. To inspect the actual DOM renderer in a standalone browser harness:
-
-```sh
-python tests/serve_demo.py
-# Open http://127.0.0.1:8765/tests/browser/
-```
-
-The harness uses the production compiler and UI renderer with a simulated ComfyUI boundary. It does **not** demonstrate ComfyUI installation, real frontend Undo/Redo, downstream queue acceptance, or GPU generation. See [verification details](docs/VERIFICATION.md) for tested and untested stages. Legacy frontends, Nodes 2.0, and unspecified ComfyUI versions are not claimed compatible. On unsupported DOM-widget environments, the node retains a standard STRING input and headless compilation.
-
-## License
-
-Original code and documentation for which ukr8b3g-cmyk holds the applicable rights are available under the [MIT License](LICENSE). Third-party material retains its original terms; images, artwork, screenshots, model weights and user-provided references are outside this MIT grant. See [NOTICE.md](NOTICE.md) before redistributing. This does not guarantee rights to any image or generated output, or replace the terms of ComfyUI, models, dependencies or external services.
-
----
+<img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
 
-[English](#h3-character-sheet-designer)
+**v1.3（ノード／パッケージ表記は1.3.0）**。MiniMax H3本来の画像参照でキャラクターシートを生成します。人物画像1枚＋部位参照3枚をそのまま受け渡し、必要なら配置画像を追加参照にします。MOSS版の画像→文章化とは異なる方式です。
 
-### v1.2.2の変更点
+### v1.3の変更点 / What's New
 
-通常版・Reference13版で、**Apply JSON**後に部位欄へ古い下書きが残る問題を修正しました。有効なJSONの適用時だけ部位・寸法の下書きを解除し、不正JSONでは入力を保持します。既存UI・ノードID・保存形式・ワークフローは変更していません。[リリースノート](docs/releases/v1.2.2.md)。
+- **New：** 今回版 **H3 Character Sheet Designer v1.3.0** と前版 **v1.2.2** の2ノードへ整理。今回の変更にはv1.3.0を使用します。
+- **New：** MOSS版と同じプリセット順へ整理し、手・足付き7ビューを追加。頭部2面を左で上下、全身3面を中央、手を右上・足を右下へ配置します。
+- **更新：** ON/OFFのガイドを1種類に統一。配置・寸法は同じで、Use Layout Imageは生成へガイド画像を渡すかだけを切り替えます。OFFの画像出力はNoneです。
+- **更新：** ガイドの外周余白・枠間を縮小し、Autoの全身列を指定高まで描ける横幅へ拡張。縦横比を保持します。出力幅・画素数が増える場合があり、時間・VRAM負荷も増える可能性があります。Manualの指定サイズは保持します。
+- **更新：** コンパクトな操作欄とSettingsタブ。Worn/Garments only切替を削除し、衣装型のAuto／Pants／Skirt or robeは維持。今回版の古いWorn保存値は衣服抽出として処理します。
+- **小修正：** 衣装前後を抽出・No human・flatの短い文へ組み直し、衣装枠に適用。衣装単独の全体文も人物保持から衣服抽出へ整理しました。**衣装・全13面は汎用的な大幅改善を確認できていません。** 人物・身体の残留、向きの重複・欠落、衣装と全身の混同は残ります。
+- **New：** 今回提示されたサブグラフ型ワークフローをテンプレートに採用。4画像入力・Designerの8出力と既存ノードtitleを保持。モデルは既定方針どおりHybrid V4／H3用INT8 TE／Pika Ref2VAへ整合しました。
 
-この画面修正はブラウザーの再読込（Ctrl+F5）で反映されます。本体再起動や配線変更は不要です。
+[リリースノート](docs/releases/v1.3.0.md)・[変更履歴](CHANGELOG.md)も参照してください。
 
-MiniMax H3の参照画像を使うキャラクターシート作成ノードです。現行の **Reference 13 Views** は人物画像1枚＋追加参照3枚に対応します。**旧4ノードと旧ワークフローも、そのまま継続利用できます。**
+### 使い方
 
-### v1.2.0の変更点
+1. 更新後にComfyUIを通常再起動し、ブラウザーをCtrl+F5で再読込。
+2. [v1.3テンプレート](workflows/H3_Character_Sheet_Designer_v1.3.json)を開き、導入済みモデルを選択。接続したLoad Imageすべてに有効な画像を指定するか、使わない追加参照入力をDesignerから外します。
+3. ビュー・部位指示・参照の役割を設定。Autoは参照の外見を保つ選択です。比較時はseedを固定します。
+4. Use Layout ImageはOFFから試し、配置の補助が必要ならONへ。画面のガイドは共通で、ONだけが画像をH3へ渡します。ONではガイドの体形・図が残る場合があります。
 
-- **Reference 13 Views** を追加しました。頭部6方向、全身3方向、衣装の前後、両手、足・履物の計13ビューから選択できます。
-- 衣装の形、着用／衣服のみの表示、手の覆い、履物を参照に合わせる自動選択に対応します。部位指定の範囲と優先順位を保持し、特定の人物や衣装は固定しません。
-- 4枚の参照画像を変更せず出力します。レイアウト画像がOFFなら、ガイドを読み込み・描画せず `None` を返します。
-- [人物1枚＋追加参照3枚のワークフロー](workflows/H3_Character_Sheet_Designer_Reference13_4images.json)を同梱しました。**Seed／Noiseをサブグラフ外に配置**し、標準の `fixed`／`randomize` を操作できます。
-- 旧Designer・Reference・Multi Reference・Reference V1.1と各ワークフローを保持します。Reference V1.1のビュー別個別出力も利用できます。
-- 衣装領域は従来の配置（基準高1120で448×1120）を保持しています。比較した2:3の実験変更は取り消しました。
+配線は上の表と共通です。人物→ref_image_0、配置画像→1、追加参照3枚→2/3/4。NoneはPicture番号から除外。画像Tensorは変更せず返します。5フレームを生成し、最初の復号フレームを静止画として保存します。
 
-変更履歴は[CHANGELOG](CHANGELOG.md)、リリースの説明は[v1.2.0のリリースノート](docs/releases/v1.2.0.md)をご覧ください。
+テンプレートは[rgthree-comfy](https://github.com/rgthree/rgthree-comfy)が必要です。Pika Ref2VAは強度1.0で有効、FL2VAは無効、ManualSigmasは8区間。今回の比較設定であり万能な最適値やPika本来の6-NFE契約を保証するものではありません。保存形式は必要に応じて利用者が変更してください。
 
-### 導入と現行ワークフロー
+### モデルと参照の注意
 
-1. リポジトリをComfyUIの `custom_nodes` に配置・更新し、ComfyUIを再起動してブラウザーを再読み込みします。
-2. [Reference13の4画像ワークフロー](workflows/H3_Character_Sheet_Designer_Reference13_4images.json)を開き、人物画像、導入済みのH3モデル・テキストエンコーダー・動画用VAEを選びます。モデルと参照画像は同梱していません。
-3. テンプレートは4枚とも配線済みです。接続するLoad Imageには有効な画像を選び、使わない追加参照はDesigner側の接続を外します。
-4. **レイアウト画像はOFF**から始めます。OFFでは文章で構図を指示しますが、配置・衣装の切り取り・ビュー数の厳密な再現は保証されません。ONはガイド画像も参照し、体型や比率に影響することがあります。
-5. 比較時はサブグラフ外の **Seed／Noise** を `fixed`、変化を付けるときは `randomize` にします。テンプレートは5フレーム生成し、デコード後の先頭フレームを静止画として保存します。
+モデル／TE／VAE／LoRAのファイル名・URLは上の **Models and downloads** 表にまとめています。Pika Ref2VA／FL2VA両方のリンクを掲載し、このテンプレートはRef2VAだけを有効にしています。CLIPローダーはtype=minimax、H3用Qwen3-VLを使用。Music3用TEは非互換で行列サイズ不一致になります。初回ロードの時間とDesignerの配置計算は別の処理です。各モデルのライセンス・アクセス条件に従ってください。
 
-テンプレートを無変更で開くには **rgthree-comfy** が必要です。未選択のPower Lora Loaderが残っていますが、**この生成方法にLoRAは不要で、テンプレートでも選択していません。** このノード自体には追加のPython実行依存関係はありません。保存されたモデル名は例なので、利用環境に合わせて選び直してください。
+追加参照の役割は同一人物／顔／頭部・髪／衣装全体／衣装前／衣装後／手／履物。明示設定・部位指示、専用参照、基準画像の順に適用し、同じ専用役割では後の接続を優先します。これはテキスト上の指示であり、領域attentionを完全分離する機能ではありません。
 
-### 追加参照画像の役割指定
+### 新旧ノードと残る制約
 
-**Reference 13 Views → Part prompts（部位プロンプト）**で、追加参照3枚それぞれに「同じキャラクターの補助参照」「顔のみ」「頭部・顔・髪」「衣装全体」「衣装前面」「衣装背面」「手」「足・履物」を指定できます。
+登録は今回版v1.3.0と前版v1.2.2の2つです。前版Reference13の生成動作・状態契約は保持しますが、共有UIのWorn切替は撤去しています。それより前のDesigner／Reference／Multi Reference／V1.1のIDが必要なら[旧リリース](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2)を使用してください。旧ファイル・Releaseは履歴として残し、保存済みワークフローやユーザーのノード名は自動変更しません。
 
-例：人物を `character_image`、顔画像を `reference_image_1`、衣装画像を `reference_image_2` に接続し、追加参照1を「顔のみ」、追加参照2を「衣装全体」にします。画像出力は下表の接続を維持し、未使用の追加入力は未接続にできます。役割はワークフローに保存され、既存ワークフローでは変更するまで従来の同一人物の補助参照として動作します。
+衣装・13面は小修正で、人物除去・向き・枚数・同一性の大幅改善を実証した版ではありません。写真・アニメ・CG、別seedでは失敗が残ります。ガイドの幾何改善もGPU画質向上の証明ではありません。Auto幅の拡大は時間・VRAM負荷を増やす場合があります。追加LLM、TE文章生成、BREAKによる分離、領域別エンコードは導入していません。
 
-役割指定はプロンプトによる誘導で、画像領域の分離や顔・衣装の完全な転写を保証しません。明示的な部位指示と外見設定を優先し、同じ役割の参照が競合する場合は後の接続順の参照を優先します。
+CPU／UI／配線の確認とGPU評価を区別しています。ユーザーの動作確認はありますが、最終変更の複数参照・複数seedでの成功率、VRAM、速度の比較評価は未完了です。今回の公開にはRegistry／Manager登録を含めません。
 
-**ComfyUI Managerで更新**するか、`ComfyUI/custom_nodes/H3-Character-Sheet-Designer` フォルダーでターミナルを開いて `git pull` を実行してください。その後、ComfyUIを再起動し、ブラウザーを再読み込みします。この機能は最新の `main` ブランチに含まれます。
+<img width="1325" height="646" alt="{A223588C-EEB3-453F-8654-B27084426E4D}" src="https://github.com/user-attachments/assets/519bd600-f0cd-408c-8d30-8181a83d8b0a" />
 
-### Reference13の接続
+## Credits / License
 
-| Designerの出力 | ネイティブH3の接続先 |
-| --- | --- |
-| `prompt`、`width`、`height` | 対応するプロンプト・幅・高さの入力 |
-| `character_image` | `ref_images.ref_image_0` |
-| `layout_image` | `ref_images.ref_image_1` |
-| `reference_image_1`／`2`／`3` | `ref_images.ref_image_2`／`3`／`4` |
-
-ガイドの配線はOFFでも残せます。出力が `None` になり、参照画像の番号では欠けた画像を飛ばします。
-
-### 互換性と旧ワークフロー
-
-| ノードID | 役割 | ワークフロー |
-| --- | --- | --- |
-| `H3CharacterSheetDesignerReference13` | 現行の13ビューと4画像の出力 | [Reference13](workflows/H3_Character_Sheet_Designer_Reference13_4images.json) |
-| `H3CharacterSheetDesigner` | 元のプロンプト・幅・高さの3出力 | 保存済みの旧ワークフローを利用 |
-| `H3CharacterSheetDesignerReference` | 配置参照画像のON／OFF | [従来の公式版](workflows/H3_Character_Sheet_Designer_wf.json) |
-| `H3CharacterSheetDesignerMultiReference` | 役割別参照画像を使う13ビュー | [Multi Reference](workflows/H3_Character_Sheet_Designer_MultiReference_flat_wf.json) |
-| `H3CharacterSheetDesignerReferenceV11` | 手動配置とビュー別個別出力 | [Reference V1.1](workflows/H3_Character_Sheet_Designer_Reference_V11_flat_wf.json) |
-
-互換性は「旧ノードを保持し、旧ワークフローを使える」という意味です。新旧ノードを配線変更なしで差し替えたり、生成結果が完全に一致したりすることは保証しません。旧ワークフローを新ノードへ自動変換することもありません。
-
-Reference13はスキーマ1／2を読み込めますが、そのスキーマ3とMulti Referenceのスキーマ3は異なります。V1.1はリスト形式の5出力、Reference13は単一値の8出力です。各ノードに対応するワークフローを使ってください。
-
-### 確認範囲と既知の制約
-
-ローカルでは、コンパイルの再現性、保存状態の互換性、画像の受け渡し、OFF時のバイパス、配置、ワークフローの接続、フロントエンドを確認しています。利用者が生成したSeed固定・レイアウトOFFの比較画像は、コード検証とは別に確認しています。
-
-比較時には基本・頭部の構成は安定していましたが、衣装拡大図が全身図になったり、襟元が省略されたり、全13ビューで細部が欠落・再配置されたりしました。画質全般や成功率を保証する結果ではなく、参照にない面はモデルの推測になります。
-
-衣装の2:3実験は採用せず、比較前の配置へ戻しています。コード／UIの検証とGPU生成品質の評価は区別します。[リリース検証記録](verification/release_v1.2.0.json)もご覧ください。
-
-### 従来のReferenceワークフロー
-
-**従来のReferenceノードでは `Use Layout Image = OFF` を基本に使えます。** 人物参照と旧版を基本に
-最適化したプロンプトで生成します。ONは黒枠付き配置図を参照し、配置を強く指定したい
-場合に使います。マネキンの体型・比率に引っ張られたり、一部が残る場合があります。
-[接続・画風・検証済み範囲](docs/REFERENCE_LOCAL_JA.md)をご覧ください。
-
-**[従来の公式ワークフローJSONをダウンロード](https://raw.githubusercontent.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/main/workflows/H3_Character_Sheet_Designer_wf.json)** · [リポジトリで開く](workflows/H3_Character_Sheet_Designer_wf.json)
-
-### 公式テンプレートの使い方
-
-上のリンクからJSONをダウンロードし、ComfyUIのキャンバスへドラッグ＆ドロップするか、ワークフロー読み込み機能で開いてください。添付されたシート用ワークフローをそのまま収録しています（API形式ではありません）。
-
-1. このカスタムノードを導入してください。保存時の基準は **ComfyUI Core 0.38.0／frontend 1.53.10** です。ネイティブの `MiniMaxH3ReferenceToVideo`、`SaveImageAdvanced` とサブグラフに対応する環境が必要です。ノードが見つからない場合はComfyUI本体とfrontendを更新してください。
-2. **Load Image** でご自身の参照画像を選択してください。保存済みの `krea2_00327_.webp` は仮のファイル名で、画像は同梱していません。
-3. H3サブグラフを開き、導入済みの拡散モデル・テキストエンコーダー・動画用VAEを各ローダーで選び直してください。配置先はそれぞれ `models/diffusion_models`、`models/text_encoders`、`models/vae` です。保存済み設定はDasiwa Hybrid V2 INT8、Qwen3-VL 32B NVFP4/AWQ、INT8/ConvRot VAE、Euler／simple／20 stepsです。共通の最適設定を保証するものではありません。ワークフロー内の **Model Links** に候補があります。保存済みの拡散モデル名にはWindows形式の `minimax\` サブフォルダーが含まれています。
-4. 人物参照を優先する通常用途では **Use Layout ImageをOFF**、画風は **指定なし**から始めます。Designerでビューとサイズを選んで実行します。保存済みの5面（正面・左横顔、全身の正面・左側面・背面）のAuto設定は現行コンパイラーで **2816×1280** です。このテンプレートでは手と足・履物の拡大ビューは未選択です。プロンプトと寸法はDesignerの接続から渡されます。下流ウィジェットに保存された数値で固定されるわけではありません。**5フレーム**生成し、デコード後の先頭フレームを `SaveImageAdvanced` でPNG保存します。
-
-保存状態と接続をローカル試験で確認しています。再起動後の実Reference OFFノードで、実行プロンプトと配置参照のバイパスも確認済みです。GPU比較では5ビューを維持しましたが、後半フレームの暗化と足元の余白は未解決です。このテンプレートは先頭フレームを保存します。[検証範囲と制約](docs/REFERENCE_LOCAL_JA.md)をご確認ください。
-
-### 従来ノードの基本操作
-
-ComfyUI用の独立ノードです。7種類のビュー、5つのプリセット、Auto／Manual寸法をGUIで選び、ネイティブH3へ渡すプロンプトと幅・高さを作ります。固定テンプレートは英文、部位の自由入力は日本語も原文のまま保持します。ComfyUIの言語設定が日本語の場合だけ日本語UIになります。
-
-`custom_nodes` にcloneしてComfyUIを再起動してください。Designerの3出力を `MiniMaxH3ReferenceToVideo` に接続し、参照画像は別のLoad Imageから最初の画像参照へ渡します。H3モデルと通常の生成ワークフローは別途必要です。
-
-既定の基本4面は2208×1280のままです。新しい「横顔・左」は人物の解剖学的左側から見た顔～胸のポートレイトです。7面・ディテールは2816×1280になります。保存済みの6面は配置を維持し、カスタムとして表示されます。基本4面の基準高を672にすると1344×768になります（7面は1696×768）。旧版ノードとReferenceのOFFでは画面のマネキンは操作用です。ReferenceのONでは黒枠付き配置画像をH3の2枚目の参照へ送ります。5フレーム設定も通常のH3 AV生成経路なので、軽量な静止画生成と同じ負荷ではありません。
-
-「足・履物」は全身内の靴とは別の拡大枠を要求します。関連する部位指定がない場合は、参照の靴・見えているブーツの筒・素足を保持し、見えない靴の意匠は発明しない指示です。選択が出力プロンプトへ届くことはローカル試験済みですが、GPUで効きが改善したかは未検証です。
-
-下部の「レイアウト｜部位指定」（Reference版は「画風」も追加）を切り替え、部位ドロップダウンと自由入力1欄で指示を保存できます。頭・髪、顔、上半身の服、背面の服、下半身、手・手袋、足・履物、全体・その他の8部位です。柄・文字・位置も同じ欄に書きます。部位ごとに保持され、関連する選択ビューへ共通反映します。**手・足の拡大ビューが未選択でも、手・手袋と足・履物の指示は全身図のプロンプトへ届きます。** 背面の柄は背面のみに指定されますが、生成結果での再現を保証するものではありません。未入力の旧ワークフローと配置は維持します。プレビューは配置確認用で、指定した服や柄には変わりません。
-
-### 短い英語プロンプトから始める
-
-英語で反映できた報告を踏まえ、**部位指定は短い英語での入力をおすすめします**。日本語も入力できますが、自動翻訳はせず原文のまま渡します。まず必要な変更だけを短く書き、反映されなかった属性があれば具体的な説明を追加してください。
-
-| 入力する部位 | そのまま使える英語の例 |
-| --- | --- |
-| **上半身の服** | `Change the jacket to silver-gray. Keep its design and material.` |
-| **手・手袋** | `Bare hands with natural skin and short nails in every view.` |
-| **足・履物** | `Black high-heeled pumps, consistent in every view.` |
-| **下半身**（上半身だけの参照） | `Complete the unseen lower body with black tailored trousers.` |
-| **背面の服**（色をそろえる） | `Keep the jacket silver-gray on the back as well.` |
-| **背面の服**（柄を追加する場合） | `Add a floral pattern only to the back of the jacket.` |
-
-背面の2例は目的に合わせて選び、両方必要な場合だけ組み合わせます。上半身しか写っていない参照では、下半身と履物をそれぞれの欄で指定できます。見えない部分のデザインを補う指示であり、元画像にない情報を復元する機能ではありません。
-
-短い指定で足りない場合は、形・素材・縫い目を維持する条件や、手袋・手の覆いを付けない条件を追加してください。
-
-- **上半身の服：** `Change only the jacket color to silver-gray. Keep its shape, material, seams, and fasteners unchanged in every view.`
-- **手・手袋：** `Show bare hands with natural skin and short nails in every view. No gloves, hand coverings, or glove-like cuffs.`
-
-長い指示が常に優れるわけではありません。変更が反映されない場合やビュー間で色・服・手・靴・背面の柄がそろわない場合もあるため、各ビューを確認してください。成功率や英語と日本語の比較は測定していません。
-
-### 手・足の拡大ビューを追加する目安
-
-通常は公式5面テンプレートと同様に、必要な顔・全身ビューを選び、**「両手」と「足・履物」の拡大ビューはオフから試す**のがおすすめです。細部の独立した拡大図が必要になったら追加してください。上半身だけの参照から手や靴の細部を指定したい場合にも役立ちます。対応する部位欄に、描いてほしいデザインを書いてください。
-
-「両手」の選択は拡大枠の追加であり、手袋を着ける指定ではありません。ただし、着物の参照でも意図しない手袋が出たという利用者の報告があります。発生率を測った結果ではありません。必要に応じて素手を明記し、全身図と拡大図の両方を確認してください。拡大ビューをオフにすれば必ず改善する、という意味ではありません。
-
-詳細な入力契約と配置ルールは[日本語仕様書](docs/IMPLEMENTATION_SPEC_JA.md)、検証済み範囲と未検証事項は[検証記録](docs/VERIFICATION.md)をご覧ください。
-
-### ライセンス
-
-ukr8b3g-cmykが権利を有する自作コード・文書には[MIT License](LICENSE)を適用します。第三者由来の素材は元の条件を維持し、画像・アートワーク・スクリーンショット・モデル重み・利用者の参照素材は今回のMIT許諾に含めません。再配布時は[NOTICE.md](NOTICE.md)を確認してください。画像・生成物の権利を保証するものではなく、ComfyUI・モデル・依存先・外部サービスの条件も別途適用されます。
+Keep [LICENSE](LICENSE), [NOTICE.md](NOTICE.md) and [artwork attribution](docs/MANNEQUIN_ARTWORK.md). Model licenses apply separately.

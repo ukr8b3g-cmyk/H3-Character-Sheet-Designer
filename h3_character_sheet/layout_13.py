@@ -6,9 +6,9 @@ from .state_13 import legacy_state
 from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, LEGACY_VIEW_IDS, PORTRAIT_IDS, VIEW_DETAILS
 
 
-def compute_semantic_layout(state, *, max_resolution=DEFAULT_MAX_RESOLUTION):
+def compute_semantic_layout(state, *, max_resolution=DEFAULT_MAX_RESOLUTION, separate_details=False):
     views, size = state['views'], state['size']
-    if set(views).issubset(LEGACY_VIEW_IDS):
+    if not separate_details and set(views).issubset(LEGACY_VIEW_IDS):
         return compute_layout(legacy_state(state), max_resolution=max_resolution)
     h = Fraction(size['body_height'])
     margin, gap, body_w, aux_w = h / 14, h / 25, 2 * h / 5, h / 2
@@ -18,7 +18,7 @@ def compute_semantic_layout(state, *, max_resolution=DEFAULT_MAX_RESOLUTION):
     details = [view for view in ('hands', 'feet') if view in views]
     groups = []
     if portraits:
-        cols = min(2, len(portraits))
+        cols = 1 if separate_details else min(2, len(portraits))
         rows = (len(portraits) + cols - 1) // cols
         cell_h = (h - (rows - 1) * gap) / rows
         groups.append((cols * aux_w + (cols - 1) * gap,

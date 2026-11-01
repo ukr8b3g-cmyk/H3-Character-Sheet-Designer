@@ -21,11 +21,11 @@ function setup() {
     afterChange(node) { transactions.push({node, phase: 'after', raw: node.widgets[0].value}); }};
   const app = {graph, ui: {settings}, extensionManager: {setting: {get: () => locale}}};
   const api = {fetchApi(path, options) { return new Promise(resolve => requests.push({path, options, resolve})); }};
-  function node() {
+  function node(type = 'H3CharacterSheetDesignerReference13') {
     const element = document.createElement('textarea'); element.value = DEFAULT_JSON;
     const original = {name: 'state_json', value: DEFAULT_JSON, type: 'customtext', element, options: {}};
     const native = [{name: 'use_layout_image', value: false}, {name: 'style', value: 'none'}];
-    const item = {type: 'H3CharacterSheetDesignerReference13', widgets: [original, ...native], graph,
+    const item = {type, widgets: [original, ...native], graph,
       size: [300, 100], inputs: [1, 2, 3].map(i => ({name: `reference_image_${i}`, link: null})),
       onAdded() { return 'added'; }, onRemoved() { return 'removed'; }, onConfigure() { return 'configured'; },
       isInputConnected(index) { return this.inputs[index].link !== null; },
@@ -59,13 +59,14 @@ function draftHeight(record, value) {
   input.value = value; input.dispatchEvent(new Event('input', {bubbles: true})); return input;
 }
 
-domTest('Reference13 real DOM has three roles and four independent saved appearance controls', t => {
+domTest('Previous node keeps three appearance controls and saved legacy data', t => {
   const h = setup(); t.after(h.cleanup); const {item, original, record} = h.node(); const root = record.ui.root;
   assert.equal(root.querySelectorAll('[data-reference-role]').length, 3);
   for (const [index, role] of ['head', 'clothing_back', 'footwear'].entries()) choose(root.querySelector(`[data-reference-role="reference_image_${index + 1}"]`), role);
   for (const [field, value] of Object.entries({hand_state: 'gloved', clothing_type: 'pants', footwear_state: 'unshod'})) choose(root.querySelector(`[data-appearance-choice="${field}"]`), value);
   root.querySelector('[data-view="clothing_front"]').click();
-  root.querySelector('[data-clothing-mode="garment"]').click();
+  assert.equal(root.querySelectorAll('[data-clothing-mode]').length, 0);
+  record.controller.applyRaw(JSON.stringify({...JSON.parse(original.value), clothing_mode: 'garment'}));
   const serialized = item.serialize(); assert.equal(serialized.widgets_values.length, 3);
   const state = parseReference13State(serialized.widgets_values[0]);
   assert.deepEqual(state.reference_roles, {reference_image_1: 'head', reference_image_2: 'clothing_back', reference_image_3: 'footwear'});
@@ -126,4 +127,49 @@ domTest('two Reference13 nodes keep independent drafts, role choices and native 
   draftHeight(a.record, '1344'); a.item.serialize();
   assert.equal(b.original.value, DEFAULT_JSON); assert.equal(b.record.ui.root.querySelector('[data-field="body_height"]').value, '1120');
   assert.equal(b.item.widgets.find(w => w.name === 'style').value, 'none');
+});
+
+domTest('V1.3 has object-only clothing cards, four-image roles and a dedicated preview route', t => {
+  const h = setup(); t.after(h.cleanup);
+  const {item, record} = h.node('H3CharacterSheetDesignerReferenceV13');
+  const root = record.ui.root;
+  assert.equal(root.querySelectorAll('[data-clothing-mode]').length, 0);
+  assert.equal(root.dataset.nodeVersion, 'v1.3.0');
+  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.3.0');
+  const shape = root.querySelector('[data-appearance-choice="clothing_type"]');
+  assert.deepEqual([...shape.options].map(o => [o.value,o.textContent]), [['reference','Auto'],['pants','Pants'],['skirt_robe','Skirt / robe']]);
+  assert(root.querySelector('.h3r13-choices .h3-preset-row'));
+  root.querySelector('[data-tab="settings"]').click();
+  assert.equal(root.querySelector('.h3-v13-settings').hidden, false);
+  assert.equal(root.querySelector('[data-preview-stage]').hidden, true);
+  root.querySelector('[data-tab="layout"]').click();
+  assert.equal(root.querySelectorAll('[data-reference-role]').length, 3);
+  assert.equal(root.querySelectorAll('img[src$="_garment.png"]').length, 2);
+  record.controller.preset('detail'); h.resolve();
+  assert.equal(JSON.parse(item.serialize().widgets_values[0]).clothing_mode, 'garment');
+  assert(h.requests.every(r => r.path === '/h3_character_sheet_designer/v1_3/preview'));
+});
+
+
+domTest('V1.3 presets match MOSS order and select the corresponding views', t => {
+  const h=setup();t.after(h.cleanup);const {item,record}=h.node('H3CharacterSheetDesignerReferenceV13');
+  const select=record.ui.root.querySelector('.h3-preset-row select');
+  assert.deepEqual([...select.options].map(o=>o.value),['five','basic','turnaround','single','seven','head','clothing','detail','custom']);
+  assert.deepEqual([...select.options].map(o=>o.textContent),['Standard · 5 views','Basic · 4 views','Turnaround · 3','Single view','7 views · hands and feet','Head · 6 views','Clothing · front/back','All · 13 views','Custom']);
+  choose(select,'seven');
+  assert.deepEqual(JSON.parse(item.serialize().widgets_values[0]).views,['face_front','face_left','body_front','body_left','body_back','hands','feet']);
+  choose(select,'clothing');assert.deepEqual(JSON.parse(item.serialize().widgets_values[0]).views,['clothing_front','clothing_back']);
+});
+
+
+domTest('V1.3 draws the same supplied guide geometry with native guide switch OFF', async t => {
+  const h=setup();t.after(h.cleanup);const {item,record}=h.node('H3CharacterSheetDesignerReferenceV13');
+  const request=h.requests.at(-1), state=JSON.parse(JSON.parse(request.options.body).state_json);
+  const layout={canvas:[2208,1280],feet_y:null,panels:state.views.map((id,i)=>({id,rect:[i/state.views.length,0,1/state.views.length,1]}))};
+  const geometry={canvas:[2208,1280],frame_width:1,legacy:false,panels:state.views.map((id,i)=>({id,bounds:[i*400+2,2,i*400+398,1278],rect:[i*400+5,5,390,1270],source:'mannequin-atlas.png',crop:[0,0,100,100],blank:false}))};
+  request.resolve({ok:true,json:async()=>({width:2208,height:1280,max_resolution:16384,layout,semantic_layout:layout,guide_geometry:geometry,guide_enabled:false,prompt:'preview'})});await tick();
+  const panel=record.ui.root.querySelector('[data-panel="face_front"]');
+  assert.equal(panel.style.left,`${2/2208*100}%`);
+  assert.equal(item.widgets.find(w=>w.name==='use_layout_image').value,false);
+  assert(record.ui.root.textContent.includes('Layout guide'));
 });

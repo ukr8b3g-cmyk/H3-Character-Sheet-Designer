@@ -19,9 +19,9 @@ def _contained_size(source, bounds):
     return max(1, round(width * limit_h / height)), max(1, limit_h)
 
 
-def derive_guide_geometry(layout, state):
+def derive_guide_geometry(layout, state, *, compact=False):
     width, height = layout['canvas']
-    legacy = set(state['views']).issubset(LEGACY_VIEW_IDS)
+    legacy = not compact and set(state['views']).issubset(LEGACY_VIEW_IDS)
     guide_layout = {**layout, 'feet_y': body_baseline(layout)}
     bodies = {} if legacy else body_artwork_placements(guide_layout)
     panels = []
@@ -40,7 +40,7 @@ def derive_guide_geometry(layout, state):
             rect = [left + (right-left-aw)//2, top + (bottom-top-ah)//2, aw, ah]
         panels.append({'id': view, 'bounds': [left, top, right, bottom], 'source': source,
                        'crop': crop, 'rect': rect, 'mirror': False, 'blank': blank})
-    return {'canvas': [width, height], 'frame_width': max(1, (min(width, height)+128)//256),
+    return {'canvas': [width, height], 'frame_width': 1 if compact else max(1, (min(width, height)+128)//256),
             'legacy': legacy, 'panels': panels}
 
 
@@ -70,3 +70,46 @@ def render_reference13_guide(geometry, layout):
         left, top, right, bottom = panel['bounds']
         draw.rectangle((left, top, max(left, right-1), max(top, bottom-1)), outline='black', width=geometry['frame_width'])
     return canvas
+
+
+def tighten_guide_layout(layout):
+    """Allocate nearby whitespace to panels, preserving canvas and view order."""
+    width,height=layout['canvas']
+    boxes=[(p['rect'][0]*width,p['rect'][1]*height,(p['rect'][0]+p['rect'][2])*width,(p['rect'][1]+p['rect'][3])*height) for p in layout['panels']]
+    edge=min(2, min(width,height)/128)
+    gap=min(4, min(min(r-l,b-t) for l,t,r,b in boxes)/4)
+    panels=[]
+    for panel,(l,t,r,b) in zip(layout['panels'],boxes):
+        left,top,right,bottom=edge,edge,width-edge,height-edge
+        for ol,ot,orr,ob in boxes:
+            if orr<=l:left=max(left,(orr+l)/2+gap/2)
+            if ol>=r:right=min(right,(r+ol)/2-gap/2)
+            if ob<=t:top=max(top,(ob+t)/2+gap/2)
+            if ot>=b:bottom=min(bottom,(b+ot)/2-gap/2)
+        panels.append({**panel,'rect':[round(left/width,6),round(top/height,6),round((right-left)/width,6),round((bottom-top)/height,6)]})
+    result={**layout,'panels':panels}
+    result['feet_y']=body_baseline(result)
+    return result
+
+
+def fit_auto_body_height(layout, target_height):
+    """Give full-body columns enough width for the requested height, without squeezing other panels."""
+    import math
+    width,height=layout['canvas']
+    bodies=[p for p in layout['panels'] if p['id'] in BODY_CROPS]
+    if not bodies:return layout
+    ratio=max(w/h for _,_,w,h in BODY_CROPS.values())
+    required=math.ceil(target_height*ratio)+2*max(1,(min(width,height)+128)//256)+2
+    changes=[(p['rect'][0]*width,(p['rect'][0]+p['rect'][2])*width,max(0,required-p['rect'][2]*width)) for p in bodies]
+    extra=sum(d for _,_,d in changes)
+    if extra<=0:return layout
+    new_width=math.ceil((width+extra)/32)*32
+    rounding=(new_width-width-extra)/len(changes)
+    changes=[(l,r,d+rounding) for l,r,d in changes]
+    panels=[]
+    for p in layout['panels']:
+        x,y,w,h=p['rect'];left=x*width
+        shift=sum(d for _,r,d in changes if r<=left+0.01)
+        grow=next((d for l,_,d in changes if p['id'] in BODY_CROPS and abs(l-left)<0.01),0)
+        panels.append({**p,'rect':[round((left+shift)/new_width,6),y,round((w*width+grow)/new_width,6),h]})
+    return {**layout,'canvas':[new_width,height],'panels':panels}

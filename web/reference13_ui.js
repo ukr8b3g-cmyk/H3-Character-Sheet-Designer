@@ -1,4 +1,4 @@
-import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, presetOf, StateError} from './reference13_state.js';
+import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, presetOf, StateError} from './reference13_state.js';
 import {createArtwork, createGuideArtwork} from './reference13_artwork.js';
 import {MULTI_VIEW_IDS, MULTI_PRESETS, REFERENCE_INPUTS, REFERENCE_ROLES, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
 let sequence = 0;
@@ -8,7 +8,7 @@ const EN = {
   intro: 'Choose the views for your character sheet', selected: 'selected',
   face_front: 'Portrait', face_left: 'Left portrait', body_front: 'Front', body_left: 'Left side', body_back: 'Back', hands: 'Hands', feet: 'Footwear',
   face_front_tip: 'Front-facing face to chest', face_left_tip: 'Head to chest, camera facing the subject’s anatomical left side', body_front_tip: 'Full body, head to soles', body_left_tip: "Camera looks directly at the subject’s anatomical left side", body_back_tip: 'Direct rear view, full body', hands_tip: 'Both hands; retain gloves from the reference', feet_tip: 'Separate close-up of both feet in reference footwear; visible boot shafts retained',
-  preset: 'Preset', five: 'Standard · 5 views', basic: 'Basic · 4 views', detail: 'Detail · 7 views', turnaround: 'Turnaround · 3', single: 'Single view', custom: 'Custom',
+  preset: 'Preset', five: 'Standard · 5 views', basic: 'Basic · 4 views', detail: 'Detail · 7 views', turnaround: 'Turnaround · 3', single: 'Single view', seven: '7 views · hands and feet', custom: 'Custom',
   auto: 'Auto', manual: 'Manual', size: 'Output size', bodyHeight: 'Panel height', width: 'Width', height: 'Height', returnAuto: 'Back to Auto', updating: 'Updating dimensions…',
   customHeight: 'Custom panel height', customHeightChoice: 'Custom…',
   autoHint: 'Auto keeps the requested full-body panel height.', manualHint: 'Manual keeps your canvas size when views change.',
@@ -36,7 +36,7 @@ const JA = {
   intro: 'キャラクターシートに使うビューを選択', selected: '選択中',
   face_front: '顔・胸', face_left: '横顔・左', body_front: '全身正面', body_left: '左側面', body_back: '全身背面', hands: '両手', feet: '足・履物',
   face_front_tip: '正面の顔から胸まで', face_left_tip: '人物の解剖学的左側から見た横顔。髪全体から胸まで', body_front_tip: '頭頂から靴底までの全身正面', body_left_tip: 'カメラが人物の解剖学的左側を正面から見る', body_back_tip: '真後ろから見た全身', hands_tip: '左右の手。参照にある手袋を保持', feet_tip: '両足の独立した拡大図。参照の履物と見えているブーツの筒を保持',
-  preset: 'プリセット', five: '標準5ビュー', basic: '基本4面', detail: '7面・ディテール', turnaround: '三面図のみ', single: '1カット', custom: 'カスタム',
+  preset: 'プリセット', five: '標準5ビュー', basic: '基本4面', detail: '7面・ディテール', turnaround: '三面図のみ', single: '1カット', seven: '7ビュー・手と足', custom: 'カスタム',
   auto: 'Auto', manual: 'Manual', size: '出力サイズ', bodyHeight: '基準高', width: '幅', height: '高さ', returnAuto: 'Autoに戻す', updating: '寸法更新中…',
   customHeight: '基準高を手入力', customHeightChoice: '手入力…',
   autoHint: 'Autoは指定した全身パネルの高さを維持します。', manualHint: 'Manualはビューを変えても幅・高さを維持します。',
@@ -63,7 +63,6 @@ const JA = {
 Object.assign(EN, {
   handState: 'Unknown hand state.', clothingMode: 'Unknown clothing mode.',
   handStateLabel: 'Hand appearance', hand_reference: 'Follow reference', hand_bare: 'Bare hands', hand_gloved: 'Gloves',
-  clothingModeLabel: 'Clothing detail', clothing_worn: 'Worn outfit detail', clothing_garment: 'Garments only',
   qualityHint: 'Hand choice overrides coverage only; other part text remains. Garments only excludes the wearer from the two clothing panels.',
   multiHandsTip: 'Both complete hands; follow the reference or the explicit hand choice',
   garmentTip: 'Referenced garments alone, with no head, limbs, skin, body or mannequin',
@@ -87,7 +86,6 @@ Object.assign(EN, {
 Object.assign(JA, {
   handState: '未知の手の状態です。', clothingMode: '未知の衣装表示です。',
   handStateLabel: '手の状態', hand_reference: '参照に従う', hand_bare: '素手', hand_gloved: '手袋',
-  clothingModeLabel: '衣装の詳細', clothing_worn: '着用状態の詳細', clothing_garment: '衣服のみ',
   qualityHint: '手の選択は着用有無を優先し、部位文は形・素材などに使います。衣服のみでは衣装2枚に人物を描きません。',
   multiHandsTip: '両手の全体。参照または手の状態の明示指定に従う',
   garmentTip: '参照の衣服のみ。頭・手足・肌・身体・マネキンを描かない',
@@ -138,45 +136,40 @@ export function loadStyles() {
 }
 
 /** Real UI renderer shared by the ComfyUI extension and the browser test harness. */
-export function createDesignerUI({controller, locale = 'en', compatibilityWarning = false, useLayoutImage = () => false, readStyle = () => 'none', readBatchOut = () => false, outputAware = false, writeStyle = null, reference = false, multiReference = false, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false})}) {
+export function createDesignerUI({controller, v13 = false, locale = 'en', compatibilityWarning = false, useLayoutImage = () => false, readStyle = () => 'none', readBatchOut = () => false, outputAware = false, writeStyle = null, reference = false, multiReference = false, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false})}) {
   loadStyles();
   const id = `h3-reference13-${++sequence}`;
   const root = element('section', 'h3-designer h3-reference13'); root.dataset.instance = id; root.classList.toggle('h3-reference', reference); root.setAttribute('aria-label', reference ? 'H3 Character Sheet Designer Reference' : 'H3 Character Sheet Designer');
   root.classList.toggle('h3-multi-reference', multiReference);
-  if (multiReference) root.setAttribute('aria-label', outputAware ? 'H3 Sheet Designer Reference V1.1' : 'H3 Character Sheet Designer Reference 13 Views');
+  const nodeVersion = v13 ? 'v1.3.0' : 'v1.2.2';
+  root.dataset.nodeVersion = nodeVersion;
+  root.setAttribute('aria-label', `H3 Character Sheet Designer ${nodeVersion}`);
+  root.classList.toggle('h3-v13', v13);
   const viewIds = multiReference ? MULTI_VIEW_IDS : VIEW_IDS;
-  const presets = multiReference ? MULTI_PRESETS : PRESETS;
+  const presets = v13 ? V13_PRESETS : multiReference ? MULTI_PRESETS : PRESETS;
   const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
   let language = locale, t = translations[locale] ?? EN, disposed = false;
   const partDrafts = new Map(); let selectedPart = PART_IDS[0], activeTab = 'layout';
   const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null; let activeOutput = 0;
   const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
+  const versionBadge = element('span', 'h3-node-version', nodeVersion); header.prepend(versionBadge);
   const cards = element('div', 'h3-cards'), cardMap = new Map();
   const headRow = element('div', 'h3-card-row h3-head-row'), bodyRow = element('div', 'h3-card-row h3-body-row');
   if (multiReference) cards.append(headRow, bodyRow);
   for (const view of viewIds) {
     const card = button('h3-card'); card.dataset.view = view;
-    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: multiReference && MULTI_MIRRORED_VIEWS.includes(view)}));
+    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: multiReference && MULTI_MIRRORED_VIEWS.includes(view), garment: v13}));
     const check = element('span', 'h3-check', '✓'); check.setAttribute('aria-hidden', 'true');
     const label = element('span', 'h3-card-label'); card.append(figure, check, label);
     listen(card, 'click', () => act(() => controller.toggle(view)));
     (multiReference ? (viewIds.indexOf(view) < 6 ? headRow : bodyRow) : cards).append(card); cardMap.set(view, {card, label});
   }
-  // Keep the shared presentation choice beside the two panels it affects.
-  // It is outside the view buttons so changing presentation never toggles a view.
   const clothingGroup = element('div', 'h3r13-clothing-group');
   const clothingCards = element('div', 'h3r13-clothing-cards');
-  const presentation = element('div', 'h3r13-presentation'), presentationButtons = new Map();
-  presentation.dataset.choiceGroup = 'clothing_mode'; presentation.setAttribute('role', 'group');
-  for (const value of SETTINGS.clothing_mode) {
-    const control = button('h3r13-presentation-button'); control.dataset.clothingMode = value;
-    listen(control, 'click', () => act(() => controller.setChoice('clothing_mode', value)));
-    presentation.append(control); presentationButtons.set(value, control);
-  }
   if (multiReference) {
     bodyRow.insertBefore(clothingGroup, cardMap.get('clothing_front').card);
     clothingCards.append(cardMap.get('clothing_front').card, cardMap.get('clothing_back').card);
-    clothingGroup.append(clothingCards, presentation);
+    clothingGroup.append(clothingCards);
   }
   const presetRow = element('div', 'h3-preset-row'), presetLabel = element('label'), preset = element('select', 'h3-select'); preset.id = `${id}-preset`; presetLabel.htmlFor = preset.id;
   for (const name of [...Object.keys(presets), 'custom']) { const option = element('option'); option.value = name; option.disabled = name === 'custom'; preset.append(option); }
@@ -223,7 +216,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   clearStyle.dataset.clearStyle = ''; listen(clearStyle, 'click', () => act(() => writeStyle('none'))); styleStatus.append(styleBadge, clearStyle);
   const previewHead = element('div', 'h3-preview-head'), tabs = element('div', 'h3-tabs'), previewTag = element('span', 'h3-preview-tag');
   tabs.setAttribute('role', 'tablist'); const tabMap = new Map();
-  const tabNames = reference ? ['layout', 'parts', 'style'] : ['layout', 'parts'];
+  const tabNames = reference ? ['layout', 'parts', 'style', ...(v13 ? ['settings'] : [])] : ['layout', 'parts', ...(v13 ? ['settings'] : [])];
   for (const name of tabNames) {
     const tab = button('h3-tab'); tab.id = `${id}-${name}-tab`; tab.dataset.tab = name;
     tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', `${id}-${name}-panel`);
@@ -267,6 +260,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   partPanel.append(rolesBox);
   const qualityMap = new Map();
   const qualityBox = element('div', 'h3r13-choices');
+  if (v13) qualityBox.append(presetRow);
   for (const field of ['clothing_type', 'hand_state', 'footwear_state']) {
     const row = element('div', 'h3r13-choice'), label = element('label'), select = element('select', 'h3-select');
     row.dataset.choiceGroup = field; select.dataset.appearanceChoice = field;
@@ -300,13 +294,24 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     // A valid JSON replacement owns these values, even when the saved JSON is unchanged.
     drafts.clear(); partDrafts.clear();
   })); jsonDetails.append(summary, rawInput, rawHint, apply);
-  root.append(header, cards, qualityBox, qualityHint, presetRow, controls, metrics, warning, status, errorBox, retry);
+  root.append(header, cards, qualityBox);
+  if (!v13) root.append(qualityHint);
+  if (!v13) root.append(presetRow);
+  root.append(controls, metrics);
+  if (!v13) root.append(warning, status); else metrics.append(status);
+  root.append(errorBox, retry);
   if (reference) root.append(styleStatus);
   root.append(previewHead, stage, partPanel);
   if (reference) root.append(stylePanel);
   root.append(footer);
-  if (reference) root.append(generated);
-  root.append(jsonDetails);
+  const settingsPanel = element('div', 'h3-v13-settings');
+  settingsPanel.id = `${id}-settings-panel`; settingsPanel.setAttribute('role', 'tabpanel'); settingsPanel.setAttribute('aria-labelledby', `${id}-settings-tab`);
+  if (v13) {
+    settingsPanel.append(modeHint, warning, qualityHint, generated, jsonDetails); root.append(settingsPanel);
+  } else {
+    if (reference) root.append(generated);
+    root.append(jsonDetails);
+  }
   // Keep node dragging out of text controls, but let browser keyboard accessibility work.
   listen(root, 'pointerdown', event => event.stopPropagation());
   const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitSheet()) : null;
@@ -336,11 +341,11 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     }
     tabs.setAttribute('aria-label', t.diagram);
     for (const [name, tab] of tabMap) {
-      tab.textContent = name === 'layout' ? t.layoutTab : name === 'style' ? t.styleTab : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;
+      tab.textContent = name === 'layout' ? t.layoutTab : name === 'style' ? t.styleTab : name === 'settings' ? (language === 'ja' ? '設定' : 'Settings') : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;
       tab.setAttribute('aria-selected', String(name === activeTab)); tab.tabIndex = name === activeTab ? 0 : -1;
     }
-    stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts'; stylePanel.hidden = activeTab !== 'style';
-    previewTag.textContent = activeTab === 'layout' ? (language === 'ja' ? (useLayoutImage() ? '生成に渡す配置画像' : '配置の目安') : (useLayoutImage() ? 'Generation layout image' : 'Conceptual layout')) : activeTab === 'style' ? t.style : t.partSaved;
+    stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts'; stylePanel.hidden = activeTab !== 'style'; settingsPanel.hidden = activeTab !== 'settings';
+    previewTag.textContent = activeTab === 'layout' ? (language === 'ja' ? (useLayoutImage() ? '生成に渡す配置画像' : v13 ? '配置ガイド' : '配置の目安') : (useLayoutImage() ? 'Generation layout image' : v13 ? 'Layout guide' : 'Conceptual layout')) : activeTab === 'style' ? t.style : t.partSaved;
     const selectedStyle = readStyle();
     styleStatus.hidden = !reference || selectedStyle === 'none'; styleBadge.textContent = `${t.style}：${t[`style_${selectedStyle}`] ?? selectedStyle}`;
     clearStyle.textContent = t.clearStyle; clearStyle.disabled = !writeStyle;
@@ -364,8 +369,8 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
   }
   function renderRoles() {
     const ja = language === 'ja';
-    const labels = ja ? {clothing_type: '衣装の型 · 前後共通', clothing_mode: '衣装の表示', hand_state: '手', footwear_state: '足・履物'} : {clothing_type: 'Clothing shape · front/back', clothing_mode: 'Clothing presentation', hand_state: 'Hands', footwear_state: 'Feet'};
-    const options = ja ? {reference: 'Auto', pants: 'パンツ', skirt_robe: 'スカート・ローブ', worn: '着用', garment: '衣服のみ', bare: '素手', gloved: 'グローブ', shod: '靴あり', unshod: '靴なし'} : {reference: 'Auto', pants: 'Pants', skirt_robe: 'Skirt / robe', worn: 'Worn', garment: 'Garments only', bare: 'Bare hands', gloved: 'Gloves', shod: 'Footwear on', unshod: 'Footwear off'};
+    const labels = ja ? {clothing_type: '衣装の型', hand_state: '手', footwear_state: '足・履物'} : {clothing_type: 'Clothing shape', hand_state: 'Hands', footwear_state: 'Feet'};
+    const options = ja ? {reference: 'Auto', pants: 'パンツ', skirt_robe: 'スカート・ローブ', bare: '素手', gloved: 'グローブ', shod: '靴あり', unshod: '靴なし'} : {reference: 'Auto', pants: 'Pants', skirt_robe: 'Skirt / robe', bare: 'Bare hands', gloved: 'Gloves', shod: 'Footwear on', unshod: 'Footwear off'};
     const tips = ja ? {
       clothing_type: '参照の衣装形状を維持、またはパンツ／スカート・ローブを指定。全身と衣装の前後に適用します。',
       hand_state: '参照維持／素手／グローブ。手の詳細と全身ビューに適用します。',
@@ -375,13 +380,6 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
       hand_state: 'Follow the reference, bare hands or gloves. Applies to hand details and full-body views.',
       footwear_state: 'Follow the reference, footwear on or off. Applies to foot details and full-body views. Footwear off preserves compatible socks and tights.',
     };
-    presentation.setAttribute('aria-label', labels.clothing_mode);
-    presentation.title = ja ? '衣装前・後の2パネルに共通。着用状態、または人物を含めない衣服のみ。' : 'Shared by the front/back outfit panels: worn outfit or garments without the wearer.';
-    for (const [value, control] of presentationButtons) {
-      control.textContent = options[value]; control.disabled = !controller.state;
-      control.setAttribute('aria-pressed', String((controller.state?.clothing_mode ?? DEFAULTS.clothing_mode) === value));
-      control.title = presentation.title;
-    }
     for (const [field, item] of qualityMap) {
       item.label.textContent = labels[field]; item.select.disabled = !controller.state;
       item.select.title = tips[field];
@@ -417,7 +415,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     const availableW = Math.max(1, stage.clientWidth - 30), availableH = Math.max(1, stage.clientHeight - 28);
     const scale = Math.min(availableW / p.width, availableH / p.height);
     canvas.style.width = `${p.width * scale}px`; canvas.style.height = `${p.height * scale}px`;
-    canvas.style.setProperty('--h3-frame-width', `${Math.max(1, Math.floor((Math.min(p.width, p.height) + 128) / 256)) * scale}px`);
+    canvas.style.setProperty('--h3-frame-width', `${(v13 && p.guide_geometry ? p.guide_geometry.frame_width : Math.max(1, Math.floor((Math.min(p.width, p.height) + 128) / 256))) * scale}px`);
   }
   function renderPreview() {
     const p = controller.preview, valid = controller.isCurrentPreview && Boolean(controller.state);
@@ -426,7 +424,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     const key = valid ? JSON.stringify([p.semantic_layout, p.guide_geometry, useLayoutImage()]) : null;
     if (key !== lastPreviewKey) {
       canvas.replaceChildren(); lastPreviewKey = key;
-      if (valid && useLayoutImage()) {
+      if (valid && (useLayoutImage() || (v13 && p.guide_geometry))) {
         for (const panel of p.guide_geometry.panels) {
           if (!panel.blank) canvas.append(createGuideArtwork(panel, p.guide_geometry.canvas, `${id}-${panel.id}`));
           const [left, top, right, bottom] = panel.bounds;
@@ -439,7 +437,7 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
           const box = element('div', 'h3-panel'); box.dataset.panel = panel.id;
           const [left, top, width, height] = panel.rect;
           Object.assign(box.style, {left: `${left*100}%`, top: `${top*100}%`, width: `${width*100}%`, height: `${height*100}%`});
-          if (!(controller.state.clothing_mode === 'garment' && panel.id.startsWith('clothing_'))) box.append(createArtwork(panel.id, `${id}-${panel.id}`));
+          if (v13 || !(controller.state.clothing_mode === 'garment' && panel.id.startsWith('clothing_'))) box.append(createArtwork(panel.id, `${id}-${panel.id}`, {garment: v13}));
           canvas.append(box);
         }
       }
@@ -460,10 +458,11 @@ export function createDesignerUI({controller, locale = 'en', compatibilityWarnin
     if (reason === 'restore') { activeOutput = 0; drafts.clear(); partDrafts.clear(); customHeight = false; localError = null; }
     t = translations[language] ?? EN; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
+
     intro.textContent = t.intro; count.textContent = `${state?.views.length ?? 0} / ${viewIds.length} ${t.selected}`;
     for (const [view, {card, label}] of cardMap) {
       card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state;
-      const tip = multiReference && view === 'hands' ? t.multiHandsTip : multiReference && state?.clothing_mode === 'garment' && view.startsWith('clothing_') ? t.garmentTip : multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
+      const tip = multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
       card.title = tip; card.setAttribute('aria-label', `${t[view]}: ${tip}`); label.textContent = t[view];
     }
     presetLabel.textContent = t.preset; preset.disabled = !state; preset.value = Object.entries(presets).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';

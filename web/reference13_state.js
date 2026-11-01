@@ -8,6 +8,7 @@ export const MULTI_VIEW_IDS = Object.freeze(['face_front', 'face_left', 'face_ri
 export const VIEW_IDS = MULTI_VIEW_IDS;
 export const MULTI_PRESETS = Object.freeze({five: ['face_front', 'face_left', 'body_front', 'body_left', 'body_back'], basic: ['face_front', 'body_front', 'body_left', 'body_back'], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'], head: MULTI_VIEW_IDS.slice(0, 6), clothing: ['clothing_front', 'clothing_back'], detail: [...MULTI_VIEW_IDS]});
 export const PRESETS = MULTI_PRESETS;
+export const V13_PRESETS = Object.freeze({five: PRESETS.five, basic: PRESETS.basic, turnaround: PRESETS.turnaround, single: PRESETS.single, seven: [...PRESETS.five, 'hands', 'feet'], head: PRESETS.head, clothing: PRESETS.clothing, detail: PRESETS.detail});
 export const REFERENCE_INPUTS = ['reference_image_1', 'reference_image_2', 'reference_image_3'];
 export const REFERENCE_ROLES = ['same_character', 'face', 'head', 'clothing', 'clothing_front', 'clothing_back', 'hands', 'footwear'];
 export const SETTINGS = Object.freeze({hand_state: ['reference', 'bare', 'gloved'], clothing_mode: ['worn', 'garment'], clothing_type: ['reference', 'pants', 'skirt_robe'], footwear_state: ['reference', 'shod', 'unshod']});
@@ -54,7 +55,7 @@ export const presetOf = state => Object.entries(PRESETS).find(([, views]) => vie
 function promote(state) { return {...structuredClone(state), schema_version: 3, part_prompts: structuredClone(state.part_prompts ?? {}), ...DEFAULTS}; }
 export class Reference13Controller extends DesignerController {
   constructor(options) {
-    super({...options, adapter: {parse: parseReference13State, serialize: serializeReference13State, migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: PRESETS}});
+    super({...options, adapter: options.adapter ?? {parse: parseReference13State, serialize: serializeReference13State, migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: PRESETS}});
   }
   commit(next) {
     if (next.schema_version < 3 && next.views.some(view => !LEGACY_VIEWS.includes(view))) next = promote(next);

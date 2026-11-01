@@ -1,5 +1,19 @@
 # What's New / Changelog
 
+## v1.3.0
+
+- Add the V1.3 node; keep previous v1.2.2 Reference13. Remove older menu registrations while retaining historical files/releases.
+- Align MOSS presets and add seven views: portraits left, bodies center, hands/feet far right.
+- Share the guide/layout between ON and OFF; OFF still passes no guide image. Reduce margins and enlarge Auto body columns for requested height; Auto width/time/VRAM can increase.
+- Compact UI, Settings tab, Worn switch removal and clothing shape Auto retained.
+- Small clothing/all-13 prompt adjustments: extraction / No human / flat, scoped to clothing panels. No major general quality improvement is claimed; human remnants, missing/duplicate views and outfit/body confusion remain possible.
+- Add supplied v1.3 subgraph template with Hybrid V4, H3 INT8 TE and Pika Ref2VA. Preserve node titles; document both Pika LoRA URLs.
+- Preserve four-image pass-through and eight outputs. No new LLM, TE generation or hard regional prompt separation.
+
+### 日本語
+v1.3ノード／テンプレート、MOSS準拠プリセットと7面、共通ガイド、余白・全身列、UIを更新。衣装・13面は小修正で、大幅改善は未確認。前版Reference13と旧ファイル／Releaseを保持。Auto幅増加の時間・VRAM負荷等をREADMEへ明記。詳細は[リリースノート](docs/releases/v1.3.0.md)。
+
+
 ## v1.2.2
 
 - Fix stale part and numeric drafts after successful Apply JSON in standard and Reference13 UIs.

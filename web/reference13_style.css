@@ -7,11 +7,6 @@
 .h3-reference13 .h3-body-row { grid-template-columns: repeat(7, minmax(0, 1fr)); margin-bottom: 0; }
 .h3r13-clothing-group { grid-column: 4 / span 2; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .h3r13-clothing-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.h3r13-presentation { display: flex; min-width: 0; border: 1px solid #607183; border-radius: 4px; overflow: hidden; }
-.h3-reference13 .h3r13-presentation-button { flex: 1; min-width: 0; padding: 2px 3px; border: 0; border-radius: 0; background: #242d38; font-size: 12px; line-height: 17px; white-space: nowrap; }
-.h3-reference13 .h3r13-presentation-button + button { border-left: 1px solid #607183; }
-.h3-reference13 .h3r13-presentation-button[aria-pressed=true] { background: #365850; color: #edf3f8; }
-.h3-reference13 .h3r13-presentation-button:focus-visible { outline-offset: -2px; }
 .h3r13-choices { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px 8px; font-size: 13px; }
 .h3r13-choice { min-width: 0; }
 .h3r13-choice label { display: block; color: #bdcbd9; margin-bottom: 2px; }
@@ -25,3 +20,24 @@
   .h3-reference13 .h3-card-row { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
   .h3-reference13 .h3-body-row { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 }
+
+.h3-reference13 .h3-node-version { flex: none; color: #83d7c6; font-size: 12px; white-space: nowrap; }
+.h3-reference13 .h3-intro > span:nth-child(2) { margin-right: auto; }
+.h3-v13 { min-height: 790px; gap: 6px; }
+.h3-v13 .h3r13-choices { gap: 4px 8px; font-size: 12px; }
+.h3-v13 .h3r13-choices .h3-preset-row { grid-column: 1 / span 3; flex-direction: column; align-items: stretch; gap: 2px; min-width: 0; }
+.h3-v13 .h3r13-choices label { font-size: 12px; line-height: 16px; color: #bdcbd9; }
+.h3-v13 .h3r13-choices select { flex: 0 0 30px; height: 30px; font-size: 13px; padding: 3px 5px; }
+.h3-v13 .h3-controls { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: end; gap: 8px; padding: 6px; }
+.h3-v13 .h3-mode-row { flex-direction: column; align-items: stretch; align-self: end; gap: 3px; }
+.h3-v13 .h3-mode-group { height: 32px; }
+.h3-v13 .h3-number-row { display: grid; grid-template-columns: minmax(90px, 112px) repeat(2, minmax(64px, 80px)); gap: 6px; }
+.h3-v13 .h3-number-field { min-width: 0; }
+.h3-v13 .h3-number-field label, .h3-v13 .h3-field-title { font-size: 13px; }
+.h3-v13 .h3-input-line input, .h3-v13 .h3-input-line select { height: 32px; padding: 3px 6px; font-size: 14px; }
+.h3-v13 .h3-metrics { flex-wrap: nowrap; min-height: 24px; }
+.h3-v13 .h3-dimensions { font-size: 18px; }
+.h3-v13 .h3-pixels, .h3-v13 .h3-status { font-size: 12px; }
+.h3-v13 .h3-status { margin-left: auto; white-space: nowrap; }
+.h3-v13 .h3-experimental { display: none; }
+.h3-v13-settings { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid #586f81; border-radius: 8px; background: #1c2630; }

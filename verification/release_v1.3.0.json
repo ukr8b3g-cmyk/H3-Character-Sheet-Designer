@@ -1,0 +1,33 @@
+{
+  "version": "1.3.0",
+  "release_name": "v1.3",
+  "python_tests": 173,
+  "javascript_dom_tests": 111,
+  "failures": 0,
+  "skips": 0,
+  "registered_nodes": [
+    "H3CharacterSheetDesignerReference13",
+    "H3CharacterSheetDesignerReferenceV13"
+  ],
+  "input_images": 4,
+  "designer_outputs": 8,
+  "workflow_titles_and_wiring_preserved": true,
+  "workflow_models": {
+    "UNETLoader": [
+      "minimax\\DasiwaMinimaxH3_dasiwaHybridV4_int8.safetensors",
+      "default"
+    ],
+    "CLIPLoader": [
+      "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "minimax",
+      "default"
+    ],
+    "VAELoader": [
+      "minimax_h3_video_vae_int8_convrot.safetensors"
+    ]
+  },
+  "existing_readme_images_preserved": 4,
+  "final_gpu_quality_benchmark": false,
+  "major_clothing_all13_improvement_claimed": false,
+  "registry_publication": false
+}
