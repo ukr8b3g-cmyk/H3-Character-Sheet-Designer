@@ -19,6 +19,8 @@ See [release notes](docs/releases/v1.3.0.md) and [CHANGELOG](CHANGELOG.md). Prev
 
 ## Start here
 
+Available workflows: [P-H3 subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2](workflows/H3_Character_Sheet_Designer_v1.2.2.json). The P-H3 workflow uses `minimax_h3_fl2va_pruned_int8_convrot.safetensors` with the P-H3 image text encoder and VAE.
+
 1. Update/install this node pack, restart ComfyUI, and reload the browser (Ctrl+F5).
 2. Open **[H3_Character_Sheet_Designer_v1.3.json](workflows/H3_Character_Sheet_Designer_v1.3.json)**. [Release download](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.3.0/H3_Character_Sheet_Designer_v1.3.json).
 3. Select installed models and valid images in every connected Load Image node. Disconnect unused optional inputs on the Designer. Models/images are not bundled.
@@ -104,6 +106,8 @@ Update existing installations through your usual Git/Manager workflow, restart C
 [リリースノート](docs/releases/v1.3.0.md)・[変更履歴](CHANGELOG.md)も参照してください。
 
 ### 使い方
+
+ワークフロー一覧 — [P-H3サブグラフ版](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3版](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2版](workflows/H3_Character_Sheet_Designer_v1.2.2.json)。P-H3版は `minimax_h3_fl2va_pruned_int8_convrot.safetensors` とP-H3 Image用テキストエンコーダー・VAEを使用します。
 
 1. 更新後にComfyUIを通常再起動し、ブラウザーをCtrl+F5で再読込。
 2. [v1.3テンプレート](workflows/H3_Character_Sheet_Designer_v1.3.json)を開き、導入済みモデルを選択。接続したLoad Imageすべてに有効な画像を指定するか、使わない追加参照入力をDesignerから外します。
