@@ -914,7 +914,7 @@
         "Aspect ratio: 1:1\nRequest: change the lighting to night time",
         0,
         0,
-        "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+        "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
         "p-h3-image_text_encoder_int8_convrot.safetensors",
         "p-h3-image_vae_int8_convrot.safetensors",
         "P-H3-Image\\p-h3-image_lora_bf16.safetensors"
@@ -923,7 +923,7 @@
         "prompt": "Aspect ratio: 1:1\nRequest: change the lighting to night time",
         "width": 0,
         "height": 0,
-        "unet_name": "minimax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+        "unet_name": "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
         "clip_name": "p-h3-image_text_encoder_int8_convrot.safetensors",
         "vae_name": "p-h3-image_vae_int8_convrot.safetensors",
         "lora_name": "P-H3-Image\\p-h3-image_lora_bf16.safetensors"
@@ -2452,10 +2452,10 @@
   "extra": {
     "frontendVersion": "1.57.6",
     "ds": {
-      "scale": 0.5732514615384654,
+      "scale": 0.43069230769231054,
       "offset": [
-        731.2545559210489,
-        258.7080275419228
+        1661.0342776302787,
+        588.1413909934329
       ]
     }
   },
