@@ -1,3 +1,7 @@
+# v1.3.1 — 2026-11-10
+
+Editable per-view H3 base prompts, Apply/Reset, blank overrides, validation and workflow persistence. Existing node names, workflows, references and sockets preserved. See README for validation and remaining model limitations.
+
 # What's New / Changelog
 
 ## v1.3.0

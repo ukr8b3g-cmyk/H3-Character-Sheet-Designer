@@ -2,7 +2,8 @@
 from .compiler import DEFAULT_MAX_RESOLUTION, EXPERIMENTAL_PIXEL_THRESHOLD, StateValidationError
 from .guide_13 import derive_guide_geometry, tighten_guide_layout, fit_auto_body_height, _contained_size
 from .layout_13 import compute_semantic_layout
-from .off_compiler_13 import compile_extended_prompt, compile_off_prompt_13
+from .off_compiler_13 import compile_extended_prompt, compile_off_prompt_13, panel_instruction
+from .view_catalog_13 import VIEW_IDS
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import parse_reference13_state, serialize_reference13_state
 from .multi_reference_compiler import ROLE_INSTRUCTIONS
@@ -21,7 +22,7 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
     if (type(reference_presence) is not dict or set(reference_presence) - set(EXTRA_INPUTS)
             or any(type(value) is not bool for value in reference_presence.values())):
         raise StateValidationError('Invalid reference presence.', 'invalid_request')
-    state = parse_reference13_state(state_json, max_resolution=max_resolution)
+    state = parse_reference13_state(state_json, max_resolution=max_resolution, allow_view_prompts=optimize_outfit)
     if optimize_outfit:
         state["clothing_mode"] = "garment"
     seven = {'face_front', 'face_left', 'body_front', 'body_left', 'body_back', 'hands', 'feet'}
@@ -52,10 +53,11 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
             references.append({'source': source, 'role': role, 'picture_number': number,
                                'tag': f'<Picture {number}>', 'core_input': f'ref_images.ref_image_{slot}'})
     appearance_policy = build_appearance_policy(state, references)
+    panel_records = []
     if not use_layout_image:
-        prompt = compile_off_prompt_13(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit)
+        prompt = compile_off_prompt_13(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
     else:
-        prompt = compile_extended_prompt(state, layout, style=style, guide_geometry=geometry, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit)
+        prompt = compile_extended_prompt(state, layout, style=style, guide_geometry=geometry, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
     eligible_sources = {item['source'] for item in appearance_policy}
     extras = [item for item in references if item['source'] in EXTRA_INPUTS]
     if extras:
@@ -81,8 +83,13 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
             prompt = prompt.replace(marker, '\n' + instructions + marker, 1)
         else:
             prompt += '\nAdditional character references:\n' + instructions + '\n'
+    editor = {}
+    if optimize_outfit:
+        defaults = dict(state, view_prompts={})
+        editor = {'default_view_prompts': {view: panel_instruction(defaults, view, True) for view in VIEW_IDS},
+                  'view_prompts': panel_records}
     width, height = layout['canvas']
-    return {'state_json': serialize_reference13_state(state), 'state': state,
+    return {**editor, 'state_json': serialize_reference13_state(state), 'state': state,
             'width': width, 'height': height, 'semantic_layout': layout, 'layout': layout,
             'prompt': prompt, 'guide_enabled': use_layout_image, 'guide_geometry': geometry,
             'reference_plan': references, 'reference_numbering_provisional': True,

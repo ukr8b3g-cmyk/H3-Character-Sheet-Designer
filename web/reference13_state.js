@@ -29,7 +29,14 @@ export function normalizeReference13State(state, max = Infinity) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
   if ([1, 2].includes(state.schema_version)) return normalizeState(state, max);
   if (state.schema_version !== 3) fail('version');
-  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : [])], 'state');
+  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : []), ...(Object.hasOwn(state, 'view_prompts') ? ['view_prompts'] : [])], 'state');
+  if (Object.hasOwn(state, 'view_prompts')) {
+    if (!state.view_prompts || typeof state.view_prompts !== 'object' || Array.isArray(state.view_prompts)) fail('object', 'view_prompts');
+    for (const [view, text] of Object.entries(state.view_prompts)) {
+      if (!VIEW_IDS.includes(view)) fail('views', view);
+      if (typeof text !== 'string' || !text.isWellFormed() || text.length > 2000) fail('view_prompt', view);
+    }
+  }
   if (Object.hasOwn(state, 'reference_roles')) {
     keys(state.reference_roles, REFERENCE_INPUTS, 'reference_roles');
     if (Object.values(state.reference_roles).some(role => !REFERENCE_ROLES.includes(role))) fail('setting', 'reference_roles');
@@ -47,7 +54,7 @@ export function normalizeReference13State(state, max = Infinity) {
     const text = validatePartPrompt(state.part_prompts[part]);
     if (text.trim()) parts[part] = text;
   }
-  return {schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]]))};
+  return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]]))};
 }
 export const parseReference13State = (raw, max) => normalizeReference13State(parseJSONStrict(raw), max);
 export const serializeReference13State = (state, max) => JSON.stringify(normalizeReference13State(state, max));
@@ -75,6 +82,17 @@ export class Reference13Controller extends DesignerController {
     const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);
     next.reference_roles ??= Object.fromEntries(REFERENCE_INPUTS.map(key => [key, 'same_character']));
     next.reference_roles[input] = role;
+    return this.commit(next);
+  }
+  setViewPrompt(view, text) {
+    this.syncFromSource();
+    if (!VIEW_IDS.includes(view)) fail('views', view);
+    if (text !== null && (typeof text !== 'string' || !text.isWellFormed() || text.length > 2000)) fail('view_prompt', view);
+    if (!this.state) return false;
+    const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);
+    next.view_prompts ??= {};
+    if (text === null) delete next.view_prompts[view]; else next.view_prompts[view] = text;
+    if (!Object.keys(next.view_prompts).length) delete next.view_prompts;
     return this.commit(next);
   }
   setHandState(value) { return this.setChoice('hand_state', value); }

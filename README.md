@@ -1,9 +1,17 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **v1.3** (node/package version `1.3.0`)
+[日本語](#日本語) · **Package v1.3.1** (node names remain v1.3.0 / v1.2.2)
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## Update — v1.3.1: editable view prompts
+
+Package v1.3.1 keeps the existing **H3 Character Sheet Designer v1.3.0** and **v1.2.2** node names. In the v1.3.0 node, open **Prompts** after Settings, select one of 13 views and edit its H3 base instruction. **Apply** saves it; **Reset this prompt** restores that view's default. Blank overrides are allowed. Valid pending edits are committed on workflow save/queue. Each override accepts up to 2,000 UTF-16 units.
+
+These are H3 instructions, not Anima tags. Layout, image references, Part prompts and settings are added separately. This edits a view's base instruction rather than the whole final prompt. Overrides persist in saved workflows. Unedited workflows retain their original instructions. Existing workflow files, node IDs/titles, sockets, image passthrough and Layout Image ON/OFF are unchanged. The previous v1.2.2 node does not gain this editor.
+
+Validation: local implementation passed Python 176 and JavaScript/DOM 112 tests. Live Chrome/ComfyUI_W checks covered Apply, Reset, save/reload and Layout Image ON/OFF; live preview API checks covered reference numbering. This update adds no GPU quality, speed or VRAM benchmark. Human remnants in clothing panels and missing/duplicate views remain possible; custom edits may weaken viewpoint compliance. Restart ComfyUI and reload the browser after updating.
 
 ## What's New — v1.3
 
@@ -91,7 +99,16 @@ Update existing installations through your usual Git/Manager workflow, restart C
 
 ## 日本語
 
-**v1.3（ノード／パッケージ表記は1.3.0）**。MiniMax H3本来の画像参照でキャラクターシートを生成します。人物画像1枚＋部位参照3枚をそのまま受け渡し、必要なら配置画像を追加参照にします。MOSS版の画像→文章化とは異なる方式です。
+### 更新 — v1.3.1：ビュー別プロンプト編集
+
+パッケージは1.3.1ですが、ノード名 **H3 Character Sheet Designer v1.3.0／v1.2.2** は保持します。v1.3.0ノードのSettingsの次に **Prompts（プロンプト）** タブを追加。13ビューから選んでH3基本文を編集し、Applyで適用、Reset this promptで対象だけ初期化できます。空欄も保存可能。各欄2,000 UTF-16単位まで。有効な未適用編集は保存・キュー送信時にも確定します。
+
+AnimaタグではなくH3用の文章です。配置・画像参照・部位プロンプト・設定は別途追加され、最終文全体の置換ではありません。編集はワークフロー内に保存し再読込で復元。未編集の旧ワークフローの生成指示、既存ファイル、ノードID・表示名・入出力・画像受け渡し・Layout Image ON/OFFは維持。旧v1.2.2には編集タブを追加しません。
+
+ローカル実装でPython176件・JS/DOM112件成功。実Chrome／ComfyUI_Wで適用・初期化・保存／再読込・Layout Image ON/OFF、実APIで参照番号を確認しました。今回GPU画質・速度・VRAMの追加評価はしていません。衣装への人物混入やビュー欠落・重複の制約は残り、編集文によって方向の追従が弱まる場合もあります。更新後はComfyUI再起動とブラウザー再読込が必要です。
+
+
+**パッケージv1.3.1（ノード名はv1.3.0／v1.2.2を維持）**。MiniMax H3本来の画像参照でキャラクターシートを生成します。人物画像1枚＋部位参照3枚をそのまま受け渡し、必要なら配置画像を追加参照にします。MOSS版の画像→文章化とは異なる方式です。
 
 ### v1.3の変更点 / What's New
 

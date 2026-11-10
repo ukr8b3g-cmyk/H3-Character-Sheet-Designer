@@ -24,7 +24,7 @@ DEFAULT_STATE = {
 DEFAULT_STATE_JSON = serialize_state(DEFAULT_STATE)
 
 
-def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION):
+def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow_view_prompts=False):
     _check_max_resolution(max_resolution)
     state = decode_json(raw)
     if type(state) is not dict:
@@ -35,12 +35,22 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION):
         return {**legacy, 'part_prompts': legacy.get('part_prompts', {}), **DEFAULTS}
     if type(version) is not int or version != 3:
         raise StateValidationError('Reference13 supports schema_version 1, 2 or 3.', 'unsupported_schema')
-    optional = ('reference_roles',) if 'reference_roles' in state else ()
+    optional = tuple(key for key in ('reference_roles', 'view_prompts') if key in state
+                     and (key != 'view_prompts' or allow_view_prompts))
     _exact_keys(state, ('schema_version', 'views', 'size', 'part_prompts', *SETTINGS, *optional), 'state')
-    if optional:
+    if 'reference_roles' in state:
         _exact_keys(state['reference_roles'], REFERENCE_INPUTS, 'reference_roles')
         if any(type(role) is not str or role not in REFERENCE_ROLES for role in state['reference_roles'].values()):
             raise StateValidationError('Unknown reference role.', 'invalid_role')
+    if 'view_prompts' in optional:
+        overrides = state['view_prompts']
+        if type(overrides) is not dict or set(overrides) - set(VIEW_IDS):
+            raise StateValidationError('Unknown view prompt IDs.', 'invalid_view_prompts')
+        for text in overrides.values():
+            if type(text) is not str or any(0xD800 <= ord(c) <= 0xDFFF for c in text):
+                raise StateValidationError('View prompts must be valid Unicode strings.', 'invalid_view_prompts')
+            if len(text.encode('utf-16-le')) // 2 > 2000:
+                raise StateValidationError('View prompt exceeds 2000 UTF-16 code units.', 'view_prompt_too_long')
     for field, values in SETTINGS.items():
         if type(state[field]) is not str or state[field] not in values:
             raise StateValidationError(f'Invalid {field}.', 'invalid_setting')
@@ -74,7 +84,7 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION):
     return {'schema_version': 3, 'views': [view for view in VIEW_IDS if view in views],
             'size': normalized_size, 'part_prompts': normalized_prompts,
             **{field: state[field] for field in SETTINGS},
-            **({'reference_roles': dict(state['reference_roles'])} if optional else {})}
+            **({key: dict(state[key]) for key in optional})}
 
 
 def legacy_state(state):

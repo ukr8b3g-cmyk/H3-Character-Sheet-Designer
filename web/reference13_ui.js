@@ -216,7 +216,7 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
   clearStyle.dataset.clearStyle = ''; listen(clearStyle, 'click', () => act(() => writeStyle('none'))); styleStatus.append(styleBadge, clearStyle);
   const previewHead = element('div', 'h3-preview-head'), tabs = element('div', 'h3-tabs'), previewTag = element('span', 'h3-preview-tag');
   tabs.setAttribute('role', 'tablist'); const tabMap = new Map();
-  const tabNames = reference ? ['layout', 'parts', 'style', ...(v13 ? ['settings'] : [])] : ['layout', 'parts', ...(v13 ? ['settings'] : [])];
+  const tabNames = reference ? ['layout', 'parts', 'style', ...(v13 ? ['settings', 'prompts'] : [])] : ['layout', 'parts', ...(v13 ? ['settings', 'prompts'] : [])];
   for (const name of tabNames) {
     const tab = button('h3-tab'); tab.id = `${id}-${name}-tab`; tab.dataset.tab = name;
     tab.setAttribute('role', 'tab'); tab.setAttribute('aria-controls', `${id}-${name}-panel`);
@@ -292,7 +292,7 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
   listen(apply, 'click', () => act(() => {
     controller.applyRaw(rawInput.value);
     // A valid JSON replacement owns these values, even when the saved JSON is unchanged.
-    drafts.clear(); partDrafts.clear();
+    drafts.clear(); partDrafts.clear(); viewDirty = false; viewComposing = false;
   })); jsonDetails.append(summary, rawInput, rawHint, apply);
   root.append(header, cards, qualityBox);
   if (!v13) root.append(qualityHint);
@@ -312,6 +312,39 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
     if (reference) root.append(generated);
     root.append(jsonDetails);
   }
+  const promptsPanel = element('div', 'h3-v13-settings h3-view-prompts');
+  promptsPanel.id = id + '-prompts-panel'; promptsPanel.setAttribute('role', 'tabpanel');
+  promptsPanel.setAttribute('aria-labelledby', id + '-prompts-tab');
+  const viewEditor = element('details'), viewSummary = element('summary');
+  viewEditor.open = true;
+  const viewSelect = element('select', 'h3-part-select'), viewInput = element('textarea', 'h3-part-input');
+  const viewHelp = element('p', 'h3-part-hint'), viewApply = button('h3-apply'), viewReset = button('h3-apply');
+  const viewPreview = element('details'), viewPreviewSummary = element('summary'), viewPreviewText = element('pre');
+  viewPreviewText.style.whiteSpace = 'pre-wrap';
+  let selectedView = VIEW_IDS[0], viewDirty = false, viewComposing = false;
+  for (const view of VIEW_IDS) { const option = element('option'); option.value = view; viewSelect.append(option); }
+  viewInput.rows = 5; viewInput.spellcheck = false;
+  function saveView() {
+    if (!viewDirty) return;
+    if (viewComposing) throw new StateError('composition');
+    controller.setViewPrompt(selectedView, viewInput.value); viewDirty = false;
+  }
+  listen(viewInput, 'input', () => { viewDirty = true; });
+  listen(viewInput, 'compositionstart', () => { viewComposing = true; });
+  listen(viewInput, 'compositionend', () => { viewComposing = false; viewDirty = true; });
+  listen(viewInput, 'keydown', event => event.stopPropagation());
+  listen(viewSelect, 'change', () => {
+    const next = viewSelect.value; viewSelect.value = selectedView; act(saveView);
+    if (viewDirty) return;
+    selectedView = next; viewSelect.value = next; render();
+  });
+  listen(viewApply, 'click', () => act(saveView));
+  listen(viewReset, 'click', () => act(() => {
+    controller.setViewPrompt(selectedView, null); viewDirty = false;
+  }));
+  viewEditor.append(viewSummary, viewSelect, viewInput, viewHelp, viewApply, viewReset);
+  viewPreview.append(viewPreviewSummary, viewPreviewText); promptsPanel.append(viewEditor, viewPreview);
+  if (v13) root.append(promptsPanel);
   // Keep node dragging out of text controls, but let browser keyboard accessibility work.
   listen(root, 'pointerdown', event => event.stopPropagation());
   const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitSheet()) : null;
@@ -341,10 +374,25 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
     }
     tabs.setAttribute('aria-label', t.diagram);
     for (const [name, tab] of tabMap) {
-      tab.textContent = name === 'layout' ? t.layoutTab : name === 'style' ? t.styleTab : name === 'settings' ? (language === 'ja' ? '設定' : 'Settings') : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;
+      tab.textContent = name === 'layout' ? t.layoutTab : name === 'style' ? t.styleTab : name === 'prompts' ? (language === 'ja' ? 'プロンプト' : 'Prompts') : name === 'settings' ? (language === 'ja' ? '設定' : 'Settings') : `${t.partsTab}${Object.keys(prompts).length ? ` (${Object.keys(prompts).length})` : ''}`;
       tab.setAttribute('aria-selected', String(name === activeTab)); tab.tabIndex = name === activeTab ? 0 : -1;
     }
-    stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts'; stylePanel.hidden = activeTab !== 'style'; settingsPanel.hidden = activeTab !== 'settings';
+    stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts'; stylePanel.hidden = activeTab !== 'style'; settingsPanel.hidden = activeTab !== 'settings'; promptsPanel.hidden = activeTab !== 'prompts';
+    const ja = language === 'ja', current = controller.isCurrentPreview;
+    viewSummary.textContent = ja ? 'ビューのプロンプトを編集' : 'Edit view prompts';
+    viewApply.textContent = ja ? '適用' : 'Apply';
+    viewReset.textContent = ja ? '初期値に戻す' : 'Reset this prompt';
+    viewHelp.textContent = ja ? '選んだビューの基本文を置き換えます。空欄も保存できます。配置・参照・部位・各設定の指示は別途加わります。各2,000文字まで。' : 'Replace this view’s base prompt; blank is allowed. Layout, references, part prompts and settings are added separately. Up to 2,000 UTF-16 units each.';
+    viewSelect.value = selectedView; viewSelect.setAttribute('aria-label', ja ? '編集するビュー' : 'View to edit');
+    for (const option of viewSelect.options) option.textContent = t[option.value] ?? option.value;
+    const override = state?.view_prompts?.[selectedView];
+    const defaults = current ? controller.preview?.default_view_prompts?.[selectedView] : undefined;
+    viewInput.disabled = !state || (override === undefined && defaults === undefined);
+    viewInput.setAttribute('aria-label', viewSummary.textContent);
+    viewApply.disabled = !state || viewInput.disabled; viewReset.disabled = !state;
+    if (!viewDirty) viewInput.value = override ?? defaults ?? '';
+    viewPreviewSummary.textContent = ja ? '各ビューの指示（設定プレビュー）' : 'Per-view prompts (settings preview)';
+    viewPreviewText.textContent = current ? (controller.preview?.view_prompts ?? []).join('\n\n') : t.pending;
     previewTag.textContent = activeTab === 'layout' ? (language === 'ja' ? (useLayoutImage() ? '生成に渡す配置画像' : v13 ? '配置ガイド' : '配置の目安') : (useLayoutImage() ? 'Generation layout image' : v13 ? 'Layout guide' : 'Conceptual layout')) : activeTab === 'style' ? t.style : t.partSaved;
     const selectedStyle = readStyle();
     styleStatus.hidden = !reference || selectedStyle === 'none'; styleBadge.textContent = `${t.style}：${t[`style_${selectedStyle}`] ?? selectedStyle}`;
@@ -445,6 +493,7 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
     stage.setAttribute('aria-busy', String(controller.pending)); fitSheet();
   }
   function flushDrafts() {
+    if (v13) saveView();
     for (const [field, draft] of [...drafts]) {
       drafts.delete(field);
       try { controller.setSize(field, draft.text); }
@@ -455,7 +504,7 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
   }
   function render(reason) {
     if (disposed) return;
-    if (reason === 'restore') { activeOutput = 0; drafts.clear(); partDrafts.clear(); customHeight = false; localError = null; }
+    if (reason === 'restore') { viewDirty = false; viewComposing = false; activeOutput = 0; drafts.clear(); partDrafts.clear(); customHeight = false; localError = null; }
     t = translations[language] ?? EN; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
 

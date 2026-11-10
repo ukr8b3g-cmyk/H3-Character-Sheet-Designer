@@ -27,6 +27,8 @@ def view_label(view):
 
 
 def panel_instruction(state, view, optimize_outfit=False):
+    if optimize_outfit and view in state.get("view_prompts", {}):
+        return state["view_prompts"][view]
     if optimize_outfit and view in CLOTHING_IDS:
         side = "front" if view == "clothing_front" else "back"
         outfit = 'the complete <Subject 2> garment set' if set(state['views']).issubset(CLOTHING_IDS) else 'the complete referenced outfit'
@@ -154,7 +156,7 @@ def panel_appearance(state, view, appearance_policy=()):
     return ' '.join(instructions)
 
 
-def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None, appearance_policy=(), optimize_outfit=False):
+def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None, appearance_policy=(), optimize_outfit=False, panel_records=None):
     active = {part: text for part, text in state['part_prompts'].items() if part_views(state, part)}
     settings = applicable_settings(state)
     modifications = [f'explicit {part} details' for part in active]
@@ -241,8 +243,11 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
                      if guide_geometry is not None else 'rect ' + json.dumps(panel['rect'], separators=(',', ':')))
         location = '' if single else locations[view] + ': '
         appearance = panel_appearance(state, view, appearance_policy)
-        lines.append(f'Panel {view}: {location}{view_label(view)}; {placement}. {panel_instruction(state, view, optimize_outfit)}'
-                     + (' ' + appearance if appearance else ''))
+        record = (f'Panel {view}: {location}{view_label(view)}; {placement}. {panel_instruction(state, view, optimize_outfit)}'
+                  + (' ' + appearance if appearance else ''))
+        lines.append(record)
+        if panel_records is not None:
+            panel_records.append(record)
     lines.append('Priority: assigned view, camera, crop and garment-only constraints; applicable clothing structure and hand/foot coverage choices; compatible named-part details; other details; then baseline reference. Change only the attribute controlled by a choice. Back-clothing details take precedence over upper clothing on visible rear surfaces. Never turn the person or widen a crop to reveal a hidden part.')
     if outfit_only:
         lines[-1] = 'Priority: assigned garment side and region; selected clothing shape; compatible named-part details; then reference garment appearance. Apply back-clothing details to the back of the outfit.'
@@ -275,5 +280,5 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
     return '\n'.join(lines) + '\n'
 
 
-def compile_off_prompt_13(state, layout, *, style='none', appearance_policy=(), optimize_outfit=False):
-    return compile_extended_prompt(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit)
+def compile_off_prompt_13(state, layout, *, style='none', appearance_policy=(), optimize_outfit=False, panel_records=None):
+    return compile_extended_prompt(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)

@@ -41,3 +41,9 @@
 .h3-v13 .h3-status { margin-left: auto; white-space: nowrap; }
 .h3-v13 .h3-experimental { display: none; }
 .h3-v13-settings { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid #586f81; border-radius: 8px; background: #1c2630; }
+.h3-view-prompts details { min-width: 0; }
+.h3-view-prompts summary { display: flex; justify-content: space-between; cursor: pointer; padding: 10px; border: 1px solid #586f81; border-radius: 6px; margin-bottom: 8px; font-weight: 600; }
+.h3-view-prompts summary::after { content: '+'; }
+.h3-view-prompts details[open] > summary::after { content: '−'; }
+.h3-view-prompts select, .h3-view-prompts textarea { box-sizing: border-box; width: 100%; }
+.h3-view-prompts pre { max-height: 360px; overflow: auto; }
