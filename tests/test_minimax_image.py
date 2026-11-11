@@ -130,6 +130,79 @@ class MiniMaxImageTests(unittest.TestCase):
             self.assertEqual(extra['core_input'], 'images.image_3')
             self.assertIn(extra['tag'], result['prompt'])
 
+    def test_bare_hands_and_unshod_feet_replace_only_defaults(self):
+        cases = (
+            ('hands', 'hand_state', 'bare', 'gloved', 'Close-up of both hands.', 'Bare hands.'),
+            ('feet', 'footwear_state', 'unshod', 'shod', 'Close-up of both feet.',
+             'Shoes removed; retain reference socks or tights.'),
+        )
+        for view, field, setting, covered, default, directive in cases:
+            for guide in (False, True):
+                for views in ([view], ['body_front', view]):
+                    with self.subTest(view=view, guide=guide, views=views):
+                        state = {**DEFAULT_STATE, 'views': views}
+                        for value in ('reference', covered):
+                            result = compile_minimax_image_state(
+                                json.dumps({**state, field: value}), use_layout_image=guide)
+                            self.assertEqual(result['default_view_prompts'], VIEW_PROMPTS)
+                            self.assertIn(VIEW_PROMPTS[view], result['prompt'])
+
+                        state[field] = setting
+                        result = compile_minimax_image_state(json.dumps(state), use_layout_image=guide)
+                        self.assertEqual(result['default_view_prompts'], {**VIEW_PROMPTS, view: default})
+                        self.assertIn(f'{default} {directive}', result['prompt'])
+                        self.assertNotIn(VIEW_PROMPTS[view], result['prompt'])
+                        self.assertNotIn('Follow selected settings first', result['prompt'])
+
+                        for override in ('', VIEW_PROMPTS[view]):
+                            state['view_prompts'] = {view: override}
+                            edited = compile_minimax_image_state(json.dumps(state), use_layout_image=guide)
+                            self.assertEqual(json.loads(edited['state_json'])['view_prompts'], {view: override})
+                            self.assertIn(' '.join(filter(None, (override, directive))), edited['prompt'])
+                            self.assertEqual(VIEW_PROMPTS[view] in edited['prompt'], bool(override))
+
+    def test_guide_off_hand_and_foot_pair_uses_white_space_between_close_ups(self):
+        state = {**DEFAULT_STATE, 'views': ['hands', 'feet'],
+                 'hand_state': 'bare', 'footwear_state': 'unshod'}
+        raw = json.dumps(state)
+        result = compile_minimax_image_state(raw, use_layout_image=False)
+        layout_instruction = 'exactly two borderless close-up views'
+        self.assertIn(layout_instruction, result['prompt'])
+        self.assertIn('blank white space between the views', result['prompt'])
+        self.assertIn('Upper half: Close-up of both hands. Bare hands.', result['prompt'])
+        self.assertIn('Lower half: Close-up of both feet. Shoes removed; retain reference socks or tights.',
+                      result['prompt'])
+        self.assertNotIn('character reference sheet', result['prompt'])
+
+        guided = compile_minimax_image_state(raw, use_layout_image=True)
+        self.assertNotIn(layout_instruction, guided['prompt'])
+        self.assertEqual(result['view_prompts'], guided['view_prompts'])
+        mixed = compile_minimax_image_state(json.dumps({**state, 'views': ['body_front', 'hands', 'feet']}))
+        self.assertNotIn(layout_instruction, mixed['prompt'])
+
+    def test_reference_priority_is_stated_once_for_additional_references(self):
+        state = {**DEFAULT_STATE, 'hand_state': 'bare',
+                 'part_prompts': {'hands': 'Retain silver rings.'},
+                 'reference_roles': {'reference_image_1': 'hands',
+                                     'reference_image_2': 'same_character',
+                                     'reference_image_3': 'hands'}}
+        presence = {'reference_image_1': True, 'reference_image_3': True}
+        for guide in (False, True):
+            for views in (['hands'], ['body_front', 'hands']):
+                with self.subTest(guide=guide, views=views):
+                    result = compile_minimax_image_state(
+                        json.dumps({**state, 'views': views}), use_layout_image=guide,
+                        reference_presence=presence)
+                    prompt = result['prompt']
+                    self.assertEqual(prompt.count('Follow selected settings first, then compatible part instructions, '
+                                                  'then dedicated references.'), 1)
+                    self.assertEqual(prompt.count('If dedicated references for the same role conflict, '
+                                                  'prefer the later input.'), 1)
+                    first = 3 if guide else 2
+                    self.assertIn(f'Use <Picture {first}> for hands and gloves.', prompt)
+                    self.assertIn(f'Use <Picture {first + 1}> for hands and gloves.', prompt)
+                    self.assertIn('Retain silver rings.', prompt)
+
     def test_node_preserves_image_passthrough_and_output_contract(self):
         import torch
         from unittest.mock import patch

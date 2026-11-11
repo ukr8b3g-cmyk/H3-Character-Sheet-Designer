@@ -128,12 +128,17 @@ def compile_minimax_image_state(state_json, **kwargs):
     views = state['views']
     single = len(views) == 1
     all_views = len(views) == len(VIEW_IDS) and not result['guide_enabled']
+    hand_foot_pair = set(views) == {'hands', 'feet'} and not result['guide_enabled']
     garment_only = all(v.startswith('clothing_') for v in views)
     subject = 'outfit' if garment_only else 'character'
     if single:
         target = ('detail illustration from <Picture 1>' if views[0] in {'hands', 'feet'}
                   else f'illustration of the {subject} from <Picture 1>')
         lines = [f'Create a single centered {target}.']
+    elif hand_foot_pair:
+        lines = ['Create exactly two borderless close-up views from <Picture 1>, one above the other on a white canvas. '
+                 'Leave a clear band of blank white space between the views.',
+                 'Match the rendering style of <Picture 1>.']
     else:
         lines = [f'Create one {subject} reference sheet from <Picture 1>.',
                  f'Preserve the same {subject} design and rendering style across all views.',
@@ -147,8 +152,16 @@ def compile_minimax_image_state(state_json, **kwargs):
                              f"Render the finished {subject} from <Picture 1> at a clear, generous scale in each area.")
         elif ref['role'] == 'same_character':
             lines.append(f"{ref['tag']} supplements the same {subject}'s appearance.")
-    if not single and not all_views:
+    if any(ref['source'] in slots[2:] for ref in refs):
+        lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
+                     'If dedicated references for the same role conflict, prefer the later input.')
+    if not (single or all_views or hand_foot_pair):
         lines.append('Arrange columns from left to right; within a stacked column, read top to bottom:')
+    defaults = dict(VIEW_PROMPTS)
+    if state['hand_state'] == 'bare':
+        defaults['hands'] = 'Close-up of both hands.'
+    if state['footwear_state'] == 'unshod':
+        defaults['feet'] = 'Close-up of both feet.'
     records = []
     view_text = {}
     scopes = applicable_settings(state)
@@ -157,7 +170,7 @@ def compile_minimax_image_state(state_json, **kwargs):
         descriptions = []
         for panel in column:
             view = panel['id']
-            text = state.get('view_prompts', {}).get(view, VIEW_PROMPTS[view])
+            text = state.get('view_prompts', {}).get(view, defaults[view])
             extras = [SETTINGS[(field, state[field])] for field, views in scopes.items()
                       if view in views and (field, state[field]) in SETTINGS]
             for ref in appearance:
@@ -168,15 +181,17 @@ def compile_minimax_image_state(state_json, **kwargs):
             text = ' '.join([text, *extras]).strip()
             if text or not single:
                 descriptions.append(text or 'One reserved view area.')
-            if all_views:
+            if all_views or hand_foot_pair:
                 view_text[view] = descriptions[-1]
             records.append(f'{view}: {text}')
         if single:
             lines.extend(descriptions)
-        elif not all_views:
+        elif not (all_views or hand_foot_pair):
             lines.append(' / '.join(descriptions))
     if all_views:
         lines.extend(_all_view_layout(view_text))
+    elif hand_foot_pair:
+        lines.extend((f"Upper half: {view_text['hands']}", f"Lower half: {view_text['feet']}"))
     if single:
         lines.extend((f'Preserve the {subject} design and rendering style.', 'Plain white background.'))
         if views[0].startswith('body_') and views[0] not in state.get('view_prompts', {}):
@@ -185,5 +200,5 @@ def compile_minimax_image_state(state_json, **kwargs):
     if style:
         lines.append(style)
     separator = ' ' if single else '\n'
-    result.update(prompt=separator.join(lines), default_view_prompts=dict(VIEW_PROMPTS), view_prompts=records)
+    result.update(prompt=separator.join(lines), default_view_prompts=defaults, view_prompts=records)
     return result

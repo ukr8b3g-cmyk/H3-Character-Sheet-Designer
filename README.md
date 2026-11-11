@@ -1,9 +1,17 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.4.0**
+[日本語](#日本語) · **Package v1.4.1**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.4.1
+
+- **Bare hands and no shoes.** These explicit settings replace the conflicting reference-preservation text in the default hand and footwear views. The no-shoes prompt retains reference socks or tights. Auto and custom view text keep their existing behavior.
+- **Hands and footwear with Layout Image OFF.** Selecting just these two views requests one hands close-up above one feet close-up, separated by white space.
+- **Part reference priority.** Explicit settings take priority, followed by compatible Part prompts and dedicated references. If references of the same role conflict, the prompt favors the later input.
+
+A fixed-reference, fixed-seed GPU comparison produced one view of bare hands and one view of feet in black socks, with a white gap. Composition and fine details can vary. The existing workflow files and node names are unchanged, including the P-H3 workflow. Restart ComfyUI after updating.
 
 ## What's New — v1.4.0
 
@@ -139,6 +147,14 @@ Update existing installations through your usual Git/Manager workflow, restart C
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.4.1の変更点
+
+- **素手・靴なし**を明示すると、手・履物ビューの既定文を切り替えます。靴なしでは参照の靴下・タイツを残すように指示します。Autoとユーザーが編集したビュー文は従来どおりです。
+- **Layout Image OFFで手と履物だけを選択**すると、上段に手、下段に足のアップを各1面、白い余白で分けるように指示します。
+- **追加参照の優先順位**は、明示設定、設定と両立するPart prompts、部位参照の順です。同じ役割の参照が競合した場合は、後の入力を優先するように指示します。
+
+同じ参照画像・seedでのGPU比較では、素手と黒い靴下の足が白い余白を挟んで各1面出ました。配置や細部は生成条件により変わります。P-H3版を含む既存ワークフローとノード名は従来どおりです。更新後はComfyUIを再起動してください。
 
 ### v1.4.0の変更点
 

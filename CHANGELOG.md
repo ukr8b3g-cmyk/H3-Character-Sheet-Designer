@@ -1,3 +1,7 @@
+# v1.4.1
+
+MiniMax H3 Image now resolves conflicting default instructions for bare hands and no shoes, states part reference priority, and requests a white gap when only hands and footwear are selected with Layout Image OFF. See the [release notes](docs/releases/v1.4.1.md).
+
 # v1.4.0 — 2026-11-11
 
 Dedicated MiniMax H3 Image node and template, High detail default, four Auto resolutions, and coordinate-free single- and 13-view prompts. See the [release notes](docs/releases/v1.4.0.md).
