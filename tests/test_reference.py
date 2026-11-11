@@ -146,52 +146,41 @@ class ReferenceTests(unittest.TestCase):
             with self.assertRaises(StateValidationError):
                 compile_reference_preview_request(json.dumps({'state_json': raw_state(), **override}).encode(), max_resolution=16384)
 
-    def test_official_templates_order_character_before_layout_and_default_off(self):
+    def test_distribution_workflows_order_character_before_layout_and_default_off(self):
+        workflow_dir = Path(__file__).resolve().parents[1] / 'workflows'
         templates = [
-            ('H3_Character_Sheet_Designer_v1.2.2.json', 'H3CharacterSheetDesignerReference13', list(FIVE_VIEWS) + ['clothing_front', 'clothing_back']),
-            ('H3_Character_Sheet_Designer_v1.3.json', 'H3CharacterSheetDesignerReferenceV13', list(FIVE_VIEWS)),
+            ('MiniMax H3 Image Character Sheet Designer.json',
+             'MiniMaxH3ImageCharacterSheetDesigner', 'MiniMaxH3ImageConditioning', 0),
+            ('H3 Character Sheet Designer - P-H3 Subgraph.json',
+             'H3CharacterSheetDesignerReferenceV13', 'PH3ImageConditioning', 1),
         ]
-        for filename, node_type, views in templates:
-            with self.subTest(template=filename):
-                self.assert_official_template(filename, node_type, views)
-
-    def assert_official_template(self, filename, node_type, views):
-        workflow = json.loads((Path(__file__).resolve().parents[1] / 'workflows' / filename).read_text(encoding='utf-8'))
-        graph = workflow['definitions']['subgraphs'][0]
-        designer = next(node for node in workflow['nodes'] if node['type'] == node_type)
-        self.assertIs(designer['widgets_values'][1], False)
-        self.assertIs(designer['widgets_values_named']['use_layout_image'], False)
-        self.assertEqual(designer['widgets_values'][2], 'none')
-        self.assertEqual(json.loads(designer['widgets_values'][0])['views'], views)
-        subgraph = next(node for node in workflow['nodes'] if node['type'] == graph['id'])
-        native = next(node for node in graph['nodes'] if node['type'] == 'MiniMaxH3ReferenceToVideo')
-        ref_inputs = [value for value in native['inputs'] if value['name'].startswith('ref_images.') and value.get('link')]
-        self.assertEqual([value['name'] for value in ref_inputs], [f'ref_images.ref_image_{index}' for index in range(5)])
-        outer_links = {link[0]: link for link in workflow['links']}
-        inner_links = {link['id']: link for link in graph['links']}
-        expected = {
-            'ref_images.ref_image_0': 'character_image',
-            'ref_images.ref_image_1': 'layout_image',
-            'ref_images.ref_image_2': 'reference_image_1',
-            'ref_images.ref_image_3': 'reference_image_2',
-            'ref_images.ref_image_4': 'reference_image_3',
-            'prompt': 'prompt', 'width': 'width', 'height': 'height',
-        }
-        for name, output_name in expected.items():
-            native_input = next(value for value in native['inputs'] if value['name'] == name)
-            internal = inner_links[native_input['link']]
-            self.assertEqual(internal['origin_id'], graph['inputNode']['id'])
-            exposed_name = graph['inputs'][internal['origin_slot']]['name']
-            external_input = next(value for value in subgraph['inputs'] if value['name'] == exposed_name)
-            external = outer_links[external_input['link']]
-            self.assertEqual(external[1], designer['id'])
-            self.assertEqual(designer['outputs'][external[2]]['name'], output_name)
-        self.assertEqual(native['widgets_values_named']['length'], 5)
-        self.assertEqual(native['widgets_values_named']['ref_image_size'], 'match')
-        nodes = {node['type']: node for node in graph['nodes']}
-        self.assertEqual(nodes['ImageFromBatch']['widgets_values'], [0, 1])
-        self.assertEqual(nodes['ImageFromBatch']['widgets_values_named'], {'batch_index': 0, 'length': 1})
-        self.assertNotIn('MiniMaxH3AddGuide', nodes)
+        for filename, designer_type, conditioning_type, first_image in templates:
+            with self.subTest(filename=filename):
+                workflow = json.loads((workflow_dir / filename).read_text(encoding='utf-8'))
+                graph = workflow['definitions']['subgraphs'][0]
+                designer = next(n for n in workflow['nodes'] if n['type'] == designer_type)
+                subgraph = next(n for n in workflow['nodes'] if n['type'] == graph['id'])
+                conditioning = next(n for n in graph['nodes'] if n['type'] == conditioning_type)
+                settings = designer['widgets_values_named']
+                self.assertIs(settings['use_layout_image'], False)
+                self.assertEqual(json.loads(settings['state_json'])['views'], list(FIVE_VIEWS))
+                if first_image == 0:
+                    self.assertEqual(json.loads(settings['state_json'])['resolution_profile'], 'high')
+                outer_links = {link[0]: link for link in workflow['links']}
+                inner_links = {link['id']: link for link in graph['links']}
+                output_slots = {out['name']: slot for slot, out in enumerate(designer['outputs'])}
+                image_outputs = ['character_image', 'layout_image',
+                                 'reference_image_1', 'reference_image_2', 'reference_image_3']
+                expected = {f'images.image_{i}': name for i, name in enumerate(image_outputs, first_image)}
+                expected.update({name: name for name in ('prompt', 'width', 'height')})
+                for input_name, output_name in expected.items():
+                    pin = next(pin for pin in conditioning['inputs'] if pin['name'] == input_name)
+                    internal = inner_links[pin['link']]
+                    self.assertEqual(internal['origin_id'], graph['inputNode']['id'])
+                    exposed_name = graph['inputs'][internal['origin_slot']]['name']
+                    exposed = next(pin for pin in subgraph['inputs'] if pin['name'] == exposed_name)
+                    self.assertEqual(outer_links[exposed['link']][1:3],
+                                     [designer['id'], output_slots[output_name]])
 
 
 if __name__ == '__main__':

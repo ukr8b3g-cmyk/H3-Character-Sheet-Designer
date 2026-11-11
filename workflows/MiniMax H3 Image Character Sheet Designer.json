@@ -558,10 +558,10 @@
       "title": "Model Links",
       "properties": {},
       "widgets_values": [
-        "## MiniMax H3 Image Character Sheet Designer v1.4.0\n\n**Required:** H3 Character Sheet Designer package **v1.4.0 or later** and **ComfyUI 0.45.0 or later** with MiniMax H3 Image Conditioning.\n\nSelect your character image in Load Image. Starts at Standard · 5 views, Auto / High detail and Layout Image OFF. Euler / Simple, 6 steps, CFG 1, denoise 1. Save Animated WEBP uses 1 FPS for the single generated image.\n\n### Model downloads\n\n| Component | Download | Folder under `ComfyUI/models/` |\n| --- | --- | --- |\n| Diffusion model | [minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors) | `diffusion_models/minimax/` |\n| Text encoder | [qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) | `text_encoders/` |\n| VAE | [minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors) | `vae/` |\n\nCLIP loader type: `minimax`. This workflow uses the three files above.\n"
+        "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
       ],
       "widgets_values_named": {
-        "text": "## MiniMax H3 Image Character Sheet Designer v1.4.0\n\n**Required:** H3 Character Sheet Designer package **v1.4.0 or later** and **ComfyUI 0.45.0 or later** with MiniMax H3 Image Conditioning.\n\nSelect your character image in Load Image. Starts at Standard · 5 views, Auto / High detail and Layout Image OFF. Euler / Simple, 6 steps, CFG 1, denoise 1. Save Animated WEBP uses 1 FPS for the single generated image.\n\n### Model downloads\n\n| Component | Download | Folder under `ComfyUI/models/` |\n| --- | --- | --- |\n| Diffusion model | [minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors) | `diffusion_models/minimax/` |\n| Text encoder | [qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) | `text_encoders/` |\n| VAE | [minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors) | `vae/` |\n\nCLIP loader type: `minimax`. This workflow uses the three files above.\n"
+        "text": "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -570,15 +570,15 @@
       "id": 117,
       "type": "SaveAnimatedWEBP",
       "pos": [
-        1860,
-        270
+        1300,
+        520
       ],
       "size": [
-        480,
-        170
+        1000,
+        710
       ],
       "flags": {},
-      "order": 9,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -617,14 +617,6 @@
   ],
   "links": [
     [
-      218,
-      52,
-      0,
-      109,
-      9,
-      "NOISE"
-    ],
-    [
       246,
       115,
       0,
@@ -647,46 +639,6 @@
       109,
       2,
       "INT"
-    ],
-    [
-      250,
-      115,
-      3,
-      109,
-      5,
-      "IMAGE"
-    ],
-    [
-      251,
-      115,
-      4,
-      109,
-      4,
-      "IMAGE"
-    ],
-    [
-      252,
-      115,
-      5,
-      109,
-      6,
-      "IMAGE"
-    ],
-    [
-      253,
-      115,
-      6,
-      109,
-      7,
-      "IMAGE"
-    ],
-    [
-      254,
-      115,
-      7,
-      109,
-      8,
-      "IMAGE"
     ],
     [
       255,
@@ -727,6 +679,54 @@
       117,
       0,
       "IMAGE"
+    ],
+    [
+      251,
+      115,
+      4,
+      109,
+      4,
+      "IMAGE"
+    ],
+    [
+      250,
+      115,
+      3,
+      109,
+      5,
+      "IMAGE"
+    ],
+    [
+      252,
+      115,
+      5,
+      109,
+      6,
+      "IMAGE"
+    ],
+    [
+      253,
+      115,
+      6,
+      109,
+      7,
+      "IMAGE"
+    ],
+    [
+      254,
+      115,
+      7,
+      109,
+      8,
+      "IMAGE"
+    ],
+    [
+      218,
+      52,
+      0,
+      109,
+      9,
+      "NOISE"
     ]
   ],
   "groups": [],
@@ -1320,7 +1320,7 @@
               "Node name for S&R": "KSampler"
             },
             "widgets_values": [
-              888942877573248,
+              579735484292535,
               "randomize",
               6,
               1,
@@ -1329,7 +1329,7 @@
               1
             ],
             "widgets_values_named": {
-              "seed": 888942877573248,
+              "seed": 579735484292535,
               "control_after_generate": "randomize",
               "steps": 6,
               "cfg": 1,
@@ -1718,10 +1718,10 @@
   "extra": {
     "frontendVersion": "1.58.5",
     "ds": {
-      "scale": 0.5323049285714291,
+      "scale": 0.4839135714285719,
       "offset": [
-        843.5701148765122,
-        149.98281181707634
+        1017.0235165489431,
+        394.5164107932089
       ]
     }
   },

@@ -68,10 +68,10 @@ See [release notes](docs/releases/v1.3.0.md) and [CHANGELOG](CHANGELOG.md). Prev
 
 ## Older v1.3 workflows
 
-Available workflows: [P-H3 subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2](workflows/H3_Character_Sheet_Designer_v1.2.2.json). The P-H3 workflow uses `minimax_h3_fl2va_pruned_int8_convrot.safetensors` with the P-H3 image text encoder and VAE.
+P-H3 template and archived releases: [P-H3 subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0) · [v1.2.2](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2). The P-H3 workflow uses `minimax_h3_fl2va_pruned_int8_convrot.safetensors` with the P-H3 image text encoder and VAE.
 
 1. Update/install this node pack, restart ComfyUI, and reload the browser (Ctrl+F5).
-2. Open **[H3_Character_Sheet_Designer_v1.3.json](workflows/H3_Character_Sheet_Designer_v1.3.json)**. [Release download](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.3.0/H3_Character_Sheet_Designer_v1.3.json).
+2. Open **[H3_Character_Sheet_Designer_v1.3.json](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0)**. [Release download](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.3.0/H3_Character_Sheet_Designer_v1.3.json).
 3. Select installed models and valid images in every connected Load Image node. Disconnect unused optional inputs on the Designer. Models/images are not bundled.
 4. Choose views and optional part instructions/reference roles. Auto retains unspecified reference appearance. Fix the seed for comparisons.
 5. Start with **Use Layout Image OFF**, enabling it when composition guidance helps. ON can transfer guide proportions or leave guide content. The UI displays the same guide either way.
@@ -175,10 +175,10 @@ AnimaタグではなくH3用の文章です。配置・画像参照・部位プ�
 
 ### 旧v1.3テンプレートの使い方
 
-ワークフロー一覧 — [P-H3サブグラフ版](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3版](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2版](workflows/H3_Character_Sheet_Designer_v1.2.2.json)。P-H3版は `minimax_h3_fl2va_pruned_int8_convrot.safetensors` とP-H3 Image用テキストエンコーダー・VAEを使用します。
+現行P-H3テンプレートと旧リリース — [P-H3サブグラフ版](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3版](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0) · [v1.2.2版](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2)。P-H3版は `minimax_h3_fl2va_pruned_int8_convrot.safetensors` とP-H3 Image用テキストエンコーダー・VAEを使用します。
 
 1. 更新後にComfyUIを通常再起動し、ブラウザーをCtrl+F5で再読込。
-2. [v1.3テンプレート](workflows/H3_Character_Sheet_Designer_v1.3.json)を開き、導入済みモデルを選択。接続したLoad Imageすべてに有効な画像を指定するか、使わない追加参照入力をDesignerから外します。
+2. [v1.3テンプレート](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0)を開き、導入済みモデルを選択。接続したLoad Imageすべてに有効な画像を指定するか、使わない追加参照入力をDesignerから外します。
 3. ビュー・部位指示・参照の役割を設定。Autoは参照の外見を保つ選択です。比較時はseedを固定します。
 4. Use Layout ImageはOFFから試し、配置の補助が必要ならONへ。画面のガイドは共通で、ONだけが画像をH3へ渡します。ONではガイドの体形・図が残る場合があります。
 

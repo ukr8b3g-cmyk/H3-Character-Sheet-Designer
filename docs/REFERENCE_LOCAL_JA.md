@@ -14,7 +14,7 @@ Referenceノードの既定値は標準5ビュー、画風なし、配置参照O
 
 ## 公式テンプレート
 
-[H3_Character_Sheet_Designer_wf.json](../workflows/H3_Character_Sheet_Designer_wf.json)
+[旧ワークフローの配布履歴](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases)
 をComfyUIへ読み込み、Load Imageとモデルローダーを各環境に合わせて選び直します。
 2026-10-06に提供されたワークフローを採用し、Use Layout Imageの保存値だけを
 推奨のOFFへ変更しています。元の画面配置とノードサイズは保持しています。
