@@ -5,11 +5,12 @@ const instances = new WeakMap();
 const textareaRecovery = new WeakMap();
 const pendingReinstall = new WeakMap();
 export const NODE_TYPE = 'H3CharacterSheetDesignerReference13';
+export const IMAGE_NODE_TYPE = 'MiniMaxH3ImageCharacterSheetDesigner';
 export const V13_NODE_TYPE = 'H3CharacterSheetDesignerReferenceV13';
 
-export function previewRequester(api, useLayoutImage, readStyle, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false, reference_image_3: false}), v13 = false) {
+export function previewRequester(api, useLayoutImage, readStyle, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false, reference_image_3: false}), v13 = false, imageNode = false) {
   return async (raw, signal) => {
-    const response = await api.fetchApi(v13 ? '/h3_character_sheet_designer/v1_3/preview' : '/h3_character_sheet_designer/reference13/preview', {
+    const response = await api.fetchApi(imageNode ? '/h3_character_sheet_designer/minimax_image/preview' : v13 ? '/h3_character_sheet_designer/v1_3/preview' : '/h3_character_sheet_designer/reference13/preview', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({state_json: raw, use_layout_image: useLayoutImage(), style: readStyle(), reference_presence: readReferencePresence()}), signal,
     });
@@ -88,7 +89,8 @@ function armReinstall(node, app, api) {
 export function installDesigner(node, app, api) {
   if (instances.has(node)) return instances.get(node);
   pendingReinstall.get(node)?.(); pendingReinstall.delete(node);
-  const v13 = node.comfyClass === V13_NODE_TYPE || node.type === V13_NODE_TYPE;
+  const imageNode = node.comfyClass === IMAGE_NODE_TYPE || node.type === IMAGE_NODE_TYPE;
+  const v13 = imageNode || node.comfyClass === V13_NODE_TYPE || node.type === V13_NODE_TYPE;
   const outputAware = false;
   const multiReference = true;
   const reference = true;
@@ -123,13 +125,13 @@ export function installDesigner(node, app, api) {
   let observedLayoutImage = useLayoutImage(), observedStyle = readStyle(), observedPresence = JSON.stringify(readReferencePresence());
   const Controller = Reference13Controller;
   const parseV13 = (raw, max) => {
-    const state = parseReference13State(raw, max);
+    const state = parseReference13State(raw, max, imageNode);
     return {...DEFAULTS, ...state, schema_version: 3, part_prompts: state.part_prompts ?? {}, clothing_mode: 'garment'};
   };
   const controller = new Controller({
     ...(v13 ? {adapter: {parse: parseV13, serialize: (state, max) => JSON.stringify(parseV13(JSON.stringify(state), max)), migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: V13_PRESETS}} : {}),
     raw: original.value, readRaw: () => original.value, writeRaw: value => { original.value = value; },
-    requestPreview: previewRequester(api, useLayoutImage, readStyle, readReferencePresence, v13),
+    requestPreview: previewRequester(api, useLayoutImage, readStyle, readReferencePresence, v13, imageNode),
     transaction: change => graphTransaction(node, change, app?.canvas),
     onCommit: (next, previous) => { node.onWidgetChanged?.('state_json', next, previous, original); },
     onChange: (_, reason) => ui?.render(reason),
@@ -148,7 +150,7 @@ export function installDesigner(node, app, api) {
     sync();
   } : null;
   try {
-    ui = createDesignerUI({controller, v13, locale: getLocale(app), reference, multiReference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
+    ui = createDesignerUI({controller, v13, imageNode, versionLabel: imageNode ? "v1.4.0" : undefined, locale: getLocale(app), reference, multiReference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
     let name = 'h3_designer_ui', suffix = 1;
     while (node.widgets.some(candidate => candidate.name === name)) name = `h3_designer_ui_${suffix++}`;
     widget = node.addDOMWidget(name, 'H3_DESIGNER_UI', ui.root, {
@@ -232,7 +234,7 @@ export function getDesigner(node) { return instances.get(node); }
 export function createExtension(app, api) {
   return {
     name: 'h3.CharacterSheetDesignerReference13',
-    nodeCreated(node) { if ([NODE_TYPE, V13_NODE_TYPE].includes(node.comfyClass) || [NODE_TYPE, V13_NODE_TYPE].includes(node.type)) installDesigner(node, app, api); },
+    nodeCreated(node) { if ([NODE_TYPE, V13_NODE_TYPE, IMAGE_NODE_TYPE].includes(node.comfyClass) || [NODE_TYPE, V13_NODE_TYPE, IMAGE_NODE_TYPE].includes(node.type)) installDesigner(node, app, api); },
     afterConfigureGraph() {
       for (const node of app.graph?._nodes ?? []) getDesigner(node)?.afterConfigure();
     },

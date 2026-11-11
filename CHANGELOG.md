@@ -1,3 +1,7 @@
+# v1.4.0 — 2026-11-11
+
+Dedicated MiniMax H3 Image node and template, High detail default, four Auto resolutions, and coordinate-free single- and 13-view prompts. See the [release notes](docs/releases/v1.4.0.md).
+
 # v1.3.1 — 2026-11-10
 
 Editable per-view H3 base prompts, Apply/Reset, blank overrides, validation and workflow persistence. Existing node names, workflows, references and sockets preserved. See README for validation and remaining model limitations.

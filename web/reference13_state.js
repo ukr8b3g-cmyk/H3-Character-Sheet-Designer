@@ -9,6 +9,7 @@ export const VIEW_IDS = MULTI_VIEW_IDS;
 export const MULTI_PRESETS = Object.freeze({five: ['face_front', 'face_left', 'body_front', 'body_left', 'body_back'], basic: ['face_front', 'body_front', 'body_left', 'body_back'], turnaround: ['body_front', 'body_left', 'body_back'], single: ['body_front'], head: MULTI_VIEW_IDS.slice(0, 6), clothing: ['clothing_front', 'clothing_back'], detail: [...MULTI_VIEW_IDS]});
 export const PRESETS = MULTI_PRESETS;
 export const V13_PRESETS = Object.freeze({five: PRESETS.five, basic: PRESETS.basic, turnaround: PRESETS.turnaround, single: PRESETS.single, seven: [...PRESETS.five, 'hands', 'feet'], head: PRESETS.head, clothing: PRESETS.clothing, detail: PRESETS.detail});
+export const IMAGE_RESOLUTION_PROFILES = Object.freeze(['current', 'high', 'max_8mp', 'max_16mp']);
 export const REFERENCE_INPUTS = ['reference_image_1', 'reference_image_2', 'reference_image_3'];
 export const REFERENCE_ROLES = ['same_character', 'face', 'head', 'clothing', 'clothing_front', 'clothing_back', 'hands', 'footwear'];
 export const SETTINGS = Object.freeze({hand_state: ['reference', 'bare', 'gloved'], clothing_mode: ['worn', 'garment'], clothing_type: ['reference', 'pants', 'skirt_robe'], footwear_state: ['reference', 'shod', 'unshod']});
@@ -25,11 +26,13 @@ function keys(value, expected, path) {
   const actual = Object.keys(value);
   if (actual.length !== expected.length || actual.some(key => !expected.includes(key))) fail('keys', path);
 }
-export function normalizeReference13State(state, max = Infinity) {
+export function normalizeReference13State(state, max = Infinity, imageNode = false) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
   if ([1, 2].includes(state.schema_version)) return normalizeState(state, max);
   if (state.schema_version !== 3) fail('version');
-  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : []), ...(Object.hasOwn(state, 'view_prompts') ? ['view_prompts'] : [])], 'state');
+  const hasResolution = imageNode && Object.hasOwn(state, 'resolution_profile');
+  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : []), ...(Object.hasOwn(state, 'view_prompts') ? ['view_prompts'] : []), ...(hasResolution ? ['resolution_profile'] : [])], 'state');
+  if (hasResolution && !IMAGE_RESOLUTION_PROFILES.includes(state.resolution_profile)) fail('resolutionProfile');
   if (Object.hasOwn(state, 'view_prompts')) {
     if (!state.view_prompts || typeof state.view_prompts !== 'object' || Array.isArray(state.view_prompts)) fail('object', 'view_prompts');
     for (const [view, text] of Object.entries(state.view_prompts)) {
@@ -54,9 +57,9 @@ export function normalizeReference13State(state, max = Infinity) {
     const text = validatePartPrompt(state.part_prompts[part]);
     if (text.trim()) parts[part] = text;
   }
-  return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]]))};
+  return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]])), ...(hasResolution ? {resolution_profile: state.resolution_profile} : {})};
 }
-export const parseReference13State = (raw, max) => normalizeReference13State(parseJSONStrict(raw), max);
+export const parseReference13State = (raw, max, imageNode = false) => normalizeReference13State(parseJSONStrict(raw), max, imageNode);
 export const serializeReference13State = (state, max) => JSON.stringify(normalizeReference13State(state, max));
 export const presetOf = state => Object.entries(PRESETS).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';
 function promote(state) { return {...structuredClone(state), schema_version: 3, part_prompts: structuredClone(state.part_prompts ?? {}), ...DEFAULTS}; }

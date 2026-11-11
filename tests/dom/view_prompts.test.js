@@ -41,7 +41,8 @@ function setup() {
     return {item, original, record};
   }
   function resolve(index = requests.length - 1, prompt = 'current preview') {
-    const request = requests[index], state = parseReference13State(JSON.parse(request.options.body).state_json);
+    const request = requests[index];
+    const state = parseReference13State(JSON.parse(request.options.body).state_json, undefined, request.path.includes('/minimax_image/'));
     const layout = {canvas: [2208, 1280], feet_y: null,
       panels: state.views.map((id, i) => ({id, rect: [i / state.views.length, 0, 1 / state.views.length, 1]}))};
     request.resolve({ok: true, json: async () => ({width: 2208, height: 1280, max_resolution: 16384,
@@ -53,9 +54,46 @@ function setup() {
       if (saved[name] === undefined) delete globalThis[name]; else globalThis[name] = saved[name];
     } }};
 }
-domTest('V1.3 editor flushes, reloads, resets and retains reference switches', async t => {
+
+domTest('MiniMax H3 Image saves Auto resolution and restores it after Manual and reload', async t => {
   const h = setup(); t.after(h.cleanup);
-  const {item, original, record} = h.node('H3CharacterSheetDesignerReferenceV13');
+  const {item, original, record} = h.node('MiniMaxH3ImageCharacterSheetDesigner');
+  const root = record.ui.root;
+  const resolution = root.querySelector('[data-resolution-profile]');
+  assert.equal(resolution.value, 'current');
+  choose(resolution, 'high');
+  const saved = item.serialize().widgets_values[0];
+  assert.equal(JSON.parse(saved).resolution_profile, 'high');
+  choose(resolution, 'max_8mp');
+  const savedEight = item.serialize().widgets_values[0];
+  assert.equal(JSON.parse(savedEight).resolution_profile, 'max_8mp');
+  choose(resolution, 'max_16mp');
+  const savedSixteen = item.serialize().widgets_values[0];
+  assert.equal(JSON.parse(JSON.parse(h.requests.at(-1).options.body).state_json).resolution_profile, 'max_16mp');
+  h.resolve(); await tick();
+  root.querySelector('[data-mode="manual"]').click();
+  assert.equal(JSON.parse(original.value).size.mode, 'manual');
+  assert(resolution.disabled);
+  root.querySelector('[data-mode="auto"]').click();
+  assert.equal(resolution.value, 'max_16mp');
+  assert(!resolution.disabled);
+  original.value = savedEight; item.onConfigure();
+  assert.equal(resolution.value, 'max_8mp');
+  original.value = savedSixteen; item.onConfigure();
+  assert.equal(resolution.value, 'max_16mp');
+  original.value = saved; item.onConfigure();
+  assert.equal(resolution.value, 'high');
+  h.locale('ja');
+  assert.equal(resolution.selectedOptions[0].textContent, '高精細');
+  choose(resolution, 'current');
+  assert(!Object.hasOwn(JSON.parse(original.value), 'resolution_profile'));
+  const legacy = h.node('H3CharacterSheetDesignerReferenceV13');
+  assert.equal(legacy.record.ui.root.querySelector('[data-resolution-profile]'), null);
+});
+for (const nodeType of ['H3CharacterSheetDesignerReferenceV13', 'MiniMaxH3ImageCharacterSheetDesigner']) {
+domTest(`${nodeType} editor flushes, reloads, resets and retains reference switches`, async t => {
+  const h = setup(); t.after(h.cleanup);
+  const {item, original, record} = h.node(nodeType);
   h.resolve(); await tick();
   const root = record.ui.root;
   root.querySelector('[data-tab="prompts"]').click();
@@ -85,4 +123,9 @@ domTest('V1.3 editor flushes, reloads, resets and retains reference switches', a
   assert.equal(panel.querySelector('button').textContent, '適用');
   const native = item.widgets.filter(w => ['use_layout_image','style'].includes(w.name));
   assert.deepEqual(native.map(w=>w.value), [false,'none']);
+  if (nodeType === 'MiniMaxH3ImageCharacterSheetDesigner') {
+    assert(h.requests.every(r => r.path === '/h3_character_sheet_designer/minimax_image/preview'));
+    assert(root.textContent.includes('v1.4.0'));
+  }
 });
+}

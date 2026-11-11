@@ -1,0 +1,69 @@
+name: Publish v1.4.0 after tests
+on:
+  workflow_run:
+    workflows: [Compiler and UI state tests]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: release-v1.4.0
+  cancel-in-progress: false
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_commit.message, 'Add MiniMax H3 Image workflow (v1.4.0)')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Build and publish the tested revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          test "$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')" = '1.4.0'
+          mkdir -p staging/H3-Character-Sheet-Designer dist
+          git archive HEAD | tar -x -C staging/H3-Character-Sheet-Designer
+          (cd staging && 7z a -tzip ../dist/H3-Character-Sheet-Designer-v1.4.0.zip H3-Character-Sheet-Designer >/dev/null)
+          7z t dist/H3-Character-Sheet-Designer-v1.4.0.zip >/dev/null
+          for name in 'MiniMax H3 Image Character Sheet Designer.json' 'H3 Character Sheet Designer - P-H3 Subgraph.json'; do
+            cp "workflows/$name" dist/
+          done
+          (cd dist && sha256sum *.zip *.json > SHA256SUMS.txt)
+          if gh release view v1.4.0 --json tagName >/dev/null 2>&1; then
+            test "$(gh api repos/$GITHUB_REPOSITORY/git/ref/tags/v1.4.0 --jq .object.sha)" = "$RELEASE_SHA"
+          else
+            gh release create v1.4.0 --target "$RELEASE_SHA" --draft --title 'H3 Character Sheet Designer v1.4.0' --notes-file docs/releases/v1.4.0.md
+          fi
+          for asset in dist/*; do
+            name=$(basename "$asset")
+            if gh release view v1.4.0 --json assets --jq '.assets[].name' | grep -Fxq "$name"; then
+              gh release download v1.4.0 --pattern "$name" --dir verify-existing
+              cmp "$asset" "verify-existing/$name"
+            else
+              gh release upload v1.4.0 "$asset"
+            fi
+          done
+          gh release edit v1.4.0 --draft=false --latest
+
+  registry:
+    needs: release
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Publish the released revision to Comfy Registry
+        uses: Comfy-Org/publish-node-action@d2366e7abb6ab16f3bb03e3520ae25c8cf749bc9
+        with:
+          personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+          skip_checkout: 'true'

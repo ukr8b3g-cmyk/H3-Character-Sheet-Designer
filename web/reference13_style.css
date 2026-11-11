@@ -32,9 +32,15 @@
 .h3-v13 .h3-mode-row { flex-direction: column; align-items: stretch; align-self: end; gap: 3px; }
 .h3-v13 .h3-mode-group { height: 32px; }
 .h3-v13 .h3-number-row { display: grid; grid-template-columns: minmax(90px, 112px) repeat(2, minmax(64px, 80px)); gap: 6px; }
+.h3-v13 .h3-resolution-row { grid-template-columns: minmax(106px, 128px) minmax(90px, 112px) repeat(2, minmax(64px, 80px)); }
 .h3-v13 .h3-number-field { min-width: 0; }
 .h3-v13 .h3-number-field label, .h3-v13 .h3-field-title { font-size: 13px; }
 .h3-v13 .h3-input-line input, .h3-v13 .h3-input-line select { height: 32px; padding: 3px 6px; font-size: 14px; }
+.h3-v13 .h3-image-controls { align-items: start; }
+.h3-v13 .h3-image-controls .h3-mode-row { align-self: start; gap: 4px; }
+.h3-image-controls .h3-field-title, .h3-image-controls .h3-number-field label { line-height: 18px; }
+.h3-image-controls .h3-mode { min-height: 0; padding-block: 0; }
+.h3-image-controls .h3-input-line > select { flex: none; }
 .h3-v13 .h3-metrics { flex-wrap: nowrap; min-height: 24px; }
 .h3-v13 .h3-dimensions { font-size: 18px; }
 .h3-v13 .h3-pixels, .h3-v13 .h3-status { font-size: 12px; }

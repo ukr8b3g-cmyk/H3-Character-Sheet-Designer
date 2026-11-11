@@ -1,4 +1,4 @@
-import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, presetOf, StateError} from './reference13_state.js';
+import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, IMAGE_RESOLUTION_PROFILES, presetOf, StateError} from './reference13_state.js';
 import {createArtwork, createGuideArtwork} from './reference13_artwork.js';
 import {MULTI_VIEW_IDS, MULTI_PRESETS, REFERENCE_INPUTS, REFERENCE_ROLES, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
 let sequence = 0;
@@ -10,6 +10,9 @@ const EN = {
   face_front_tip: 'Front-facing face to chest', face_left_tip: 'Head to chest, camera facing the subject’s anatomical left side', body_front_tip: 'Full body, head to soles', body_left_tip: "Camera looks directly at the subject’s anatomical left side", body_back_tip: 'Direct rear view, full body', hands_tip: 'Both hands; retain gloves from the reference', feet_tip: 'Separate close-up of both feet in reference footwear; visible boot shafts retained',
   preset: 'Preset', five: 'Standard · 5 views', basic: 'Basic · 4 views', detail: 'Detail · 7 views', turnaround: 'Turnaround · 3', single: 'Single view', seven: '7 views · hands and feet', custom: 'Custom',
   auto: 'Auto', manual: 'Manual', size: 'Output size', bodyHeight: 'Panel height', width: 'Width', height: 'Height', returnAuto: 'Back to Auto', updating: 'Updating dimensions…',
+  resolution: 'Resolution', resolution_current: 'Current', resolution_high: 'High detail', resolution_max_8mp: '8 MP', resolution_max_16mp: '16 MP',
+  resolutionProfile: 'Select a valid resolution.', resolutionHint: 'Current uses panel height. High detail increases pixel count toward 8 MP. Choose 8 MP or 16 MP to set the canvas area directly.',
+  imageResolutionWarning: 'This canvas exceeds 16 MP.',
   customHeight: 'Custom panel height', customHeightChoice: 'Custom…',
   autoHint: 'Auto keeps the requested full-body panel height.', manualHint: 'Manual keeps your canvas size when views change.',
   layout: 'SHEET PREVIEW', diagram: 'Layout guide', experimental: 'Experimental', pixels: 'pixels',
@@ -38,6 +41,9 @@ const JA = {
   face_front_tip: '正面の顔から胸まで', face_left_tip: '人物の解剖学的左側から見た横顔。髪全体から胸まで', body_front_tip: '頭頂から靴底までの全身正面', body_left_tip: 'カメラが人物の解剖学的左側を正面から見る', body_back_tip: '真後ろから見た全身', hands_tip: '左右の手。参照にある手袋を保持', feet_tip: '両足の独立した拡大図。参照の履物と見えているブーツの筒を保持',
   preset: 'プリセット', five: '標準5ビュー', basic: '基本4面', detail: '7面・ディテール', turnaround: '三面図のみ', single: '1カット', seven: '7ビュー・手と足', custom: 'カスタム',
   auto: 'Auto', manual: 'Manual', size: '出力サイズ', bodyHeight: '基準高', width: '幅', height: '高さ', returnAuto: 'Autoに戻す', updating: '寸法更新中…',
+  resolution: '解像度', resolution_current: '現行', resolution_high: '高精細', resolution_max_8mp: '8 MP', resolution_max_16mp: '16 MP',
+  resolutionProfile: '有効な解像度を選択してください。', resolutionHint: '現行は基準高で算出し、高精細は8 MPを上限に画素数を増やします。8 MPと16 MPは出力全体の画素数です。',
+  imageResolutionWarning: '出力サイズが16 MPを超えています。',
   customHeight: '基準高を手入力', customHeightChoice: '手入力…',
   autoHint: 'Autoは指定した全身パネルの高さを維持します。', manualHint: 'Manualはビューを変えても幅・高さを維持します。',
   layout: 'シートプレビュー', diagram: '配置ガイド', experimental: 'Experimental', pixels: '画素',
@@ -136,12 +142,12 @@ export function loadStyles() {
 }
 
 /** Real UI renderer shared by the ComfyUI extension and the browser test harness. */
-export function createDesignerUI({controller, v13 = false, locale = 'en', compatibilityWarning = false, useLayoutImage = () => false, readStyle = () => 'none', readBatchOut = () => false, outputAware = false, writeStyle = null, reference = false, multiReference = false, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false})}) {
+export function createDesignerUI({controller, v13 = false, imageNode = false, versionLabel = undefined, locale = 'en', compatibilityWarning = false, useLayoutImage = () => false, readStyle = () => 'none', readBatchOut = () => false, outputAware = false, writeStyle = null, reference = false, multiReference = false, readReferencePresence = () => ({reference_image_1: false, reference_image_2: false})}) {
   loadStyles();
   const id = `h3-reference13-${++sequence}`;
   const root = element('section', 'h3-designer h3-reference13'); root.dataset.instance = id; root.classList.toggle('h3-reference', reference); root.setAttribute('aria-label', reference ? 'H3 Character Sheet Designer Reference' : 'H3 Character Sheet Designer');
   root.classList.toggle('h3-multi-reference', multiReference);
-  const nodeVersion = v13 ? 'v1.3.0' : 'v1.2.2';
+  const nodeVersion = versionLabel ?? (v13 ? 'v1.3.0' : 'v1.2.2');
   root.dataset.nodeVersion = nodeVersion;
   root.setAttribute('aria-label', `H3 Character Sheet Designer ${nodeVersion}`);
   root.classList.toggle('h3-v13', v13);
@@ -179,6 +185,23 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
   const auto = button('h3-mode'), manual = button('h3-mode'); auto.dataset.mode = 'auto'; manual.dataset.mode = 'manual'; modeGroup.append(auto, manual); modeRow.append(sizeLabel, modeGroup);
   listen(auto, 'click', () => act(() => controller.setMode('auto'))); listen(manual, 'click', () => act(() => controller.setMode('manual', displayOutput())));
   const numberRow = element('div', 'h3-number-row'), fields = new Map();
+  const resolution = imageNode ? element('select', 'h3-select') : null;
+  const resolutionLabel = imageNode ? element('label') : null;
+  if (resolution) {
+    controls.classList.add('h3-image-controls');
+    numberRow.classList.add('h3-resolution-row');
+    resolution.id = `${id}-resolution`; resolution.dataset.resolutionProfile = '';
+    resolutionLabel.htmlFor = resolution.id;
+    for (const value of IMAGE_RESOLUTION_PROFILES) {
+      const option = element('option'); option.value = value; resolution.append(option);
+    }
+    const wrap = element('div', 'h3-number-field'), line = element('div', 'h3-input-line');
+    line.append(resolution); wrap.append(resolutionLabel, line); numberRow.append(wrap);
+    listen(resolution, 'change', () => act(() => controller.change(next => {
+      if (resolution.value === 'current') delete next.resolution_profile;
+      else next.resolution_profile = resolution.value;
+    })));
+  }
   for (const [field, labelKey] of [['body_height', 'bodyHeight'], ['manual_width', 'width'], ['manual_height', 'height']]) {
     const wrap = element('div', 'h3-number-field'), label = element('label'), input = element('input'); input.type = 'text'; input.inputMode = 'numeric'; input.autocomplete = 'off'; input.spellcheck = false; input.id = `${id}-${field}`; input.dataset.field = field; label.htmlFor = input.id;
     const message = element('span', 'h3-draft-note'); message.id = `${input.id}-note`; input.setAttribute('aria-describedby', message.id);
@@ -520,14 +543,21 @@ export function createDesignerUI({controller, v13 = false, locale = 'en', compat
     auto.disabled = !state; manual.disabled = !state || (state.size.mode === 'auto' && !current);
     auto.setAttribute('aria-pressed', String(state?.size.mode === 'auto')); manual.setAttribute('aria-pressed', String(state?.size.mode === 'manual'));
     sizeLabel.textContent = t.size; returnAuto.textContent = t.returnAuto; returnAuto.hidden = state?.size.mode !== 'manual';
+    if (resolution) {
+      resolutionLabel.textContent = t.resolution;
+      resolution.disabled = state?.size.mode !== 'auto';
+      resolution.title = state?.size.mode === 'manual' ? t.manualHint : t.resolutionHint;
+      for (const option of resolution.options) option.textContent = t[`resolution_${option.value}`];
+      resolution.value = state?.resolution_profile ?? 'current';
+    }
     modeHint.textContent = outputAware && readBatchOut() ? (language === 'ja' ? '各画像を個別に生成。Manual寸法は全画像に共通。Autoはビュー種別ごとの寸法。表示中の画像をクリックしてManualへ切替できます。' : 'Each view is generated separately. Manual dimensions apply to every image; Auto uses the view type. Select a preview to freeze its dimensions in Manual.') : outputAware && state?.size.mode === 'manual' ? (language === 'ja' ? '指定した画像サイズ内に選択ビューを再配置します。' : 'Selected views are rearranged inside the requested canvas.') : state?.size.mode === 'manual' ? t.manualHint : t.autoHint;
     renderFields(); renderParts(); renderRoles();
     const p = controller.preview, actual = displayOutput(), displayP = actual && state;
     dimensions.textContent = displayP ? `${actual.width.toLocaleString('en-US')} × ${actual.height.toLocaleString('en-US')}${outputAware && readBatchOut() ? ' · ' + (language === 'ja' ? '1枚あたり' : 'per image') : ''}` : '— × —';
     const pixelCount = displayP ? actual.width * actual.height : 0;
     pixels.textContent = displayP ? `${pixelCount.toLocaleString(language)} ${t.pixels} · ${(pixelCount / 1e6).toFixed(2)} MP` : '';
-    badge.textContent = t.experimental; badge.hidden = !displayP || pixelCount <= 1032192;
-    warning.textContent = t.resolutionWarning; warning.hidden = badge.hidden;
+    badge.textContent = t.experimental; badge.hidden = !displayP || (imageNode ? pixelCount <= 16_000_000 : pixelCount <= 1032192);
+    warning.textContent = imageNode ? t.imageResolutionWarning : t.resolutionWarning; warning.hidden = badge.hidden;
     metrics.classList.toggle('h3-stale', Boolean(displayP && !current));
     status.textContent = controller.pending ? (displayP ? t.stale : t.pending) : controller.previewError ? `${t.unavailable}${displayP ? ` · ${t.previous}` : ''}` : compatibilityWarning ? t.undoWarning : t.committed;
     const problem = controller.error || localError || controller.previewError;

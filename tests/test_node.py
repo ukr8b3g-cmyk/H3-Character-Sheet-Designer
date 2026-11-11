@@ -83,7 +83,7 @@ class NodeTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         with mock.patch.dict(sys.modules, {name: module, "server": None}):
             spec.loader.exec_module(module)
-        self.assertEqual(list(module.NODE_CLASS_MAPPINGS), ["H3CharacterSheetDesignerReference13", "H3CharacterSheetDesignerReferenceV13"])
+        self.assertEqual(list(module.NODE_CLASS_MAPPINGS), ["H3CharacterSheetDesignerReference13", "H3CharacterSheetDesignerReferenceV13", "MiniMaxH3ImageCharacterSheetDesigner"])
         self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesignerReference13"], "H3 Character Sheet Designer v1.2.2")
         self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesignerReferenceV13"], "H3 Character Sheet Designer v1.3.0")
         self.assertEqual(module.WEB_DIRECTORY, "./web")

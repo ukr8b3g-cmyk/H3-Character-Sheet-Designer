@@ -1,11 +1,52 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.3.1** (node names remain v1.3.0 / v1.2.2)
+[日本語](#日本語) · **Package v1.4.0**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
 
-## Update — v1.3.1: editable view prompts
+## What's New — v1.4.0
+
+**Requires H3 Character Sheet Designer v1.4.0+ and ComfyUI 0.45.0+ for the new MiniMax H3 Image workflow.** Update ComfyUI if `MiniMax H3 Image Conditioning` is missing, then restart and reload the browser after updating the Designer.
+
+| Workflow | Designer node | Model path |
+| --- | --- | --- |
+| [MiniMax H3 Image Character Sheet Designer](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) | **MiniMax H3 Image Character Sheet Designer v1.4.0** | MiniMax H3 Image Conditioning and three image-model files |
+| [H3 Character Sheet Designer — P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) | **H3 Character Sheet Designer v1.3.0** | P-H3 Image Conditioning and its original model set |
+
+- **New defaults:** Standard · 5 views, Auto / **High detail**, Layout Image OFF. The four Auto choices are Current, High detail, 8 MP and 16 MP. Manual uses the dimensions you enter.
+- **Image-specific prompts:** short layout instructions replace numeric panel coordinates. Single view requests one centered depiction. All 13 with Layout Image OFF describes six portraits on the left, three full-body views in the center, front/back outfit next, and hands above footwear on the far right.
+- **Sampling and output:** Euler / Simple, 6 steps, CFG 1, denoise 1. The template uses ComfyUI's built-in Save Animated WEBP at 1 FPS and generates a single static image.
+- **Existing workflows:** the P-H3 node keeps its v1.3.0 name, sockets and behavior. v1.2.2 remains available to saved workflows as a deprecated node. The release offers the two templates above as direct downloads.
+
+### MiniMax H3 Image model downloads
+
+Use the exact three files selected in the template. Set CLIP type to `minimax`. Select your character image in Load Image before running. The workflow uses the supplied image as a generation reference.
+
+| Component | Download | Folder under `ComfyUI/models/` |
+| --- | --- | --- |
+| Diffusion model | [minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors) | `diffusion_models/minimax/` |
+| Text encoder | [qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) | `text_encoders/` |
+| VAE | [minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors) | `vae/` |
+
+[ComfyUI's MiniMax H3 Image guide](https://docs.comfy.org/tutorials/image/minimax/minimax-h3-image)
+
+### P-H3 compatibility template model downloads
+
+| Component | Download | Folder under `ComfyUI/models/` |
+| --- | --- | --- |
+| Diffusion model | [minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors) | `diffusion_models/minimax/` |
+| Text encoder | [p-h3-image_text_encoder_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors) | `text_encoders/` |
+| VAE | [p-h3-image_vae_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors) | `vae/` |
+| LoRA | [p-h3-image_lora_bf16.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors) | `loras/P-H3-Image/` |
+
+![MiniMax H3 Image Auto resolution menu](docs/images/minimax-h3-image-resolution.png)
+
+![MiniMax H3 Image 13-view GPU example with Layout Image off](docs/images/minimax-h3-image-13-views.webp)
+
+*13-view GPU example, 4832 × 1280, Layout Image OFF. The requested views appeared once each in this run. Fine details and viewpoint adherence can vary with reference, seed and resolution. 8 MP and 16 MP can require more VRAM and time.*
+
+## Previous update — v1.3.1: editable view prompts
 
 Package v1.3.1 keeps the existing **H3 Character Sheet Designer v1.3.0** and **v1.2.2** node names. In the v1.3.0 node, open **Prompts** after Settings, select one of 13 views and edit its H3 base instruction. **Apply** saves it; **Reset this prompt** restores that view's default. Blank overrides are allowed. Valid pending edits are committed on workflow save/queue. Each override accepts up to 2,000 UTF-16 units.
 
@@ -25,7 +66,7 @@ Validation: local implementation passed Python 176 and JavaScript/DOM 112 tests.
 
 See [release notes](docs/releases/v1.3.0.md) and [CHANGELOG](CHANGELOG.md). Previous changes remain recorded there.
 
-## Start here
+## Older v1.3 workflows
 
 Available workflows: [P-H3 subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2](workflows/H3_Character_Sheet_Designer_v1.2.2.json). The P-H3 workflow uses `minimax_h3_fl2va_pruned_int8_convrot.safetensors` with the P-H3 image text encoder and VAE.
 
@@ -39,7 +80,7 @@ The template requires native ComfyUI H3/subgraph support and **[rgthree-comfy](h
 
 <img width="1191" height="803" alt="{E6449818-9833-48BF-ABB4-78E75C593EED}" src="https://github.com/user-attachments/assets/c56b09f1-f5bc-41da-84cc-18da76556691" />
 
-## Models and downloads
+## Model downloads for the older Pika v1.3 template
 
 Set the CLIP loader type to **`minimax`** and select an **H3** encoder. Music3 encoders are incompatible and cause sampler matrix-shape errors (for example 32768 versus 5120). Model switching/first loading is separate from layout compilation.
 
@@ -56,7 +97,7 @@ Set the CLIP loader type to **`minimax`** and select an **H3** encoder. Music3 e
 
 Choose the adapter matching your base model and conditioning path. Both Pika links are provided; this template enables Ref2VA only. Follow model licenses/access requirements. The `minimax/` subfolder is template organization, not a required ComfyUI convention.
 
-## Wiring and reference roles
+## Older Pika v1.3 wiring and reference roles
 
 | Designer output | Native H3 input |
 | --- | --- |
@@ -69,14 +110,14 @@ Keep the guide wire connected when OFF. Picture numbering skips None images. The
 
 In Part prompts assign extra references to Same character, Face, Head/face/hair, Complete outfit, Outfit front/back, Hands or Footwear. Explicit choices and part instructions take priority, then dedicated references, then the baseline image; later dedicated references of the same role take priority. These are text-based permissions, not regional attention isolation. Separate panel descriptions and `No human` do not guarantee that instructions stay inside one panel.
 
-## Which node / previous workflows
+## Earlier node IDs and workflows
 
 | Node ID / display version | Purpose |
 | --- | --- |
 | `H3CharacterSheetDesignerReferenceV13` / **v1.3.0** | Current workflow and common guide |
 | `H3CharacterSheetDesignerReference13` / **v1.2.2** | Previous behavior for existing Reference13 workflows / comparison |
 
-These are the **two registered nodes**. Earlier Designer, Reference, Multi Reference and Reference V1.1 IDs are not registered in v1.3. Their historical source/workflow files and [old releases](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2) remain available; use an earlier release if those IDs are required. Saved workflows and user node titles are not automatically rewritten. V1.2.2 preserves its compiler/state behavior; its shared UI also has the Worn switch removed.
+These are the previous node versions. Earlier Designer, Reference, Multi Reference and Reference V1.1 IDs are not registered in v1.3. Their historical source/workflow files and [old releases](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2) remain available; use an earlier release if those IDs are required. Saved workflows and user node titles are not automatically rewritten. V1.2.2 preserves its compiler/state behavior; its shared UI also has the Worn switch removed.
 
 ## Limits and validation
 
@@ -93,11 +134,21 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-Update existing installations through your usual Git/Manager workflow, restart ComfyUI, and reload the browser. Model weights are separate downloads. Registry/Manager publication is a separate operation and is not included here.
+Update existing installations through your usual Git/Manager workflow, restart ComfyUI, and reload the browser. Model weights are separate downloads. Check the [Comfy Registry listing](https://registry.comfy.org/nodes/h3-character-sheet-designer) for the version available through Manager.
 
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.4.0の変更点
+
+**新しいMiniMax H3 Image版には、この拡張のv1.4.0以上と、ComfyUI 0.45.0以上が必要です。** `MiniMax H3 Image Conditioning` が見つからない場合はComfyUIを更新してください。
+
+- **新規** [MiniMax H3 Image用テンプレート](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json)。ノード表示は **MiniMax H3 Image Character Sheet Designer v1.4.0**。標準は **Standard · 5 views／Auto・High detail／Layout Image OFF**。Auto解像度はCurrent・High detail・8 MP・16 MP。Manualは入力した寸法を使用します。
+- 座標を短い配置文に置き換えました。単体は中央に1枚。全13面のLayout Image OFFでは、頭部6面・全身3面・衣装前後・手と履物の順に配置します。掲載画像は4832 × 1280で13面が各1枚揃った例です。参照画像、seed、解像度によって見切れや向きのずれが起きる場合があります。
+- **モデルは上の3ファイル**。CLIPは `minimax`。Load Imageで参照画像を選び、Euler / Simple、6ステップ、CFG 1で生成します。標準のSave Animated WEBPを1 FPSに設定し、静止画1枚を保存します。
+- [従来のP-H3テンプレート](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json)も同梱。ノード表示は **H3 Character Sheet Designer v1.3.0**。モデルは上のP-H3用の表を参照してください。v1.2.2は保存済みワークフローの互換用です。
+
 
 ### 更新 — v1.3.1：ビュー別プロンプト編集
 
@@ -122,7 +173,7 @@ AnimaタグではなくH3用の文章です。配置・画像参照・部位プ�
 
 [リリースノート](docs/releases/v1.3.0.md)・[変更履歴](CHANGELOG.md)も参照してください。
 
-### 使い方
+### 旧v1.3テンプレートの使い方
 
 ワークフロー一覧 — [P-H3サブグラフ版](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) · [v1.3版](workflows/H3_Character_Sheet_Designer_v1.3.json) · [v1.2.2版](workflows/H3_Character_Sheet_Designer_v1.2.2.json)。P-H3版は `minimax_h3_fl2va_pruned_int8_convrot.safetensors` とP-H3 Image用テキストエンコーダー・VAEを使用します。
 
@@ -137,7 +188,7 @@ AnimaタグではなくH3用の文章です。配置・画像参照・部位プ�
 
 ### モデルと参照の注意
 
-モデル／TE／VAE／LoRAのファイル名・URLは上の **Models and downloads** 表にまとめています。Pika Ref2VA／FL2VA両方のリンクを掲載し、このテンプレートはRef2VAだけを有効にしています。CLIPローダーはtype=minimax、H3用Qwen3-VLを使用。Music3用TEは非互換で行列サイズ不一致になります。初回ロードの時間とDesignerの配置計算は別の処理です。各モデルのライセンス・アクセス条件に従ってください。
+モデル／TE／VAE／LoRAのファイル名・URLは上の **Model downloads for the older Pika v1.3 template** 表にまとめています。Pika Ref2VA／FL2VA両方のリンクを掲載し、このテンプレートはRef2VAだけを有効にしています。CLIPローダーはtype=minimax、H3用Qwen3-VLを使用。Music3用TEは非互換で行列サイズ不一致になります。初回ロードの時間とDesignerの配置計算は別の処理です。各モデルのライセンス・アクセス条件に従ってください。
 
 追加参照の役割は同一人物／顔／頭部・髪／衣装全体／衣装前／衣装後／手／履物。明示設定・部位指示、専用参照、基準画像の順に適用し、同じ専用役割では後の接続を優先します。これはテキスト上の指示であり、領域attentionを完全分離する機能ではありません。
 
