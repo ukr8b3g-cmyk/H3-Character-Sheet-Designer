@@ -885,11 +885,6 @@
           "name": "noise",
           "type": "NOISE",
           "link": 218
-        },
-        {
-          "name": "clip_name_1",
-          "type": "COMBO",
-          "link": null
         }
       ],
       "outputs": [
@@ -1352,16 +1347,6 @@
             "pos": [
               -196,
               -1586
-            ]
-          },
-          {
-            "id": "3b689d4f-d12a-4e5b-aa2a-039198f2490e",
-            "name": "clip_name_1",
-            "type": "COMBO",
-            "linkIds": [],
-            "pos": [
-              -196,
-              -1566
             ]
           }
         ],

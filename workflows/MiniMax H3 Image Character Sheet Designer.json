@@ -2,7 +2,7 @@
   "id": "8b615474-1528-4aab-8687-195f64661a18",
   "revision": 0,
   "last_node_id": 117,
-  "last_link_id": 259,
+  "last_link_id": 260,
   "nodes": [
     {
       "id": 4,
@@ -254,7 +254,7 @@
     },
     {
       "id": 52,
-      "type": "RandomNoise",
+      "type": "PrimitiveInt",
       "pos": [
         1820,
         100
@@ -274,10 +274,10 @@
           "dir": null,
           "label": null,
           "locked": null,
-          "name": "NOISE",
+          "name": "INT",
           "nameLocked": null,
           "removable": null,
-          "type": "NOISE",
+          "type": "INT",
           "pos": null,
           "slot_index": null,
           "links": [
@@ -289,14 +289,14 @@
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.38.0",
-        "Node name for S&R": "RandomNoise"
+        "Node name for S&R": "PrimitiveInt"
       },
       "widgets_values": [
         42,
         "fixed"
       ],
       "widgets_values_named": {
-        "noise_seed": 42,
+        "value": 42,
         "control_after_generate": "fixed"
       }
     },
@@ -340,11 +340,6 @@
           "link": 249
         },
         {
-          "name": "lora_name",
-          "type": "COMBO",
-          "link": null
-        },
-        {
           "label": "image_1",
           "name": "images.image_1",
           "shape": 7,
@@ -381,14 +376,12 @@
           "color_on": null,
           "dir": null,
           "label": null,
-          "name": "noise",
-          "type": "NOISE",
-          "link": 218
-        },
-        {
-          "name": "clip_name_1",
-          "type": "COMBO",
-          "link": null
+          "name": "seed",
+          "type": "INT",
+          "link": 218,
+          "widget": {
+            "name": "seed"
+          }
         }
       ],
       "outputs": [
@@ -685,7 +678,7 @@
       115,
       4,
       109,
-      4,
+      3,
       "IMAGE"
     ],
     [
@@ -693,7 +686,7 @@
       115,
       3,
       109,
-      5,
+      4,
       "IMAGE"
     ],
     [
@@ -701,7 +694,7 @@
       115,
       5,
       109,
-      6,
+      5,
       "IMAGE"
     ],
     [
@@ -709,7 +702,7 @@
       115,
       6,
       109,
-      7,
+      6,
       "IMAGE"
     ],
     [
@@ -717,7 +710,7 @@
       115,
       7,
       109,
-      8,
+      7,
       "IMAGE"
     ],
     [
@@ -725,8 +718,8 @@
       52,
       0,
       109,
-      9,
-      "NOISE"
+      8,
+      "INT"
     ]
   ],
   "groups": [],
@@ -738,7 +731,7 @@
         "state": {
           "lastGroupId": 2,
           "lastNodeId": 117,
-          "lastLinkId": 259,
+          "lastLinkId": 260,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -840,16 +833,6 @@
             ]
           },
           {
-            "id": "e5785a96-f16f-42e7-9c59-bbafe3d18805",
-            "name": "lora_name",
-            "type": "COMBO",
-            "linkIds": [],
-            "pos": [
-              -196,
-              -1706
-            ]
-          },
-          {
             "id": "656911b5-f2f3-4524-9f4d-5f739633b849",
             "name": "images.image_1",
             "type": "IMAGE",
@@ -923,10 +906,12 @@
           },
           {
             "id": "d36d519f-81a8-48b0-a74b-0748469fa2df",
-            "name": "noise",
-            "type": "NOISE",
-            "linkIds": [],
-            "localized_name": "noise",
+            "name": "seed",
+            "type": "INT",
+            "linkIds": [
+              260
+            ],
+            "localized_name": "seed",
             "label": null,
             "dir": null,
             "color_off": null,
@@ -934,16 +919,6 @@
             "pos": [
               -196,
               -1586
-            ]
-          },
-          {
-            "id": "3b689d4f-d12a-4e5b-aa2a-039198f2490e",
-            "name": "clip_name_1",
-            "type": "COMBO",
-            "linkIds": [],
-            "pos": [
-              -196,
-              -1566
             ]
           }
         ],
@@ -1302,6 +1277,15 @@
                 "name": "latent_image",
                 "type": "LATENT",
                 "link": 235
+              },
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "widget": {
+                  "name": "seed"
+                },
+                "link": 260
               }
             ],
             "outputs": [
@@ -1648,7 +1632,7 @@
           {
             "id": 238,
             "origin_id": -10,
-            "origin_slot": 7,
+            "origin_slot": 6,
             "target_id": 114,
             "target_slot": 2,
             "type": "IMAGE"
@@ -1656,7 +1640,7 @@
           {
             "id": 239,
             "origin_id": -10,
-            "origin_slot": 8,
+            "origin_slot": 7,
             "target_id": 114,
             "target_slot": 3,
             "type": "IMAGE"
@@ -1664,7 +1648,7 @@
           {
             "id": 240,
             "origin_id": -10,
-            "origin_slot": 9,
+            "origin_slot": 8,
             "target_id": 114,
             "target_slot": 4,
             "type": "IMAGE"
@@ -1672,7 +1656,7 @@
           {
             "id": 241,
             "origin_id": -10,
-            "origin_slot": 10,
+            "origin_slot": 9,
             "target_id": 114,
             "target_slot": 5,
             "type": "IMAGE"
@@ -1680,7 +1664,7 @@
           {
             "id": 242,
             "origin_id": -10,
-            "origin_slot": 11,
+            "origin_slot": 10,
             "target_id": 114,
             "target_slot": 6,
             "type": "IMAGE"
@@ -1707,6 +1691,14 @@
             "origin_slot": 2,
             "target_id": 114,
             "target_slot": 13,
+            "type": "INT"
+          },
+          {
+            "id": 260,
+            "origin_id": -10,
+            "origin_slot": 11,
+            "target_id": 112,
+            "target_slot": 4,
             "type": "INT"
           }
         ],
