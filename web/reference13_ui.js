@@ -523,7 +523,6 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       catch (error) { drafts.set(field, {...draft, error}); render(); fields.get(field).input.focus(); throw error; }
     }
     for (const [part, draft] of partDrafts) if (draft.error) { selectedPart = part; activeTab = 'parts'; render(); partInput.focus(); throw draft.error; }
-    render();
   }
   function render(reason) {
     if (disposed) return;

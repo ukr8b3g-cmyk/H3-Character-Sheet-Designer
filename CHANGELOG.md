@@ -1,3 +1,7 @@
+# v1.4.2
+
+Fix dropdown selections being reset by a workflow save or undo snapshot. Includes both templates with the external seed wiring already fixed on main. See the [release notes](docs/releases/v1.4.2.md).
+
 # v1.4.1
 
 MiniMax H3 Image now resolves conflicting default instructions for bare hands and no shoes, states part reference priority, and requests a white gap when only hands and footwear are selected with Layout Image OFF. See the [release notes](docs/releases/v1.4.1.md).

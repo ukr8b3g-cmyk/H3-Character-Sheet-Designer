@@ -1,9 +1,14 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.4.1**
+[日本語](#日本語) · **Package v1.4.2**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.4.2
+
+- **Dropdowns retain selections.** Saving and undo snapshots no longer reset a selection before it is committed. Tested in Chrome by selecting **8 MP** and **Basic · 4 views** with the mouse, then saving and reopening the workflow JSON.
+- **External seed wiring.** The included P-H3 and MiniMax H3 Image templates carry the seed wiring fixes from the previous update to main. Existing node IDs and titles are preserved.
 
 ## What's New — v1.4.1
 
@@ -147,6 +152,11 @@ Update existing installations through your usual Git/Manager workflow, restart C
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.4.2の変更点
+
+- **ドロップダウンの選択を保持。** 保存や履歴記録の際に、確定前の選択を上書きする再描画を削除しました。Chromeで **8 MP** と **Basic · 4 views** をマウスで選び、JSONの保存・再読込後も保持されることを確認しました。
+- **外部seedの配線。** P-H3版とMiniMax H3 Image版の同梱テンプレートには、mainに反映済みのseed配線修正が入っています。既存のノードIDと表示名は従来どおりです。
 
 ### v1.4.1の変更点
 
