@@ -1,8 +1,8 @@
 {
   "id": "8b615474-1528-4aab-8687-195f64661a18",
   "revision": 0,
-  "last_node_id": 117,
-  "last_link_id": 260,
+  "last_node_id": 120,
+  "last_link_id": 265,
   "nodes": [
     {
       "id": 4,
@@ -309,7 +309,7 @@
       ],
       "size": [
         500,
-        360
+        388
       ],
       "flags": {},
       "order": 7,
@@ -382,6 +382,15 @@
           "widget": {
             "name": "seed"
           }
+        },
+        {
+          "label": "Enable Tiled VAE Decode",
+          "name": "switch",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "switch"
+          },
+          "link": null
         }
       ],
       "outputs": [
@@ -408,7 +417,8 @@
         0,
         "minimax\\minimax_h3_image_pruned_int8_convrot.safetensors",
         "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "minimax_h3_image_vae_fp16.safetensors"
+        "minimax_h3_image_vae_fp16.safetensors",
+        false
       ],
       "widgets_values_named": {
         "prompt": "Aspect ratio: 1:1\nRequest: change the lighting to night time",
@@ -416,7 +426,8 @@
         "height": 0,
         "unet_name": "minimax\\minimax_h3_image_pruned_int8_convrot.safetensors",
         "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
-        "vae_name": "minimax_h3_image_vae_fp16.safetensors"
+        "vae_name": "minimax_h3_image_vae_fp16.safetensors",
+        "switch": false
       }
     },
     {
@@ -551,10 +562,10 @@
       "title": "Model Links",
       "properties": {},
       "widgets_values": [
-        "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
+        "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Enable Tiled VAE Decode** is off by default. If generation stalls at VAE Decode, try turning it on in the generation subgraph.\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
       ],
       "widgets_values_named": {
-        "text": "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
+        "text": "## MiniMax H3 Image v1.4.0\n\n**Required**  \nH3 Character Sheet Designer v1.4.0+  \nComfyUI 0.45.0+\n\n**Default** Standard 5 views · High detail\n\n**Enable Tiled VAE Decode** is off by default. If generation stalls at VAE Decode, try turning it on in the generation subgraph.\n\n**Diffusion model**  \n[minimax_h3_image_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[minimax_h3_image_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors)  \nComfyUI/models/vae/\n\n**CLIP type** minimax\n"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -730,8 +741,8 @@
         "version": 1,
         "state": {
           "lastGroupId": 2,
-          "lastNodeId": 117,
-          "lastLinkId": 260,
+          "lastNodeId": 120,
+          "lastLinkId": 265,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -743,7 +754,7 @@
             -300,
             -1850,
             128,
-            328
+            348
           ]
         },
         "outputNode": {
@@ -920,6 +931,19 @@
               -196,
               -1586
             ]
+          },
+          {
+            "id": "80192dac-7012-4005-ad2d-23e6db89ffc8",
+            "name": "switch",
+            "type": "BOOLEAN",
+            "linkIds": [
+              265
+            ],
+            "label": "Enable Tiled VAE Decode",
+            "pos": [
+              -196,
+              -1566
+            ]
           }
         ],
         "outputs": [
@@ -1090,7 +1114,8 @@
                 "type": "VAE",
                 "links": [
                   189,
-                  237
+                  237,
+                  264
                 ]
               }
             ],
@@ -1172,7 +1197,7 @@
                 "pos": null,
                 "slot_index": null,
                 "links": [
-                  207
+                  261
                 ]
               }
             ],
@@ -1294,7 +1319,8 @@
                 "name": "LATENT",
                 "type": "LATENT",
                 "links": [
-                  226
+                  226,
+                  263
                 ]
               }
             ],
@@ -1513,6 +1539,123 @@
               "width": 0,
               "height": 0
             }
+          },
+          {
+            "id": 119,
+            "type": "VAEDecodeTiled",
+            "pos": [
+              1810,
+              -2240
+            ],
+            "size": [
+              270,
+              150
+            ],
+            "flags": {},
+            "order": 8,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "samples",
+                "name": "samples",
+                "type": "LATENT",
+                "link": 263
+              },
+              {
+                "localized_name": "vae",
+                "name": "vae",
+                "type": "VAE",
+                "link": 264
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "IMAGE",
+                "name": "IMAGE",
+                "type": "IMAGE",
+                "links": [
+                  262
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.45.0",
+              "Node name for S&R": "VAEDecodeTiled"
+            },
+            "widgets_values": [
+              512,
+              64,
+              64,
+              8
+            ],
+            "widgets_values_named": {
+              "tile_size": 512,
+              "overlap": 64,
+              "temporal_size": 64,
+              "temporal_overlap": 8
+            }
+          },
+          {
+            "id": 120,
+            "type": "ComfySwitchNode",
+            "pos": [
+              2170,
+              -2260
+            ],
+            "size": [
+              270,
+              80
+            ],
+            "flags": {},
+            "order": 9,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "on_false",
+                "name": "on_false",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": 261
+              },
+              {
+                "localized_name": "on_true",
+                "name": "on_true",
+                "shape": 7,
+                "type": "IMAGE",
+                "link": 262
+              },
+              {
+                "localized_name": "switch",
+                "name": "switch",
+                "type": "BOOLEAN",
+                "widget": {
+                  "name": "switch"
+                },
+                "link": 265
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "output",
+                "name": "output",
+                "type": "IMAGE",
+                "links": [
+                  207
+                ]
+              }
+            ],
+            "properties": {
+              "cnr_id": "comfy-core",
+              "ver": "0.45.0",
+              "Node name for S&R": "ComfySwitchNode"
+            },
+            "widgets_values": [
+              false
+            ],
+            "widgets_values_named": {
+              "switch": false
+            }
           }
         ],
         "groups": [],
@@ -1527,7 +1670,7 @@
           },
           {
             "id": 207,
-            "origin_id": 75,
+            "origin_id": 120,
             "origin_slot": 0,
             "target_id": -20,
             "target_slot": 0,
@@ -1700,6 +1843,46 @@
             "target_id": 112,
             "target_slot": 4,
             "type": "INT"
+          },
+          {
+            "id": 261,
+            "origin_id": 75,
+            "origin_slot": 0,
+            "target_id": 120,
+            "target_slot": 0,
+            "type": "IMAGE"
+          },
+          {
+            "id": 262,
+            "origin_id": 119,
+            "origin_slot": 0,
+            "target_id": 120,
+            "target_slot": 1,
+            "type": "IMAGE"
+          },
+          {
+            "id": 263,
+            "origin_id": 112,
+            "origin_slot": 0,
+            "target_id": 119,
+            "target_slot": 0,
+            "type": "LATENT"
+          },
+          {
+            "id": 264,
+            "origin_id": 102,
+            "origin_slot": 0,
+            "target_id": 119,
+            "target_slot": 1,
+            "type": "VAE"
+          },
+          {
+            "id": 265,
+            "origin_id": -10,
+            "origin_slot": 12,
+            "target_id": 120,
+            "target_slot": 2,
+            "type": "BOOLEAN"
           }
         ],
         "extra": {}
