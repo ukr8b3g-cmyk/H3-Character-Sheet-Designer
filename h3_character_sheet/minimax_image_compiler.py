@@ -3,11 +3,12 @@ import json
 from math import sqrt
 
 from .compiler import StateValidationError, decode_json
+from .guide_13 import derive_guide_geometry
 from .state_13 import applicable_settings, part_views, serialize_reference13_state
 from .reference_v13_compiler import compile_reference_v13_state
 from .reference_compiler import STYLE_PROMPTS
 from .appearance_policy_13 import build_appearance_policy
-from .view_catalog_13 import VIEW_IDS
+from .view_catalog_13 import BODY_IDS, PRESETS, VIEW_IDS
 
 RESOLUTION_PROFILES = ('current', 'high', 'max_8mp', 'max_16mp')
 EIGHT_MP = 8_000_000
@@ -50,6 +51,31 @@ def _arranged_columns(layout):
     for panel in layout['panels']:
         columns.setdefault(panel['rect'][0], []).append(panel)
     return [sorted(columns[x], key=lambda p: p['rect'][1]) for x in sorted(columns)]
+
+
+def _standard_five_view_guide(layout, state):
+    """Trade a little portrait width for full-body space and leave room above the head."""
+    canvas_width, _ = layout['canvas']
+    panels = sorted(layout['panels'], key=lambda panel: panel['rect'][0])
+    extra = round(min(panel['rect'][2] for panel in panels if panel['id'] in BODY_IDS) * canvas_width * 0.06)
+    guide_panels = []
+    shift = 0
+    for panel in panels:
+        x, y, width, height = panel['rect']
+        change = extra if panel['id'] in BODY_IDS else -extra * 1.5
+        guide_panels.append({**panel, 'rect': [x + shift / canvas_width, y, width + change / canvas_width, height]})
+        shift += change
+    geometry = derive_guide_geometry({**layout, 'panels': guide_panels}, state, compact=True)
+    for panel in geometry['panels']:
+        if panel['id'] in BODY_IDS:
+            left, top, right, bottom = panel['bounds']
+            _, _, width, height = panel['rect']
+            panel_height = bottom - top
+            y = top + round(panel_height * 0.105)
+            fit_height = min(height, bottom - round(panel_height * 0.035) - y)
+            fit_width = round(width * fit_height / height)
+            panel['rect'] = [(left + right - fit_width) // 2, y, fit_width, fit_height]
+    return geometry
 
 
 def _all_view_layout(descriptions):
@@ -115,6 +141,8 @@ def compile_minimax_image_state(state_json, **kwargs):
     # Reuse validation, sizing, guide rendering and persistence, not video prose.
     result = compile_reference_v13_state(state_json, **kwargs)
     state = result['state']
+    if result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
+        result['guide_geometry'] = _standard_five_view_guide(result['semantic_layout'], state)
     if profile is not None:
         state['resolution_profile'] = profile
         result['state_json'] = serialize_reference13_state(state)

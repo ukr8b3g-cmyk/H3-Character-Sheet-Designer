@@ -1,9 +1,15 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.4.2**
+[日本語](#日本語) · **Package v1.4.3**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.4.3
+
+For MiniMax H3 Image, **Standard · 5 views** in Auto size with **Use Layout Image** enabled gives each full-body panel about 6% more width and leaves 10.5% above and at least 3.5% below the figure in the guide. The two portrait panels give up a little width to keep the sheet dimensions fixed.
+
+Fixed-seed GPU comparisons at 3168 × 1280 produced all five views for both reference images. The horned character fit from horn tips to shoe soles in all three full-body views. Framing can vary with the reference, seed, and output size. [Release notes](docs/releases/v1.4.3.md)
 
 ## What's New — v1.4.2
 
@@ -87,7 +93,7 @@ P-H3 template and archived releases: [P-H3 subgraph](workflows/H3%20Character%20
 2. Open **[H3_Character_Sheet_Designer_v1.3.json](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0)**. [Release download](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.3.0/H3_Character_Sheet_Designer_v1.3.json).
 3. Select installed models and valid images in every connected Load Image node. Disconnect unused optional inputs on the Designer. Models/images are not bundled.
 4. Choose views and optional part instructions/reference roles. Auto retains unspecified reference appearance. Fix the seed for comparisons.
-5. Start with **Use Layout Image OFF**, enabling it when composition guidance helps. ON can transfer guide proportions or leave guide content. The UI displays the same guide either way.
+5. Start with **Use Layout Image OFF**, enabling it when composition guidance helps. ON can transfer guide proportions or leave guide content. MiniMax H3 Image adjusts the guide framing for **Standard · 5 views** in Auto size when enabled.
 
 The template requires native ComfyUI H3/subgraph support and **[rgthree-comfy](https://github.com/rgthree/rgthree-comfy)** for Power LoRA Loader. The Designer adds no Python runtime dependency. Pika Ref2VA is enabled at 1.0, FL2VA is disabled, and ManualSigmas has eight intervals. These are the supplied comparison settings, not a universal optimum or the original Pika six-NFE sampling contract. Keep the supplied save format unless you intentionally change it.
 
@@ -153,6 +159,12 @@ Update existing installations through your usual Git/Manager workflow, restart C
 
 ## 日本語
 
+### v1.4.3の変更点
+
+MiniMax H3 Image版で **Standard · 5 views**、Autoサイズ、**Use Layout Image ON** を選ぶと、ガイドの全身3枠を各約6%広げ、上に10.5%、下に3.5%以上の余白を取ります。顔アップ2枠から幅を振り分けるため、シートの出力寸法は変わりません。
+
+3168 × 1280のGPU比較では、2枚の参照画像で5ビューが各1枚ずつ揃い、角のある人物も全身3面で角先から靴底まで収まりました。収まり方は参照画像、seed、出力サイズによって変わります。 [リリースノート](docs/releases/v1.4.3.md)
+
 ### v1.4.2の変更点
 
 - **ドロップダウンの選択を保持。** 保存や履歴記録の際に、確定前の選択を上書きする再描画を削除しました。Chromeで **8 MP** と **Basic · 4 views** をマウスで選び、JSONの保存・再読込後も保持されることを確認しました。
@@ -206,7 +218,7 @@ AnimaタグではなくH3用の文章です。配置・画像参照・部位プ�
 1. 更新後にComfyUIを通常再起動し、ブラウザーをCtrl+F5で再読込。
 2. [v1.3テンプレート](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.3.0)を開き、導入済みモデルを選択。接続したLoad Imageすべてに有効な画像を指定するか、使わない追加参照入力をDesignerから外します。
 3. ビュー・部位指示・参照の役割を設定。Autoは参照の外見を保つ選択です。比較時はseedを固定します。
-4. Use Layout ImageはOFFから試し、配置の補助が必要ならONへ。画面のガイドは共通で、ONだけが画像をH3へ渡します。ONではガイドの体形・図が残る場合があります。
+4. Use Layout ImageはOFFから試し、配置の補助が必要ならONへ。ONではガイドの体形や図が残る場合があります。MiniMax H3 Image版の **Standard · 5 views** をAutoサイズで使う場合は、ONにすると全身ガイドの枠と余白を調整します。
 
 配線は上の表と共通です。人物→ref_image_0、配置画像→1、追加参照3枚→2/3/4。NoneはPicture番号から除外。画像Tensorは変更せず返します。5フレームを生成し、最初の復号フレームを静止画として保存します。
 

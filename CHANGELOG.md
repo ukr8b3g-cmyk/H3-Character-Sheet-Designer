@@ -1,3 +1,7 @@
+# v1.4.3
+
+Widen the full-body guide panels and add headroom for MiniMax H3 Image Standard 5 views in Auto size with Layout Image enabled. See the [release notes](docs/releases/v1.4.3.md).
+
 # v1.4.2
 
 Fix dropdown selections being reset by a workflow save or undo snapshot. Includes both templates with the external seed wiring already fixed on main. See the [release notes](docs/releases/v1.4.2.md).
