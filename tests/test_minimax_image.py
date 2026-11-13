@@ -77,10 +77,58 @@ class MiniMaxImageTests(unittest.TestCase):
         self.assertIn('same weight-bearing limbs', off['prompt'])
         self.assertNotIn('same weight-bearing limbs', on['prompt'])
         self.assertNotIn('<Picture 2>', off['prompt'])
-        edited = compile_minimax_image_state(json.dumps({**state, 'view_prompts': {'body_left': 'Custom side view'}}),
-                                             use_layout_image=False)
-        self.assertIn('Custom side view', edited['prompt'])
-        self.assertNotIn('same weight-bearing limbs', edited['prompt'])
+
+    def test_minimax_eleven_view_stance_applies_only_to_unedited_body_views(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none'}
+        seated = 'Full-body side view seated on the ground.'
+        for guide in (False, True):
+            for overrides, expected_scope in (
+                ({'face_front': 'Custom portrait'}, 'across all three full-body views.'),
+                ({'body_left': seated}, 'for the full-body front view and full-body back view.'),
+                ({'body_front': VIEW_PROMPTS['body_front'], 'body_left': ''}, 'for the full-body back view.'),
+                ({'body_front': VIEW_PROMPTS['body_front'], 'body_left': seated, 'body_back': ''}, None),
+            ):
+                with self.subTest(guide=guide, overrides=overrides):
+                    result = compile_minimax_image_state(json.dumps({**state, 'view_prompts': overrides}),
+                                                         use_layout_image=guide)
+                    prompt = result['prompt']
+                    stance = 'Use the same stance and limb arrangement as <Picture 1>'
+                    lines = [line for line in prompt.splitlines() if line.startswith(stance)]
+                    self.assertEqual([line.partition('. ')[0] + '.' for line in lines],
+                                     [f'{stance} {expected_scope}'] if expected_scope else [])
+                    if 'body_left' in overrides:
+                        self.assertNotIn('same weight-bearing limbs', prompt)
+                    for view, text in overrides.items():
+                        self.assertIn(f'{view}: {text}', result['view_prompts'])
+                    self.assertEqual(json.loads(result['state_json'])['view_prompts'], overrides)
+
+    def test_minimax_guided_eleven_view_side_edit_assigns_each_portrait_slot(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none',
+                 'view_prompts': {'body_left': 'Full-body side view seated on the ground.',
+                                  'face_front': 'Custom front portrait.'}}
+        for guide in (False, True):
+            for side_edited in (False, True):
+                with self.subTest(guide=guide, side_edited=side_edited):
+                    overrides = dict(state['view_prompts'])
+                    if not side_edited:
+                        overrides.pop('body_left')
+                    result = compile_minimax_image_state(json.dumps({**state, 'view_prompts': overrides}),
+                                                         use_layout_image=guide)
+                    prompt = result['prompt']
+                    rows = [line for line in prompt.splitlines() if ' portrait row.' in line]
+                    borderless = 'Separate the finished views with plain white space. Omit all guide outlines and divider lines.'
+                    if not (guide and side_edited):
+                        self.assertEqual(rows, [])
+                        self.assertNotIn(borderless, prompt)
+                        continue
+                    self.assertIn(borderless, prompt)
+                    defaults = result['default_view_prompts']
+                    self.assertEqual(rows, [
+                        f"Top portrait row. Left slot: Custom front portrait. Right slot: {defaults['face_left']}",
+                        f"Middle portrait row. Left slot: {defaults['face_right']} Right slot: {defaults['face_3q_left']}",
+                        f"Bottom portrait row. Left slot: {defaults['face_3q_right']} Right slot: {defaults['face_back']}",
+                    ])
+                    self.assertEqual(len(result['view_prompts']), 11)
 
     def test_reference_v13_eleven_view_close_up_column_without_guide(self):
         state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none'}

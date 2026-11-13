@@ -181,6 +181,11 @@ domTest('No clothing preserves 13 saved views and validates 11 preview panels in
     assert.equal(JSON.parse(saved).views.length, 13);
     original.value = saved; item.onConfigure();
     assert.equal(shape.value, 'none');
+    assert.match(shape.title, /skips clothing views.*Hands and footwear use their own settings/);
+    h.locale('ja');
+    assert.match(shape.title, /衣服なし／体表を保持.*手袋・履物は別設定/);
+    assert.doesNotMatch(legacy.record.ui.root.querySelector('[data-appearance-choice="clothing_type"]').title, /衣服なし/);
+    h.locale('en');
     choose(shape, 'reference'); h.resolve(); await tick();
     assert.equal(record.controller.preview.layout.panels.length, 13);
     assert.equal(clothing.disabled, false);

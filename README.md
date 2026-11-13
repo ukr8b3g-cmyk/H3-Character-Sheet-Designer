@@ -1,9 +1,15 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.4.4**
+[日本語](#日本語) · **Package v1.4.5**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.4.5
+
+In MiniMax H3 Image, the 11-view **No clothing · natural body surface** layout assigns each portrait to a specific slot when **Use Layout Image** is on and the full-body side prompt is edited. The prompt requests white gaps between views and keeps the shared reference stance instruction scoped to unedited full-body views. The clothing menu tooltip explains how the mode treats clothing panels, hands, and footwear.
+
+On ComfyUI_W, a GPU run with the same wolf reference, seed 42, and a 4224 × 1280 canvas used **Use Layout Image** on and an edited standing side-view prompt. The finished sheet had no visible guide lines, all three full-body views showed the wolf standing on two legs, and all 11 requested views appeared exactly once. Results can vary with the reference and seed. [Issue #6](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/issues/6) · [Release notes](docs/releases/v1.4.5.md)
 
 ## What's New — v1.4.4
 
@@ -167,6 +173,12 @@ Update existing installations through your usual Git/Manager workflow, restart C
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.4.5の変更点
+
+MiniMax H3 Image版の **衣服なし／体表を保持** で、**Layout Image ON** かつ全身側面のプロンプトを編集した場合に、顔6面の位置を個別に指定し、ビュー間は白い余白で分けるよう指示します。参照と同じ姿勢を求める共通指示は、未編集の全身ビューにだけ適用します。衣装メニューのツールチップにも、このモードの衣装ビュー・手袋・履物の扱いを追記しました。
+
+通常のComfyUI_Wで、同じオオカミ参照画像・seed 42・4224 × 1280・**Layout Image ON** を使用し、側面の編集文で二足の立ち姿を指定してGPU検証しました。ガイド線は出ず、正面・側面・背面の全身3面はすべて二足の立ち姿で、手足のアップを含む11面が各1枚揃いました。結果は参照画像やseedによって変わります。 [Issue #6](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/issues/6) · [リリースノート](docs/releases/v1.4.5.md)
 
 ### v1.4.4の変更点
 

@@ -467,6 +467,11 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       hand_state: 'Follow the reference, bare hands or gloves. Applies to hand details and full-body views.',
       footwear_state: 'Follow the reference, footwear on or off. Applies to foot details and full-body views. Footwear off preserves compatible socks and tights.',
     };
+    if (v13) {
+      tips.clothing_type += ja
+        ? ' 「衣服なし／体表を保持」では参照の体表と模様を残し、衣装ビューを生成対象から外します。手袋・履物は別設定です。'
+        : ' No clothing preserves the reference body surface and markings and skips clothing views. Hands and footwear use their own settings.';
+    }
     for (const [field, item] of qualityMap) {
       item.label.textContent = labels[field]; item.select.disabled = !controller.state;
       item.select.title = tips[field];

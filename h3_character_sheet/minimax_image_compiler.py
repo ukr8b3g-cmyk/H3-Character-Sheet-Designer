@@ -156,6 +156,7 @@ def compile_minimax_image_state(state_json, **kwargs):
     for ref in refs:
         ref['core_input'] = f"images.image_{slots.index(ref['source'])}"
     views = state['views']
+    overrides = state.get('view_prompts', {})
     single = len(views) == 1
     all_views = len(views) == len(VIEW_IDS) and not result['guide_enabled']
     hand_foot_pair = set(views) == {'hands', 'feet'} and not result['guide_enabled']
@@ -189,13 +190,26 @@ def compile_minimax_image_state(state_json, **kwargs):
         lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
                      'If dedicated references for the same role conflict, prefer the later input.')
     columns = _arranged_columns(result['semantic_layout'])
+    portrait_rows = (natural and result['guide_enabled'] and 'body_left' in overrides
+                     and [len(column) for column in columns] == [3, 3, 1, 1, 1, 2]
+                     and set(views) == set((*PORTRAIT_IDS, *BODY_IDS, 'hands', 'feet')))
     if not (single or all_views or hand_foot_pair):
         placement = 'Arrange columns from left to right; within a stacked column, read top to bottom:'
         if natural and len(views) == 11:
             if [len(column) for column in columns] == [3, 3, 1, 1, 1, 2]:
                 placement = ('Place the six portraits in the two columns on the left, the three full-body views in the middle, '
                              'and the hand and foot close-ups in the column on the right. Within each column, read top to bottom:')
-            placement = 'Use the same stance and limb arrangement as <Picture 1> across all three full-body views. ' + placement
+                if portrait_rows:
+                    placement = ('The left block has three rows and two columns of portraits, one distinct angle per slot. '
+                                 'The three full-body views are in the middle, with hand and foot close-ups on the right. '
+                                 'Separate the finished views with plain white space. Omit all guide outlines and divider lines.')
+            default_body_views = [label for view, label in (('body_front', 'front'), ('body_left', 'side'), ('body_back', 'back'))
+                                  if view not in overrides]
+            if len(default_body_views) == len(BODY_IDS):
+                placement = 'Use the same stance and limb arrangement as <Picture 1> across all three full-body views. ' + placement
+            elif default_body_views:
+                targets = ' and '.join(f'full-body {label} view' for label in default_body_views)
+                placement = f'Use the same stance and limb arrangement as <Picture 1> for the {targets}. ' + placement
         lines.append(placement)
     defaults = dict(VIEW_PROMPTS)
     if state['hand_state'] == 'bare':
@@ -215,11 +229,11 @@ def compile_minimax_image_state(state_json, **kwargs):
     view_text = {}
     scopes = applicable_settings(state)
     appearance = build_appearance_policy(state, refs)
-    for column in columns:
+    for index, column in enumerate(columns):
         descriptions = []
         for panel in column:
             view = panel['id']
-            text = state.get('view_prompts', {}).get(view, defaults[view])
+            text = overrides.get(view, defaults[view])
             extras = [SETTINGS[(field, state[field])] for field, views in scopes.items()
                       if view in views and (field, state[field]) in SETTINGS]
             for ref in appearance:
@@ -230,12 +244,15 @@ def compile_minimax_image_state(state_json, **kwargs):
             text = ' '.join([text, *extras]).strip()
             if text or not single:
                 descriptions.append(text or 'One reserved view area.')
-            if all_views or hand_foot_pair:
+            if all_views or hand_foot_pair or portrait_rows:
                 view_text[view] = descriptions[-1]
             records.append(f'{view}: {text}')
         if single:
             lines.extend(descriptions)
-        elif not (all_views or hand_foot_pair):
+        elif portrait_rows and index == 1:
+            for row, left, right in zip(('Top', 'Middle', 'Bottom'), *columns[:2]):
+                lines.append(f"{row} portrait row. Left slot: {view_text[left['id']]} Right slot: {view_text[right['id']]}")
+        elif not (all_views or hand_foot_pair or (portrait_rows and index == 0)):
             lines.append(' / '.join(descriptions))
     if all_views:
         lines.extend(_all_view_layout(view_text))
@@ -243,7 +260,7 @@ def compile_minimax_image_state(state_json, **kwargs):
         lines.extend((f"Upper half: {view_text['hands']}", f"Lower half: {view_text['feet']}"))
     if single:
         lines.extend((f'Preserve the {subject} design and rendering style.', 'Plain white background.'))
-        if views[0].startswith('body_') and views[0] not in state.get('view_prompts', {}):
+        if views[0].startswith('body_') and views[0] not in overrides:
             lines.append('Keep a small margin around the complete figure.')
     style = STYLE_PROMPTS[kwargs.get('style', 'none')]
     if style:

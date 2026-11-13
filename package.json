@@ -14,5 +14,5 @@
   "devDependencies": {
     "jsdom": "30.1.1"
   },
-  "version": "1.4.4"
+  "version": "1.4.5"
 }
