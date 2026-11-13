@@ -21,15 +21,20 @@ def _contained_size(source, bounds):
 
 def derive_guide_geometry(layout, state, *, compact=False):
     width, height = layout['canvas']
-    legacy = not compact and set(state['views']).issubset(LEGACY_VIEW_IDS)
+    natural = state.get('clothing_type') == 'none'
+    legacy = not natural and not compact and set(state['views']).issubset(LEGACY_VIEW_IDS)
     guide_layout = {**layout, 'feet_y': body_baseline(layout)}
-    bodies = {} if legacy else body_artwork_placements(guide_layout)
+    bodies = {} if legacy or natural else body_artwork_placements(guide_layout)
     panels = []
     for panel in layout['panels']:
         view = panel['id']
         x, y, w, h = panel['rect']
         left, top = round(x * width), round(y * height)
         right, bottom = round((x + w) * width), round((y + h) * height)
+        if natural:
+            panels.append({'id': view, 'bounds': [left, top, right, bottom], 'blank': True,
+                           'rect': [left, top, max(1, right-left), max(1, bottom-top)]})
+            continue
         blank = view in CLOTHING_IDS and state['clothing_mode'] == 'garment'
         crop = list(bodies[view]['crop']) if view in bodies else list(ATLAS_CROPS.get(view, (0, 0, *EXTRA_SIZES.get(view, (1, 1)))))
         source = view + '.png' if view in EXTRA_SIZES else 'mannequin-atlas.png'

@@ -1,9 +1,18 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.4.3**
+[日本語](#日本語) · **Package v1.4.4**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.4.4
+
+**No clothing · natural body surface** is now available under **Clothing shape** in MiniMax H3 Image and P-H3 v1.3. Choose it for unclothed animal characters or mascots to keep the body structure, fur, colors, and markings from the reference. Hand and footwear settings still apply independently.
+
+- **All · 13 views** generates 11 views in this mode. The clothing front and back selections are kept in the workflow and restored when you switch **Clothing shape** back to **Auto**. Choose at least one non-clothing view. If a connected reference has a clothing role, disconnect it or change its role before generating.
+- With **Use Layout Image** on, the guide uses plain panel frames. With it off, the MiniMax H3 Image prompt keeps the reference stance in the full-body side view, and the P-H3 prompt reserves the right column for separate hand and foot close-ups.
+
+Both workflows produced 11 views, including a bipedal full-body side view and separate hand and foot close-ups, in a GPU test with the same wolf reference, seed 42, and 4224 × 1280 output. View count and pose can vary with the reference and seed. [Issue #6](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/issues/6) · [Release notes](docs/releases/v1.4.4.md)
 
 ## What's New — v1.4.3
 
@@ -158,6 +167,15 @@ Update existing installations through your usual Git/Manager workflow, restart C
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.4.4の変更点
+
+MiniMax H3 Image版とP-H3 v1.3版の **衣装の型** に **衣服なし／体表を保持** を追加しました。服を着ていない動物やマスコットの体の構造、毛並み、色、模様を参照画像に合わせます。手袋と履物はそれぞれの設定で指定できます。
+
+- **全13ビュー**を選ぶと、衣装の前後を除いた11面を生成します。13面の選択はワークフローに保存され、**Auto**に戻すと復元されます。衣装以外のビューを1面以上選んでください。衣装用の追加参照を接続している場合は、接続を外すか役割を変更してください。
+- **Layout Image ON**では枠だけのガイドを使います。**OFF**では、MiniMax H3 Image版の全身側面に参照と同じ立ち方を指示し、P-H3版では右端の上段に手、下段に足のアップを割り当てます。
+
+同じオオカミ参照画像・seed 42・4224 × 1280でGPU検証し、両版で全身側面が二足の姿勢を保ち、手足のアップを含む11面が揃いました。ビュー数や姿勢の追従は参照画像やseedにより変わります。 [Issue #6](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/issues/6) · [リリースノート](docs/releases/v1.4.4.md)
 
 ### v1.4.3の変更点
 

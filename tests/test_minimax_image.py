@@ -1,16 +1,97 @@
 import copy
 import json
 import unittest
+from unittest.mock import patch
 
 from h3_character_sheet.compiler import StateValidationError
+from h3_character_sheet.guide_13 import render_reference13_guide
 from h3_character_sheet.minimax_image_compiler import VIEW_PROMPTS, compile_minimax_image_state
 from h3_character_sheet.minimax_image_preview import compile_preview_request
+from h3_character_sheet.on_compiler_13 import compile_reference13_state
 from h3_character_sheet.reference_v13_compiler import compile_reference_v13_state
 from h3_character_sheet.state_13 import DEFAULT_STATE, serialize_reference13_state
 from h3_character_sheet.view_catalog_13 import PRESETS, VIEW_IDS
 
 
 class MiniMaxImageTests(unittest.TestCase):
+    def test_no_clothing_uses_eleven_views_and_preserves_saved_choices(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none',
+                 'hand_state': 'gloved', 'footwear_state': 'unshod',
+                 'view_prompts': {'clothing_front': 'Keep this clothing edit', 'face_front': 'Custom portrait'},
+                 'part_prompts': {'upper_clothing': 'Gold jacket', 'back_clothing': 'Silver jacket',
+                                  'lower_body': 'Dark leg markings'}}
+        expected = [view for view in VIEW_IDS if not view.startswith('clothing_')]
+        for compile_state in (compile_minimax_image_state, compile_reference_v13_state):
+            with self.subTest(compiler=compile_state.__name__):
+                off, on = [compile_state(json.dumps(state), use_layout_image=enabled) for enabled in (False, True)]
+                for result in (off, on):
+                    saved = json.loads(result['state_json'])
+                    self.assertEqual(saved['views'], list(VIEW_IDS))
+                    self.assertEqual(saved['view_prompts'], state['view_prompts'])
+                    self.assertEqual(saved['part_prompts'], state['part_prompts'])
+                    self.assertEqual([p['id'] for p in result['layout']['panels']], expected)
+                    self.assertIn('Custom portrait', result['prompt'])
+                    self.assertIn('Dark leg markings', result['prompt'])
+                    self.assertIn('socks or tights', result['prompt'])
+                    for text in ('Keep this clothing edit', 'Gold jacket', 'Silver jacket', 'neutral standing',
+                                 'shared garment construction', '13 selected views'):
+                        self.assertNotIn(text, result['prompt'])
+                    self.assertFalse(result['guide_geometry']['legacy'])
+                    self.assertTrue(all(panel['blank'] for panel in result['guide_geometry']['panels']))
+                self.assertEqual(off['guide_geometry'], on['guide_geometry'])
+                self.assertFalse(off['guide_enabled'])
+                self.assertTrue(on['guide_enabled'])
+                with patch('h3_character_sheet.guide_13.Image.open', side_effect=AssertionError('artwork read')):
+                    guide = render_reference13_guide(on['guide_geometry'], on['layout'])
+                self.assertEqual(guide.size, (on['width'], on['height']))
+                restored = compile_state(json.dumps({**saved, 'clothing_type': 'reference'}))
+                self.assertEqual([p['id'] for p in restored['layout']['panels']], list(VIEW_IDS))
+                self.assertIn('Keep this clothing edit', restored['prompt'])
+                self.assertIn('Gold jacket', restored['prompt'])
+
+    def test_no_clothing_validates_views_and_connected_roles(self):
+        state = {**DEFAULT_STATE, 'clothing_type': 'none',
+                 'reference_roles': {'reference_image_1': 'face', 'reference_image_2': 'clothing_back',
+                                     'reference_image_3': 'same_character'}}
+        raw = json.dumps(state)
+        for compile_state in (compile_minimax_image_state, compile_reference_v13_state):
+            self.assertEqual(len(compile_state(raw)['layout']['panels']), 5)
+            with self.assertRaisesRegex(StateValidationError, 'Extra reference 2'):
+                compile_state(raw, reference_presence={'reference_image_2': True})
+            with self.assertRaisesRegex(StateValidationError, 'Select a non-clothing view'):
+                compile_state(json.dumps({**state, 'views': ['clothing_front', 'clothing_back']}))
+            details = compile_state(json.dumps({**state, 'views': ['hands', 'feet']}))
+            self.assertNotIn('natural stance', details['prompt'])
+            self.assertIn('forepaws', details['prompt'])
+        with self.assertRaisesRegex(StateValidationError, 'P-H3 v1.3'):
+            compile_reference13_state(raw)
+
+    def test_minimax_eleven_view_guide_matches_the_reference_stance(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none',
+                 'size': {**DEFAULT_STATE['size'], 'mode': 'manual', 'manual_width': 4224, 'manual_height': 1280}}
+        on = compile_minimax_image_state(json.dumps(state), use_layout_image=True)
+        off = compile_minimax_image_state(json.dumps(state), use_layout_image=False)
+        self.assertIn('same stance and limb arrangement', on['prompt'])
+        self.assertIn('six portraits in the two columns on the left', on['prompt'])
+        self.assertIn('same stance and limb arrangement', off['prompt'])
+        self.assertIn('same weight-bearing limbs', off['prompt'])
+        self.assertNotIn('same weight-bearing limbs', on['prompt'])
+        self.assertNotIn('<Picture 2>', off['prompt'])
+        edited = compile_minimax_image_state(json.dumps({**state, 'view_prompts': {'body_left': 'Custom side view'}}),
+                                             use_layout_image=False)
+        self.assertIn('Custom side view', edited['prompt'])
+        self.assertNotIn('same weight-bearing limbs', edited['prompt'])
+
+    def test_reference_v13_eleven_view_close_up_column_without_guide(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none'}
+        off = compile_reference_v13_state(json.dumps(state), use_layout_image=False)
+        on = compile_reference_v13_state(json.dumps(state), use_layout_image=True)
+        cue = 'Reserve the far-right column for two separate close-ups'
+        self.assertIn(cue, off['prompt'])
+        self.assertNotIn(cue, on['prompt'])
+        details = compile_reference_v13_state(json.dumps({**state, 'views': ['hands', 'feet']}), use_layout_image=False)
+        self.assertNotIn(cue, details['prompt'])
+
     def test_auto_profiles_preserve_layout_and_order_at_all_presets(self):
         presets = {**PRESETS, 'seven': (*DEFAULT_STATE['views'], 'hands', 'feet')}
         for name, views in presets.items():

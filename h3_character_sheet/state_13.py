@@ -24,7 +24,8 @@ DEFAULT_STATE = {
 DEFAULT_STATE_JSON = serialize_state(DEFAULT_STATE)
 
 
-def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow_view_prompts=False):
+def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow_view_prompts=False,
+                            allow_no_clothing=False):
     _check_max_resolution(max_resolution)
     state = decode_json(raw)
     if type(state) is not dict:
@@ -52,6 +53,11 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
             if len(text.encode('utf-16-le')) // 2 > 2000:
                 raise StateValidationError('View prompt exceeds 2000 UTF-16 code units.', 'view_prompt_too_long')
     for field, values in SETTINGS.items():
+        if field == 'clothing_type' and state[field] == 'none':
+            if not allow_no_clothing:
+                raise StateValidationError('Use the MiniMax H3 Image or P-H3 v1.3 node for No clothing.',
+                                           'no_clothing_unsupported_node')
+            continue
         if type(state[field]) is not str or state[field] not in values:
             raise StateValidationError(f'Invalid {field}.', 'invalid_setting')
     views = state['views']
@@ -59,6 +65,8 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
         raise StateValidationError('views must be an array of view IDs.', 'invalid_type')
     if not views or set(views) - set(VIEW_IDS):
         raise StateValidationError('Select known Reference13 views.', 'unknown_view' if views else 'empty_views')
+    if not effective_views(state):
+        raise StateValidationError('Select a non-clothing view to use No clothing.', 'no_effective_views')
     size = state['size']
     _exact_keys(size, ('mode', 'body_height', 'manual_width', 'manual_height'), 'size')
     if type(size['mode']) is not str or size['mode'] not in ('auto', 'manual'):
@@ -100,7 +108,13 @@ def serialize_reference13_state(state):
     return serialize_state(legacy_state(state) if state['schema_version'] < 3 else state)
 
 
+def effective_views(state):
+    return [view for view in state['views'] if state['clothing_type'] != 'none' or view not in CLOTHING_IDS]
+
+
 def part_views(state, part):
+    if state['clothing_type'] == 'none' and part in ('upper_clothing', 'back_clothing'):
+        return ()
     extra = {
         'head_hair': PORTRAIT_IDS[2:], 'face': PORTRAIT_IDS[2:-1],
         'upper_clothing': (*PORTRAIT_IDS[2:], *CLOTHING_IDS),
@@ -120,7 +134,7 @@ def applicable_settings(state):
               'footwear_state': (*BODY_IDS, 'feet'),
               'clothing_type': (*BODY_IDS, *CLOTHING_IDS), 'clothing_mode': CLOTHING_IDS}
     return {field: tuple(view for view in state['views'] if view in scopes[field])
-            for field in SETTINGS if state[field] != DEFAULTS[field]
+             for field in SETTINGS if state[field] != DEFAULTS[field] and state[field] != 'none'
             and any(view in scopes[field] for view in state['views'])}
 
 

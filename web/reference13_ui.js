@@ -1,4 +1,4 @@
-import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, IMAGE_RESOLUTION_PROFILES, presetOf, StateError} from './reference13_state.js';
+import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, IMAGE_RESOLUTION_PROFILES, CLOTHING_VIEWS, effectiveViews, presetOf, StateError} from './reference13_state.js';
 import {createArtwork, createGuideArtwork} from './reference13_artwork.js';
 import {MULTI_VIEW_IDS, MULTI_PRESETS, REFERENCE_INPUTS, REFERENCE_ROLES, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
 let sequence = 0;
@@ -127,6 +127,13 @@ const multiTips = {
 };
 export function errorText(error, locale = 'en') {
   const t = translations[locale] ?? EN;
+  const code = error instanceof StateError ? error.code : error?.serverCode;
+  if (code === 'no_effective_views') return locale === 'ja' ? '衣服以外のビューを1つ以上選んでください。' : 'Select at least one non-clothing view.';
+  if (code === 'no_clothing_unsupported_node') return locale === 'ja' ? '衣服なしはMiniMax H3 Image版とP-H3 v1.3版で使えます。' : 'Use MiniMax H3 Image or P-H3 v1.3 for No clothing.';
+  if (code === 'no_clothing_reference_conflict' && locale === 'ja') {
+    const slot = /^Extra reference ([1-3]) /.exec(error.serverMessage ?? '')?.[1];
+    return `追加参照${slot ? ` ${slot}` : ''}が衣服専用です。「衣服なし」を使うには接続を外すか、参照の役割を変更してください。`;
+  }
   if (error instanceof StateError) {
     const key = error.code === 'size' ? 'sizeError' : error.code;
     return `${t[key] ?? t.network}${['duplicateKey', 'keys', 'object', 'maxSize'].includes(error.code) && error.detail ? ` (${error.detail})` : ''}`;
@@ -288,7 +295,8 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     const row = element('div', 'h3r13-choice'), label = element('label'), select = element('select', 'h3-select');
     row.dataset.choiceGroup = field; select.dataset.appearanceChoice = field;
     select.id = `${id}-${field}`; label.htmlFor = select.id;
-    for (const value of SETTINGS[field]) { const option = element('option'); option.value = value; select.append(option); }
+    const values = v13 && field === 'clothing_type' ? [...SETTINGS[field], 'none'] : SETTINGS[field];
+    for (const value of values) { const option = element('option'); option.value = value; select.append(option); }
     listen(select, 'change', () => act(() => controller.setChoice(field, select.value)));
     row.append(label, select); qualityBox.append(row); qualityMap.set(field, {label, select});
   }
@@ -409,6 +417,10 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     viewSelect.value = selectedView; viewSelect.setAttribute('aria-label', ja ? '編集するビュー' : 'View to edit');
     for (const option of viewSelect.options) option.textContent = t[option.value] ?? option.value;
     const override = state?.view_prompts?.[selectedView];
+    const natural = state?.clothing_type === 'none';
+    const editHint = ja ? '編集した文章はそのまま使用されます。衣服の指定が残っている場合は内容を確認してください。'
+      : 'Edits are used as entered. Check any clothing instructions that remain.';
+    if (natural && override !== undefined && effectiveViews(state).includes(selectedView)) viewHelp.textContent += ` ${editHint}`;
     const defaults = current ? controller.preview?.default_view_prompts?.[selectedView] : undefined;
     viewInput.disabled = !state || (override === undefined && defaults === undefined);
     viewInput.setAttribute('aria-label', viewSummary.textContent);
@@ -430,7 +442,11 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     for (const option of partSelect.options) option.textContent = `${prompts[option.value] ? '● ' : ''}${t[`${option.value}_part`]}`;
     partCount.textContent = `${Object.keys(prompts).length} ${t.partCount}`;
     promptLabel.textContent = `${t[`${selectedPart}_part`]} · ${t.partPrompt}`;
-    partHint.textContent = t.partHint; partInput.disabled = !state; partInput.placeholder = t.partPlaceholder;
+    const inactivePart = natural && ['upper_clothing', 'back_clothing'].includes(selectedPart);
+    partHint.textContent = inactivePart
+      ? (ja ? '衣服なしではこの部位の指示を適用しません。入力内容は保持されます。' : 'No clothing keeps this part prompt saved and skips it during generation.')
+      : natural && prompts[selectedPart] ? `${t.partHint} ${editHint}` : t.partHint;
+    partInput.disabled = !state; partInput.placeholder = t.partPlaceholder;
     const value = draft?.text ?? prompts[selectedPart] ?? '';
     if (partInput.value !== value) partInput.value = value;
     partInput.setAttribute('aria-invalid', String(Boolean(draft?.error)));
@@ -455,9 +471,12 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       item.label.textContent = labels[field]; item.select.disabled = !controller.state;
       item.select.title = tips[field];
       item.select.value = controller.state?.[field] ?? DEFAULTS[field];
-      for (const option of item.select.options) option.textContent = options[option.value];
+      for (const option of item.select.options) option.textContent = option.value === 'none'
+        ? (ja ? '衣服なし／体表を保持' : 'No clothing · natural body surface') : options[option.value];
     }
-    qualityHint.textContent = ja ? 'Auto：参照の状態を維持' : 'Auto follows the reference.';
+    qualityHint.textContent = controller.state?.clothing_type === 'none'
+      ? (ja ? '体表と模様を保持します。手袋・履物は別設定です。' : 'Preserve the body surface and markings. Hands and footwear use their own settings.')
+      : (ja ? 'Auto：参照の状態を維持' : 'Auto follows the reference.');
   }
   function renderFields() {
     const state = controller.state;
@@ -530,14 +549,22 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     t = translations[language] ?? EN; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
 
-    intro.textContent = t.intro; count.textContent = `${state?.views.length ?? 0} / ${viewIds.length} ${t.selected}`;
+    const natural = state?.clothing_type === 'none', ja = language === 'ja';
+    intro.textContent = t.intro; count.textContent = natural
+      ? (ja ? `選択${state.views.length}／生成${effectiveViews(state).length}` : `${state.views.length} selected · ${effectiveViews(state).length} generated`)
+      : `${state?.views.length ?? 0} / ${viewIds.length} ${t.selected}`;
     for (const [view, {card, label}] of cardMap) {
-      card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state;
-      const tip = multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
+      const excluded = natural && CLOTHING_VIEWS.includes(view);
+      card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state || excluded;
+      const tip = excluded ? (ja ? '衣服なしのため生成対象外。選択は保持されます。' : 'Excluded in No clothing. Your selection is kept.')
+        : multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
       card.title = tip; card.setAttribute('aria-label', `${t[view]}: ${tip}`); label.textContent = t[view];
     }
     presetLabel.textContent = t.preset; preset.disabled = !state; preset.value = Object.entries(presets).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';
-    for (const option of preset.options) option.textContent = multiReference && option.value === 'detail' ? t.multiDetail : t[option.value];
+    for (const option of preset.options) {
+      option.textContent = multiReference && option.value === 'detail' ? t.multiDetail : t[option.value];
+      if (option.value === 'clothing') option.disabled = natural;
+    }
     auto.textContent = t.auto; manual.textContent = state?.size.mode === 'auto' && !current ? t.updating : t.manual;
     auto.disabled = !state; manual.disabled = !state || (state.size.mode === 'auto' && !current);
     auto.setAttribute('aria-pressed', String(state?.size.mode === 'auto')); manual.setAttribute('aria-pressed', String(state?.size.mode === 'manual'));
@@ -562,7 +589,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     const problem = controller.error || localError || controller.previewError;
     errorBox.textContent = problem ? `${controller.error ? `${t.invalid} ` : ''}${errorText(problem, language)}` : ''; errorBox.hidden = !problem;
     retry.textContent = t.retry; retry.hidden = !controller.previewError || !state;
-    footer.textContent = activeTab === 'parts' ? t.partGuide : activeTab === 'style' ? t.styleHint : t.caveat;
+    footer.textContent = activeTab === 'parts' && !natural ? t.partGuide : activeTab === 'style' ? t.styleHint : t.caveat;
     const hasExtras = p?.reference_plan?.some(item => item.source.startsWith('reference_image_'));
     const referenceLabels = language === 'ja' ? {character_image: '人物', layout_image: '配置', reference_image_1: '追加参照1', reference_image_2: '追加参照2', reference_image_3: '追加参照3'} : {character_image: 'character', layout_image: 'layout', reference_image_1: 'extra reference 1', reference_image_2: 'extra reference 2', reference_image_3: 'extra reference 3'};
     const numbering = hasExtras ? p.reference_plan.map(item => `Picture ${item.picture_number}: ${referenceLabels[item.source]}`).join(' / ') : useLayoutImage() ? t.layoutReference : t.characterOnly;

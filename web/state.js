@@ -151,6 +151,7 @@ export class DesignerController {
   constructor({raw, requestPreview, transaction = fn => fn(), onChange = () => {}, onCommit = () => {}, timeoutMs = 15000, readRaw = null, writeRaw = null, adapter = null}) {
     this.adapter = adapter; this.viewIds = adapter?.viewIds ?? VIEW_IDS; this.presets = adapter?.presets ?? PRESETS;
     this.parseState = adapter?.parse ?? parseState; this.serializeState = adapter?.serialize ?? serializeState;
+    this.validatePreview = adapter?.validatePreview ?? validatePreview;
     this.readRaw = readRaw; this.writeRaw = writeRaw; this._raw = raw; this.observedRaw = raw; this.state = null; this.error = null; this.preview = null; this.previewRaw = null;
     this.pending = false; this.previewError = null; this.maxResolution = Infinity;
     this.generation = 0; this.requestNumber = 0; this.disposed = false;
@@ -243,7 +244,7 @@ export class DesignerController {
       const timeout = new Promise((_, reject) => { this.timer = setTimeout(() => { abort.abort(); reject(new StateError('timeout')); }, this.timeoutMs); });
       const result = await Promise.race([this.requestPreview(raw, abort.signal), timeout]);
       if (!current()) return;
-      this.preview = validatePreview(result, state); this.previewRaw = raw;
+      this.preview = this.validatePreview(result, state); this.previewRaw = raw;
       if (Number.isSafeInteger(result.max_resolution) && result.max_resolution >= 32) this.maxResolution = result.max_resolution;
       this.pending = false; this.previewError = null; this.emit('preview');
     } catch (error) {

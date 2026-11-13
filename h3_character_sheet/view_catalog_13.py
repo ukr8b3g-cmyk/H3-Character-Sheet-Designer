@@ -4,6 +4,21 @@ from .compiler import BODY_IDS, PRESETS as LEGACY_PRESETS, VIEW_IDS as LEGACY_VI
 PORTRAIT_IDS = ('face_front', 'face_left', 'face_right', 'face_3q_left', 'face_3q_right', 'face_back')
 CLOTHING_IDS = ('clothing_front', 'clothing_back')
 VIEW_IDS = (*PORTRAIT_IDS, *BODY_IDS, *CLOTHING_IDS, 'hands', 'feet')
+NATURAL_SURFACE = ('Preserve the character’s natural body surface, colors, markings and body structure from <Picture 1>. '
+                   'Keep the visible torso and lower body free of garments. Retain compatible accessories.')
+NATURAL_VIEW_PROMPTS = {
+    'face_front': 'Front portrait with the complete head and upper chest.',
+    'face_left': 'Profile portrait facing image-right, with the complete head and upper chest.',
+    'face_right': 'Profile portrait facing image-left, with the complete head and upper chest.',
+    'face_3q_left': 'Three-quarter portrait facing image-right, with the complete head and upper chest.',
+    'face_3q_right': 'Three-quarter portrait facing image-left, with the complete head and upper chest.',
+    'face_back': 'Portrait directly from behind, with the complete head and upper back.',
+    'body_front': 'One complete front view in the character’s natural stance, including the entire silhouette.',
+    'body_left': 'One complete profile facing image-right in the character’s natural stance, including the entire silhouette.',
+    'body_back': 'One complete view directly from behind in the character’s natural stance, including the entire silhouette.',
+    'hands': 'One close-up of the character’s hands or forepaws as shown in the reference. Keep their shape and surface markings.',
+    'feet': 'One close-up of the character’s feet or hind paws as shown in the reference. Keep their shape and surface markings.',
+}
 PRESETS = {**LEGACY_PRESETS, 'head': PORTRAIT_IDS, 'clothing': CLOTHING_IDS, 'detail': VIEW_IDS}
 VIEW_DETAILS = {
     'face_front': ('front portrait', 'One front-facing bust, complete head and hair through the upper chest. Both eyes visible; no waist, legs or feet.'),

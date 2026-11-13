@@ -17,6 +17,9 @@ export const DEFAULTS = Object.freeze(Object.fromEntries(Object.entries(SETTINGS
 export const HAND_STATES = SETTINGS.hand_state;
 export const CLOTHING_MODES = SETTINGS.clothing_mode;
 export const CLOTHING_TYPES = SETTINGS.clothing_type;
+export const CLOTHING_VIEWS = PRESETS.clothing;
+export const effectiveViews = state => state.clothing_type === 'none'
+  ? state.views.filter(view => !CLOTHING_VIEWS.includes(view)) : state.views;
 export const FOOTWEAR_STATES = SETTINGS.footwear_state;
 export const MULTI_MIRRORED_VIEWS = Object.freeze([]);
 export const DEFAULT_JSON = JSON.stringify({schema_version: 3, views: PRESETS.five, size: {mode: 'auto', body_height: 1120, manual_width: 2208, manual_height: 1280}, part_prompts: {}, ...DEFAULTS});
@@ -26,7 +29,7 @@ function keys(value, expected, path) {
   const actual = Object.keys(value);
   if (actual.length !== expected.length || actual.some(key => !expected.includes(key))) fail('keys', path);
 }
-export function normalizeReference13State(state, max = Infinity, imageNode = false) {
+export function normalizeReference13State(state, max = Infinity, imageNode = false, allowNoClothing = imageNode) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
   if ([1, 2].includes(state.schema_version)) return normalizeState(state, max);
   if (state.schema_version !== 3) fail('version');
@@ -44,8 +47,13 @@ export function normalizeReference13State(state, max = Infinity, imageNode = fal
     keys(state.reference_roles, REFERENCE_INPUTS, 'reference_roles');
     if (Object.values(state.reference_roles).some(role => !REFERENCE_ROLES.includes(role))) fail('setting', 'reference_roles');
   }
-  for (const [field, values] of Object.entries(SETTINGS)) if (!values.includes(state[field])) fail('setting', field);
+  for (const [field, values] of Object.entries(SETTINGS)) {
+    if (field === 'clothing_type' && state[field] === 'none') {
+      if (!allowNoClothing) fail('no_clothing_unsupported_node');
+    } else if (!values.includes(state[field])) fail('setting', field);
+  }
   if (!Array.isArray(state.views) || !state.views.length || state.views.some(view => !VIEW_IDS.includes(view))) fail('views');
+  if (!effectiveViews(state).length) fail('no_effective_views');
   keys(state.size, ['mode', 'body_height', 'manual_width', 'manual_height'], 'size');
   if (!['auto', 'manual'].includes(state.size.mode)) fail('mode');
   const size = {mode: state.size.mode};
@@ -59,7 +67,8 @@ export function normalizeReference13State(state, max = Infinity, imageNode = fal
   }
   return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]])), ...(hasResolution ? {resolution_profile: state.resolution_profile} : {})};
 }
-export const parseReference13State = (raw, max, imageNode = false) => normalizeReference13State(parseJSONStrict(raw), max, imageNode);
+export const parseReference13State = (raw, max, imageNode = false, allowNoClothing = imageNode) =>
+  normalizeReference13State(parseJSONStrict(raw), max, imageNode, allowNoClothing);
 export const serializeReference13State = (state, max) => JSON.stringify(normalizeReference13State(state, max));
 export const presetOf = state => Object.entries(PRESETS).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';
 function promote(state) { return {...structuredClone(state), schema_version: 3, part_prompts: structuredClone(state.part_prompts ?? {}), ...DEFAULTS}; }
@@ -72,7 +81,7 @@ export class Reference13Controller extends DesignerController {
     return super.commit(next);
   }
   setChoice(field, value) {
-    if (!SETTINGS[field]?.includes(value)) fail('setting', field);
+    if (!SETTINGS[field]?.includes(value) && !(field === 'clothing_type' && value === 'none')) fail('setting', field);
     this.syncFromSource();
     if (!this.state || (this.state[field] ?? DEFAULTS[field]) === value) return false;
     const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);

@@ -1,3 +1,7 @@
+# v1.4.4
+
+Add **No clothing · natural body surface** to MiniMax H3 Image and P-H3 v1.3. With Layout Image off, preserve the reference stance in the MiniMax full-body side view and reserve a column for P-H3 hand and foot close-ups in the 11-view layout. See the [release notes](docs/releases/v1.4.4.md).
+
 # v1.4.3
 
 Widen the full-body guide panels and add headroom for MiniMax H3 Image Standard 5 views in Auto size with Layout Image enabled. See the [release notes](docs/releases/v1.4.3.md).

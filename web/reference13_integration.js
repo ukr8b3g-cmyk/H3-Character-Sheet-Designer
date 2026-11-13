@@ -1,6 +1,6 @@
-import {getLocale, subscribeLocale} from './state.js';
+import {getLocale, subscribeLocale, validatePreview} from './state.js';
 import {createDesignerUI, translations} from './reference13_ui.js';
-import {Reference13Controller, parseReference13State, DEFAULTS, VIEW_IDS, PRESETS, V13_PRESETS} from './reference13_state.js';
+import {Reference13Controller, effectiveViews, parseReference13State, DEFAULTS, VIEW_IDS, PRESETS, V13_PRESETS} from './reference13_state.js';
 const instances = new WeakMap();
 const textareaRecovery = new WeakMap();
 const pendingReinstall = new WeakMap();
@@ -125,11 +125,13 @@ export function installDesigner(node, app, api) {
   let observedLayoutImage = useLayoutImage(), observedStyle = readStyle(), observedPresence = JSON.stringify(readReferencePresence());
   const Controller = Reference13Controller;
   const parseV13 = (raw, max) => {
-    const state = parseReference13State(raw, max, imageNode);
+    const state = parseReference13State(raw, max, imageNode, true);
     return {...DEFAULTS, ...state, schema_version: 3, part_prompts: state.part_prompts ?? {}, clothing_mode: 'garment'};
   };
   const controller = new Controller({
-    ...(v13 ? {adapter: {parse: parseV13, serialize: (state, max) => JSON.stringify(parseV13(JSON.stringify(state), max)), migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: V13_PRESETS}} : {}),
+    ...(v13 ? {adapter: {parse: parseV13, serialize: (state, max) => JSON.stringify(parseV13(JSON.stringify(state), max)),
+      validatePreview: (data, state) => validatePreview(data, {...state, views: effectiveViews(state)}),
+      migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: V13_PRESETS}} : {}),
     raw: original.value, readRaw: () => original.value, writeRaw: value => { original.value = value; },
     requestPreview: previewRequester(api, useLayoutImage, readStyle, readReferencePresence, v13, imageNode),
     transaction: change => graphTransaction(node, change, app?.canvas),

@@ -4,11 +4,11 @@ from math import sqrt
 
 from .compiler import StateValidationError, decode_json
 from .guide_13 import derive_guide_geometry
-from .state_13 import applicable_settings, part_views, serialize_reference13_state
+from .state_13 import applicable_settings, effective_views, part_views, serialize_reference13_state
 from .reference_v13_compiler import compile_reference_v13_state
 from .reference_compiler import STYLE_PROMPTS
 from .appearance_policy_13 import build_appearance_policy
-from .view_catalog_13 import BODY_IDS, PRESETS, VIEW_IDS
+from .view_catalog_13 import BODY_IDS, NATURAL_SURFACE, NATURAL_VIEW_PROMPTS, PORTRAIT_IDS, PRESETS, VIEW_IDS
 
 RESOLUTION_PROFILES = ('current', 'high', 'max_8mp', 'max_16mp')
 EIGHT_MP = 8_000_000
@@ -140,12 +140,14 @@ def compile_minimax_image_state(state_json, **kwargs):
         state_json = json.dumps(saved, ensure_ascii=False, separators=(',', ':'))
     # Reuse validation, sizing, guide rendering and persistence, not video prose.
     result = compile_reference_v13_state(state_json, **kwargs)
-    state = result['state']
-    if result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
+    saved = result['state']
+    state = {**saved, 'views': effective_views(saved)}
+    natural = state['clothing_type'] == 'none'
+    if not natural and result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
         result['guide_geometry'] = _standard_five_view_guide(result['semantic_layout'], state)
     if profile is not None:
-        state['resolution_profile'] = profile
-        result['state_json'] = serialize_reference13_state(state)
+        saved['resolution_profile'] = profile
+        result['state_json'] = serialize_reference13_state(saved)
         _apply_resolution(result, profile)
     result['experimental'] = result['pixel_count'] > MAX_AUTO_PIXELS
     refs = result['reference_plan']
@@ -171,30 +173,49 @@ def compile_minimax_image_state(state_json, **kwargs):
         lines = [f'Create one {subject} reference sheet from <Picture 1>.',
                  f'Preserve the same {subject} design and rendering style across all views.',
                  'White background. Each requested view appears once.']
+    if natural and any(view in (*BODY_IDS, *PORTRAIT_IDS) for view in views):
+        lines.append(NATURAL_SURFACE)
     for ref in refs:
         if ref['role'] == 'layout':
             if single:
                 lines.append(f"Use {ref['tag']} for framing.")
             else:
-                lines.append(f"{ref['tag']} supplies the arrangement and viewing directions. "
+                placement = 'frame positions and sizes' if natural else 'arrangement and viewing directions'
+                lines.append(f"{ref['tag']} supplies the {placement}. "
                              f"Render the finished {subject} from <Picture 1> at a clear, generous scale in each area.")
         elif ref['role'] == 'same_character':
             lines.append(f"{ref['tag']} supplements the same {subject}'s appearance.")
     if any(ref['source'] in slots[2:] for ref in refs):
         lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
                      'If dedicated references for the same role conflict, prefer the later input.')
+    columns = _arranged_columns(result['semantic_layout'])
     if not (single or all_views or hand_foot_pair):
-        lines.append('Arrange columns from left to right; within a stacked column, read top to bottom:')
+        placement = 'Arrange columns from left to right; within a stacked column, read top to bottom:'
+        if natural and len(views) == 11:
+            if [len(column) for column in columns] == [3, 3, 1, 1, 1, 2]:
+                placement = ('Place the six portraits in the two columns on the left, the three full-body views in the middle, '
+                             'and the hand and foot close-ups in the column on the right. Within each column, read top to bottom:')
+            placement = 'Use the same stance and limb arrangement as <Picture 1> across all three full-body views. ' + placement
+        lines.append(placement)
     defaults = dict(VIEW_PROMPTS)
     if state['hand_state'] == 'bare':
         defaults['hands'] = 'Close-up of both hands.'
     if state['footwear_state'] == 'unshod':
         defaults['feet'] = 'Close-up of both feet.'
+    if natural:
+        defaults.update(NATURAL_VIEW_PROMPTS)
+        if len(views) == 11 and not result['guide_enabled']:
+            defaults['body_left'] = ('Full body in profile facing image-right. Turn the same figure in place, '
+                                     'keeping the reference pose and the same weight-bearing limbs.')
+        if state['hand_state'] == 'reference':
+            defaults['hands'] += ' Retain reference hand coverings when present.'
+        if state['footwear_state'] == 'reference':
+            defaults['feet'] += ' Retain reference footwear when present.'
     records = []
     view_text = {}
     scopes = applicable_settings(state)
     appearance = build_appearance_policy(state, refs)
-    for column in _arranged_columns(result['semantic_layout']):
+    for column in columns:
         descriptions = []
         for panel in column:
             view = panel['id']

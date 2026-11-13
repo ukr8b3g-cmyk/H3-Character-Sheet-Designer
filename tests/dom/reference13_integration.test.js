@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-import {DEFAULT_JSON, parseReference13State} from '../../web/reference13_state.js';
+import {DEFAULT_JSON, effectiveViews, parseReference13State} from '../../web/reference13_state.js';
 import {installDesigner} from '../../web/reference13_integration.js';
 let JSDOM;
 try { ({JSDOM} = await import(process.env.H3_JSDOM_PATH ? pathToFileURL(process.env.H3_JSDOM_PATH).href : 'jsdom')); } catch {}
@@ -41,9 +41,11 @@ function setup() {
     return {item, original, record};
   }
   function resolve(index = requests.length - 1, prompt = 'current preview') {
-    const request = requests[index], state = parseReference13State(JSON.parse(request.options.body).state_json);
+    const request = requests[index], state = parseReference13State(JSON.parse(request.options.body).state_json, undefined,
+      request.path.includes('/minimax_image/'), !request.path.includes('/reference13/'));
+    const views = effectiveViews(state);
     const layout = {canvas: [2208, 1280], feet_y: null,
-      panels: state.views.map((id, i) => ({id, rect: [i / state.views.length, 0, 1 / state.views.length, 1]}))};
+      panels: views.map((id, i) => ({id, rect: [i / views.length, 0, 1 / views.length, 1]}))};
     request.resolve({ok: true, json: async () => ({width: 2208, height: 1280, max_resolution: 16384,
       layout, semantic_layout: layout, prompt})});
   }
@@ -137,7 +139,7 @@ domTest('V1.3 has object-only clothing cards, four-image roles and a dedicated p
   assert.equal(root.dataset.nodeVersion, 'v1.3.0');
   assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.3.0');
   const shape = root.querySelector('[data-appearance-choice="clothing_type"]');
-  assert.deepEqual([...shape.options].map(o => [o.value,o.textContent]), [['reference','Auto'],['pants','Pants'],['skirt_robe','Skirt / robe']]);
+  assert.deepEqual([...shape.options].map(o => [o.value,o.textContent]), [['reference','Auto'],['pants','Pants'],['skirt_robe','Skirt / robe'],['none','No clothing · natural body surface']]);
   assert(root.querySelector('.h3r13-choices .h3-preset-row'));
   root.querySelector('[data-tab="settings"]').click();
   assert.equal(root.querySelector('.h3-v13-settings').hidden, false);
@@ -148,6 +150,42 @@ domTest('V1.3 has object-only clothing cards, four-image roles and a dedicated p
   record.controller.preset('detail'); h.resolve();
   assert.equal(JSON.parse(item.serialize().widgets_values[0]).clothing_mode, 'garment');
   assert(h.requests.every(r => r.path === '/h3_character_sheet_designer/v1_3/preview'));
+});
+
+domTest('No clothing preserves 13 saved views and validates 11 preview panels in both current nodes', async t => {
+  const h = setup(); t.after(h.cleanup);
+  const legacy = h.node();
+  assert.equal(legacy.record.ui.root.querySelector('[data-appearance-choice="clothing_type"] option[value="none"]'), null);
+  for (const type of ['H3CharacterSheetDesignerReferenceV13', 'MiniMaxH3ImageCharacterSheetDesigner']) {
+    const {item, original, record} = h.node(type), root = record.ui.root;
+    const preset = root.querySelector('.h3-preset-row select');
+    const shape = root.querySelector('[data-appearance-choice="clothing_type"]');
+    const clothing = root.querySelector('[data-view="clothing_front"]');
+    choose(preset, 'clothing');
+    const clothingOnly = original.value;
+    choose(shape, 'none');
+    assert.equal(original.value, clothingOnly);
+    assert.equal(shape.value, 'reference');
+    assert(root.textContent.includes('Select at least one non-clothing view.'));
+    choose(preset, 'detail');
+    const earlier = h.requests.length - 1;
+    choose(shape, 'none');
+    const current = h.requests.length - 1;
+    h.resolve(current); await tick();
+    h.resolve(earlier, 'stale'); await tick();
+    assert.equal(record.controller.preview.layout.panels.length, 11);
+    assert(clothing.disabled);
+    assert.equal(clothing.getAttribute('aria-pressed'), 'true');
+    assert(preset.querySelector('[value="clothing"]').disabled);
+    const saved = item.serialize().widgets_values[0];
+    assert.equal(JSON.parse(saved).views.length, 13);
+    original.value = saved; item.onConfigure();
+    assert.equal(shape.value, 'none');
+    choose(shape, 'reference'); h.resolve(); await tick();
+    assert.equal(record.controller.preview.layout.panels.length, 13);
+    assert.equal(clothing.disabled, false);
+    assert.equal(clothing.getAttribute('aria-pressed'), 'true');
+  }
 });
 
 
