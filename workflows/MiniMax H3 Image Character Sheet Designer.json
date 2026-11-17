@@ -1010,8 +1010,8 @@
               "Node name for S&R": "UNETLoader",
               "models": [
                 {
-                  "name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
-                  "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+                  "name": "minimax\\minimax_h3_image_pruned_int8_convrot.safetensors",
+                  "url": "https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/diffusion_models/minimax_h3_image_pruned_int8_convrot.safetensors",
                   "directory": "diffusion_models"
                 }
               ]
@@ -1067,8 +1067,8 @@
               "Node name for S&R": "CLIPLoader",
               "models": [
                 {
-                  "name": "p-h3-image_text_encoder_int8_convrot.safetensors",
-                  "url": "https://huggingface.co/PrunaAI/p-h3-image-comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors",
+                  "name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+                  "url": "https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
                   "directory": "text_encoders"
                 }
               ]
@@ -1127,8 +1127,8 @@
               "Node name for S&R": "VAELoader",
               "models": [
                 {
-                  "name": "p-h3-image_vae_int8_convrot.safetensors",
-                  "url": "https://huggingface.co/PrunaAI/p-h3-image-comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors",
+                  "name": "minimax_h3_image_vae_fp16.safetensors",
+                  "url": "https://huggingface.co/Comfy-Org/MiniMax-H3-Image/resolve/main/vae/minimax_h3_image_vae_fp16.safetensors",
                   "directory": "vae"
                 }
               ]
