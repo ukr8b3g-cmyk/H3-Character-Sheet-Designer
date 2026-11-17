@@ -245,7 +245,7 @@ MiniMax H3 Image版で **Standard · 5 views**、Autoサイズ、**Use Layout Im
 - **新規** [v1.4.0のMiniMax H3 Image用テンプレート](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/blob/v1.4.0/workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json)。当時のノード表示は **MiniMax H3 Image Character Sheet Designer v1.4.0**。標準は **Standard · 5 views／Auto・High detail／Layout Image OFF**。Auto解像度はCurrent・High detail・8 MP・16 MP。Manualは入力した寸法を使用します。
 - 座標を短い配置文に置き換えました。単体は中央に1枚。全13面のLayout Image OFFでは、頭部6面・全身3面・衣装前後・手と履物の順に配置します。掲載画像は4832 × 1280で13面が各1枚揃った例です。参照画像、seed、解像度によって見切れや向きのずれが起きる場合があります。
 - **モデルは上の3ファイル**。CLIPは `minimax`。Load Imageで参照画像を選び、Euler / Simple、6ステップ、CFG 1で生成します。標準のSave Animated WEBPを1 FPSに設定し、静止画1枚を保存します。
-- [従来のP-H3テンプレート](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json)も同梱。ノード表示は **H3 Character Sheet Designer v1.3.0**。モデルは上のP-H3用の表を参照してください。v1.2.2は保存済みワークフローの互換用です。
+- [v1.4.0に同梱したP-H3テンプレート](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/blob/v1.4.0/workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json)の当時のノード表示は **H3 Character Sheet Designer v1.3.0**。モデルは上のP-H3用の表を参照してください。v1.2.2は保存済みワークフローの互換用です。
 
 
 ### 更新 — v1.3.1：ビュー別プロンプト編集

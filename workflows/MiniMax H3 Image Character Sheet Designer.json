@@ -529,7 +529,7 @@
       ],
       "properties": {
         "cnr_id": "h3-character-sheet-designer",
-        "ver": "1.4.0",
+        "ver": "1.5.0",
         "Node name for S&R": "MiniMaxH3ImageCharacterSheetDesigner"
       },
       "widgets_values": [
