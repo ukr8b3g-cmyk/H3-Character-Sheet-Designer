@@ -308,8 +308,8 @@
         100
       ],
       "size": [
-        500,
-        388
+        510,
+        340
       ],
       "flags": {},
       "order": 7,
@@ -378,10 +378,10 @@
           "label": null,
           "name": "seed",
           "type": "INT",
-          "link": 218,
           "widget": {
             "name": "seed"
-          }
+          },
+          "link": 218
         },
         {
           "label": "Enable Tiled VAE Decode",
@@ -418,6 +418,7 @@
         "minimax\\minimax_h3_image_pruned_int8_convrot.safetensors",
         "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
         "minimax_h3_image_vae_fp16.safetensors",
+        false,
         false
       ],
       "widgets_values_named": {
@@ -427,6 +428,7 @@
         "unet_name": "minimax\\minimax_h3_image_pruned_int8_convrot.safetensors",
         "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
         "vae_name": "minimax_h3_image_vae_fp16.safetensors",
+        "seed": false,
         "switch": false
       }
     },
@@ -575,11 +577,11 @@
       "type": "SaveAnimatedWEBP",
       "pos": [
         1300,
-        520
+        490
       ],
       "size": [
         1000,
-        710
+        740
       ],
       "flags": {},
       "order": 8,
@@ -1757,6 +1759,54 @@
             "type": "LATENT"
           },
           {
+            "id": 260,
+            "origin_id": -10,
+            "origin_slot": 11,
+            "target_id": 112,
+            "target_slot": 4,
+            "type": "INT"
+          },
+          {
+            "id": 261,
+            "origin_id": 75,
+            "origin_slot": 0,
+            "target_id": 120,
+            "target_slot": 0,
+            "type": "IMAGE"
+          },
+          {
+            "id": 262,
+            "origin_id": 119,
+            "origin_slot": 0,
+            "target_id": 120,
+            "target_slot": 1,
+            "type": "IMAGE"
+          },
+          {
+            "id": 263,
+            "origin_id": 112,
+            "origin_slot": 0,
+            "target_id": 119,
+            "target_slot": 0,
+            "type": "LATENT"
+          },
+          {
+            "id": 264,
+            "origin_id": 102,
+            "origin_slot": 0,
+            "target_id": 119,
+            "target_slot": 1,
+            "type": "VAE"
+          },
+          {
+            "id": 265,
+            "origin_id": -10,
+            "origin_slot": 12,
+            "target_id": 120,
+            "target_slot": 2,
+            "type": "BOOLEAN"
+          },
+          {
             "id": 236,
             "origin_id": 101,
             "origin_slot": 0,
@@ -1835,54 +1885,6 @@
             "target_id": 114,
             "target_slot": 13,
             "type": "INT"
-          },
-          {
-            "id": 260,
-            "origin_id": -10,
-            "origin_slot": 11,
-            "target_id": 112,
-            "target_slot": 4,
-            "type": "INT"
-          },
-          {
-            "id": 261,
-            "origin_id": 75,
-            "origin_slot": 0,
-            "target_id": 120,
-            "target_slot": 0,
-            "type": "IMAGE"
-          },
-          {
-            "id": 262,
-            "origin_id": 119,
-            "origin_slot": 0,
-            "target_id": 120,
-            "target_slot": 1,
-            "type": "IMAGE"
-          },
-          {
-            "id": 263,
-            "origin_id": 112,
-            "origin_slot": 0,
-            "target_id": 119,
-            "target_slot": 0,
-            "type": "LATENT"
-          },
-          {
-            "id": 264,
-            "origin_id": 102,
-            "origin_slot": 0,
-            "target_id": 119,
-            "target_slot": 1,
-            "type": "VAE"
-          },
-          {
-            "id": 265,
-            "origin_id": -10,
-            "origin_slot": 12,
-            "target_id": 120,
-            "target_slot": 2,
-            "type": "BOOLEAN"
           }
         ],
         "extra": {}
@@ -1893,10 +1895,10 @@
   "extra": {
     "frontendVersion": "1.58.5",
     "ds": {
-      "scale": 0.4839135714285719,
+      "scale": 0.7084978599285723,
       "offset": [
-        1017.0235165489431,
-        394.5164107932089
+        -126.11669137030569,
+        144.2828712161084
       ]
     }
   },
@@ -1907,6 +1909,6 @@
   },
   "version": 0.4,
   "seed_widgets": {
-    "52": 0
+    "109": 6
   }
 }
