@@ -8,7 +8,7 @@ Create character reference sheets with native MiniMax H3 image-reference conditi
 ## What's New — v1.5.0
 
 - **Head · 6 views** uses the same three-column, two-row arrangement in MiniMax H3 Image and P-H3, with Layout Image on or off. The preview and prompt use the same view positions and screen-facing directions.
-- With **Use Layout Image** on, the borderless guide reserves more space above the top row. The prompt uses the character reference for appearance and the guide for placement and viewing angles.
+- With **Use Layout Image** on, the borderless guide leaves space above the top row. The character reference supplies the appearance. In **No clothing · natural body surface**, six pale areas separated by white space mark placement in the preview and guide, and the per-view prompts specify the viewing angles.
 - The same [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) and [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) workflow files are included. Both current Designer nodes display **v1.5.0**.
 
 A MiniMax H3 Image GPU test at 1888 × 1792 with a fixed seed produced all six angles in the expected positions, with the upper horn tips visible. The rightmost hair touched the frame in that test. With matching inputs and dimensions, both nodes produce the same Head 6 prompt and guide. The models can generate different results.
@@ -192,7 +192,9 @@ v1.5.0 changes the Head · 6 views layout, guide, and prompt, so an existing wor
 
 ### v1.5.0の変更点
 
-MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／OFFとも3列×2段です。プレビュー、プロンプト、配置ガイドで各ビューの位置と画面上の向きを揃えました。ONでは枠線のないガイドを使い、上段に余白を取ります。人物参照は肌・髪・衣装などの見た目に、ガイド画像は位置と向きに使うよう指示します。同じ入力条件・寸法なら両版のHead 6のガイドとプロンプトは一致し、生成結果はモデルによって変わります。
+MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／OFFとも3列×2段です。プレビュー、プロンプト、配置ガイドで各ビューの位置と画面上の向きを揃えました。ONでは枠線のないガイドを使い、上段に余白を取ります。同じ入力条件・寸法なら両版のHead 6のガイドとプロンプトは一致し、生成結果はモデルによって変わります。
+
+**衣服なし／体表を保持**では、白い余白で区切った淡い6面で配置を示します。プレビューとガイドは同じ配置を使い、生成時の顔の向きは各面のプロンプトで指定します。
 
 配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。現行ノードの表示は両方とも **v1.5.0** です。
 

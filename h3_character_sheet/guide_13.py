@@ -57,6 +57,7 @@ def render_reference13_guide(geometry, layout):
             raise StateValidationError(f'Cannot read guide asset: {ATLAS_PATH}', 'guide_asset') from exc
     canvas = Image.new('RGB', tuple(geometry['canvas']), 'white')
     draw = ImageDraw.Draw(canvas)
+    panel_fill = geometry.get('panel_fill')
     for panel in geometry['panels']:
         if not panel['blank']:
             path = ATLAS_PATH.parent / panel['source']
@@ -72,6 +73,8 @@ def render_reference13_guide(geometry, layout):
             x, y, w, h = panel['rect']
             artwork = artwork.resize((w, h), Image.Resampling.LANCZOS)
             canvas.paste(artwork, (x, y), artwork)
+        elif panel_fill:
+            canvas.paste(panel_fill, tuple(panel['bounds']))
         if geometry['frame_width']:
             left, top, right, bottom = panel['bounds']
             draw.rectangle((left, top, max(left, right-1), max(top, bottom-1)), outline='black', width=geometry['frame_width'])

@@ -263,3 +263,35 @@ domTest('MiniMax shows the same borderless Head 6 preview on both sides of the l
   h.locale('ja');
   assert.equal(root.querySelector('[data-view="face_left"] .h3-card-label').textContent, '右向き横顔');
 });
+
+domTest('Head 6 shows the pale guide areas without artwork in No clothing', async t => {
+  const h = setup(); t.after(h.cleanup);
+  for (const type of ['MiniMaxH3ImageCharacterSheetDesigner', 'H3CharacterSheetDesignerReferenceV13']) {
+    const {item, record} = h.node(type), root = record.ui.root;
+    choose(root.querySelector('.h3-preset-row select'), 'head');
+    choose(root.querySelector('[data-appearance-choice="clothing_type"]'), 'none');
+    const native = item.widgets.find(widget => widget.name === 'use_layout_image');
+    for (const enabled of [true, false]) {
+      native.value = enabled; record.sync();
+      const request = h.requests.at(-1), data = JSON.parse(request.options.body);
+      assert.equal(data.use_layout_image, enabled);
+      const state = JSON.parse(data.state_json);
+      assert.equal(state.clothing_type, 'none');
+      const width = 1920, height = 1792;
+      const panels = state.views.map((id, i) => {
+        const left = 30 + i % 3 * 640, top = 60 + Math.floor(i / 3) * 896;
+        return {id, bounds: [left, top, left + 580, top + 776], blank: true};
+      });
+      const layout = {canvas: [width, height], feet_y: null, panels: panels.map(({id, bounds: [l, t, r, b]}) => (
+        {id, rect: [l / width, t / height, (r - l) / width, (b - t) / height]}))};
+      const geometry = {canvas: layout.canvas, frame_width: 0, panel_fill: '#eef0f2', legacy: false, panels};
+      request.resolve({ok: true, json: async () => ({width, height, max_resolution: 16384, layout,
+        semantic_layout: layout, guide_geometry: geometry, guide_enabled: enabled, prompt: 'preview'})});
+      await tick();
+      const sheet = root.querySelector('.h3-sheet'), boxes = [...sheet.querySelectorAll('[data-panel]')];
+      assert.equal(boxes.length, 6);
+      assert(boxes.every(box => box.style.backgroundColor === 'rgb(238, 240, 242)'));
+      assert.equal(sheet.querySelectorAll('[data-artwork]').length, 0);
+    }
+  }
+});

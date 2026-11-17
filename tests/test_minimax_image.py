@@ -66,13 +66,42 @@ class MiniMaxImageTests(unittest.TestCase):
             x, y, width, height = panel['rect']
             self.assertNotEqual(guide.crop((x, y, x + width, y + height)).getextrema(), ((255, 255),) * 3)
 
-    def test_guided_head_six_uses_natural_appearance_in_no_clothing_mode(self):
+    def test_guided_head_six_marks_positions_in_no_clothing_mode(self):
         state = {**DEFAULT_STATE, 'views': list(PRESETS['head']), 'clothing_type': 'none'}
-        result = compile_minimax_image_state(json.dumps(state), use_layout_image=True)
-        self.assertIn("Use <Picture 1> as the appearance reference for the character's "
-                      "natural body surface, hair, markings, colors, and illustration style in all six portraits.",
-                      result['prompt'])
-        self.assertNotIn('skin, hair, clothing', result['prompt'])
+        raw = json.dumps(state)
+        for compiler in (compile_minimax_image_state, compile_reference_v13_state):
+            with self.subTest(compiler=compiler.__name__):
+                on = compiler(raw, use_layout_image=True)
+                off = compiler(raw, use_layout_image=False)
+                self.assertIn("Use <Picture 1> as the appearance reference for the character's "
+                              "natural body surface, hair, markings, colors, and illustration style in all six portraits.",
+                              on['prompt'])
+                self.assertIn('Use the six pale areas in <Picture 2> to place the portraits in two rows and three columns.',
+                              on['prompt'])
+                self.assertIn('In the upper-center panel, show a strict side profile with the face pointing toward the left edge',
+                              on['prompt'])
+                self.assertIn('In the lower-left panel, show a strict side profile with the face pointing toward the right edge',
+                              on['prompt'])
+                self.assertNotIn('<Picture 2>', off['prompt'])
+                self.assertEqual(on['guide_geometry'], off['guide_geometry'])
+                geometry = on['guide_geometry']
+                self.assertEqual(geometry['frame_width'], 0)
+                guide = render_reference13_guide(geometry, on['semantic_layout'])
+                channels = guide.getextrema()
+                self.assertEqual(channels[0], channels[1])
+                self.assertEqual(channels[1], channels[2])
+                shade, white = channels[0]
+                self.assertGreater(shade, 0)
+                self.assertLess(shade, white)
+                self.assertEqual(white, 255)
+                self.assertEqual(len(geometry['panels']), 6)
+                for panel in geometry['panels']:
+                    self.assertTrue(panel['blank'])
+                    self.assertEqual(guide.crop(tuple(panel['bounds'])).getextrema(), ((shade, shade),) * 3)
+                for x in (guide.width // 3, guide.width * 2 // 3):
+                    self.assertEqual(guide.crop((x, 0, x + 1, guide.height)).getextrema(), ((255, 255),) * 3)
+                y = guide.height // 2
+                self.assertEqual(guide.crop((0, y, guide.width, y + 1)).getextrema(), ((255, 255),) * 3)
 
     def test_guided_head_six_keeps_user_view_wording_at_its_new_position(self):
         custom = {'face_back': 'Show a braided knot.', 'face_left': ''}

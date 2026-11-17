@@ -540,6 +540,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
           const [left, top, right, bottom] = panel.bounds;
           const box = element('div', 'h3-panel'); box.dataset.panel = panel.id;
           Object.assign(box.style, {left: `${left/p.width*100}%`, top: `${top/p.height*100}%`, width: `${(right-left)/p.width*100}%`, height: `${(bottom-top)/p.height*100}%`});
+          if (panel.blank && p.guide_geometry.panel_fill) box.style.backgroundColor = p.guide_geometry.panel_fill;
           canvas.append(box);
         }
       } else if (valid) {

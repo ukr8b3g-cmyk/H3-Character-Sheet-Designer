@@ -26,7 +26,9 @@ def _head_six_guide(layout, state, *, use_layout_image):
         panel['rect'] = rects[panel['id']]
     geometry = derive_guide_geometry(layout, state, compact=True)
     geometry['frame_width'] = 0
-    if use_layout_image:
+    if state['clothing_type'] == 'none':
+        geometry['panel_fill'] = '#f2f2f2'
+    elif use_layout_image:
         upper_views = {view for view, _, _ in HEAD_SIX_PANELS[:3]}
         for panel in geometry['panels']:
             if panel['id'] in upper_views and not panel['blank']:
@@ -54,9 +56,13 @@ def apply_head_six(result, state, defaults, *, style):
         if ref['role'] == 'layout':
             details = ('natural body surface, hair, markings, colors, and illustration style' if natural
                        else 'skin, hair, clothing, colors, and illustration style')
+            placement = (
+                f"Use the six pale areas in {ref['tag']} to place the portraits in two rows and three columns."
+                if natural else
+                f"{ref['tag']} supplies the positions and viewing angles in two rows and three columns."
+            )
             lines.append(f"Use <Picture 1> as the appearance reference for the character's {details} "
-                         f"in all six portraits. {ref['tag']} supplies the positions and viewing angles in "
-                         f"two rows and three columns. {HEAD_SIX_FRAMING} "
+                         f"in all six portraits. {placement} {HEAD_SIX_FRAMING} "
                          "A narrow band of plain white space runs across the top of the sheet. "
                          "The entire outline of each upper-row head, including any horn tips, ears, "
                          "or headwear, fits below this space.")
