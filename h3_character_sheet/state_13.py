@@ -55,7 +55,7 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
     for field, values in SETTINGS.items():
         if field == 'clothing_type' and state[field] == 'none':
             if not allow_no_clothing:
-                raise StateValidationError('Use the MiniMax H3 Image or P-H3 v1.3 node for No clothing.',
+                raise StateValidationError('Use the MiniMax H3 Image or current P-H3 node for No clothing.',
                                            'no_clothing_unsupported_node')
             continue
         if type(state[field]) is not str or state[field] not in values:

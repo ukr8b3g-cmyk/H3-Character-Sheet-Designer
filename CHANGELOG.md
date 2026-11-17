@@ -1,6 +1,6 @@
 # v1.5.0
 
-Arrange MiniMax H3 Image Head · 6 views in three columns and two rows. Align the preview, guide, and prompt, use screen-facing direction labels, and add top-row headroom to the borderless layout guide. The MiniMax node displays v1.5.0. Both bundled workflow files retain their existing names and wiring. See the [older-version installation steps](README.md#install-an-older-version) for the original layout.
+Arrange Head · 6 views in three columns and two rows for MiniMax H3 Image and P-H3. Both use the same guide and Head 6 prompt at matching dimensions, screen-facing direction labels, and additional top-row headroom in Layout Image mode. Both current nodes display v1.5.0. Both bundled workflows retain their existing names and wiring. See the [older-version installation steps](README.md#install-an-older-version) for the original layout.
 
 # v1.4.5
 

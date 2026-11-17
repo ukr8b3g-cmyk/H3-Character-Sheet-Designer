@@ -131,13 +131,16 @@ domTest('two Reference13 nodes keep independent drafts, role choices and native 
   assert.equal(b.item.widgets.find(w => w.name === 'style').value, 'none');
 });
 
-domTest('V1.3 has object-only clothing cards, four-image roles and a dedicated preview route', t => {
+domTest('P-H3 v1.5.0 has object-only clothing cards, screen directions and a dedicated preview route', t => {
   const h = setup(); t.after(h.cleanup);
   const {item, record} = h.node('H3CharacterSheetDesignerReferenceV13');
   const root = record.ui.root;
   assert.equal(root.querySelectorAll('[data-clothing-mode]').length, 0);
-  assert.equal(root.dataset.nodeVersion, 'v1.3.0');
-  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.3.0');
+  assert.equal(root.dataset.nodeVersion, 'v1.5.0');
+  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.5.0');
+  const profile = root.querySelector('[data-view="face_right"]');
+  assert.equal(profile.querySelector('.h3-card-label').textContent, 'Left-facing profile');
+  assert.equal(profile.querySelector('[data-artwork]').style.transform, '');
   const shape = root.querySelector('[data-appearance-choice="clothing_type"]');
   assert.deepEqual([...shape.options].map(o => [o.value,o.textContent]), [['reference','Auto'],['pants','Pants'],['skirt_robe','Skirt / robe'],['none','No clothing · natural body surface']]);
   assert(root.querySelector('.h3r13-choices .h3-preset-row'));

@@ -85,7 +85,7 @@ class NodeTests(unittest.TestCase):
             spec.loader.exec_module(module)
         self.assertEqual(list(module.NODE_CLASS_MAPPINGS), ["H3CharacterSheetDesignerReference13", "H3CharacterSheetDesignerReferenceV13", "MiniMaxH3ImageCharacterSheetDesigner"])
         self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesignerReference13"], "H3 Character Sheet Designer v1.2.2")
-        self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesignerReferenceV13"], "H3 Character Sheet Designer v1.3.0")
+        self.assertEqual(module.NODE_DISPLAY_NAME_MAPPINGS["H3CharacterSheetDesignerReferenceV13"], "H3 Character Sheet Designer v1.5.0")
         self.assertEqual(module.WEB_DIRECTORY, "./web")
 
     def test_preview_registration_reuses_core_router_and_is_idempotent(self):

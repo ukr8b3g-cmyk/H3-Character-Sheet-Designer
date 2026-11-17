@@ -132,7 +132,7 @@ class MiniMaxImageTests(unittest.TestCase):
             details = compile_state(json.dumps({**state, 'views': ['hands', 'feet']}))
             self.assertNotIn('natural stance', details['prompt'])
             self.assertIn('forepaws', details['prompt'])
-        with self.assertRaisesRegex(StateValidationError, 'P-H3 v1.3'):
+        with self.assertRaisesRegex(StateValidationError, 'P-H3'):
             compile_reference13_state(raw)
 
     def test_minimax_eleven_view_guide_matches_the_reference_stance(self):

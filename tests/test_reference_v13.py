@@ -1,6 +1,7 @@
 import copy, json, unittest
 from h3_character_sheet.state_13 import DEFAULT_STATE
-from h3_character_sheet.view_catalog_13 import VIEW_IDS
+from h3_character_sheet.view_catalog_13 import PRESETS, VIEW_IDS
+from h3_character_sheet.minimax_image_compiler import compile_minimax_image_state
 from h3_character_sheet.reference_v13_compiler import compile_reference_v13_state
 from h3_character_sheet.on_compiler_13 import compile_reference13_state
 from h3_character_sheet.guide_13 import render_reference13_guide
@@ -33,8 +34,7 @@ class V13Tests(unittest.TestCase):
 
     def test_successful_non_clothing_prompts_unchanged(self):
         groups=[['face_front','face_left','body_front','body_left','body_back'],
-                ['body_front'],['body_front','body_left','body_back'],
-                ['face_front','face_left','face_right','face_3q_left','face_3q_right','face_back']]
+                ['body_front'],['body_front','body_left','body_back']]
         for views in groups:
             for guide in [False,True]:
                 with self.subTest(views=views,guide=guide):
@@ -50,6 +50,31 @@ class V13Tests(unittest.TestCase):
                     self.assertEqual(content(old['prompt']),content(new['prompt']))
                     self.assertEqual(old['layout']['canvas'][1],new['layout']['canvas'][1])
                     self.assertEqual(old['reference_plan'],new['reference_plan'])
+
+    def test_head_six_matches_minimax_layout_and_prompt_at_the_same_size(self):
+        state = {
+            **DEFAULT_STATE,
+            'views': list(PRESETS['head']),
+            'size': {**DEFAULT_STATE['size'], 'mode': 'manual', 'manual_width': 1888, 'manual_height': 1792},
+            'view_prompts': {'face_left': '', 'face_back': 'Show a braid.'},
+            'part_prompts': {'head_hair': 'Silver hair.'},
+            'reference_roles': {'reference_image_1': 'same_character',
+                                'reference_image_2': 'face',
+                                'reference_image_3': 'same_character'},
+        }
+        for guided in (False, True):
+            with self.subTest(guided=guided):
+                kwargs = {'use_layout_image': guided, 'reference_presence': {'reference_image_2': True}}
+                ph3 = compile_reference_v13_state(json.dumps(state), **kwargs)
+                image = compile_minimax_image_state(json.dumps(state), **kwargs)
+                for key in ('semantic_layout', 'guide_geometry', 'prompt', 'view_prompts', 'state_json'):
+                    self.assertEqual(ph3[key], image[key])
+                self.assertEqual(ph3['guide_geometry']['frame_width'], 0)
+                lower_left = next(line for line in ph3['prompt'].splitlines() if line.startswith('The lower-left panel.'))
+                self.assertIn('Silver hair.', lower_left)
+                self.assertIn('The lower-right panel. Show a braid.', ph3['prompt'])
+                self.assertEqual(ph3['reference_plan'][-1]['core_input'], 'ref_images.ref_image_3')
+                self.assertEqual(image['reference_plan'][-1]['core_input'], 'images.image_3')
 
     def test_four_reference_passthrough_and_output_contract(self):
         import torch
@@ -110,7 +135,7 @@ class V13Tests(unittest.TestCase):
         with patch.dict(sys.modules,{'h3_registration_check':module,'server':None}):
             spec.loader.exec_module(module)
         self.assertEqual(set(module.NODE_CLASS_MAPPINGS),{'H3CharacterSheetDesignerReference13','H3CharacterSheetDesignerReferenceV13','MiniMaxH3ImageCharacterSheetDesigner'})
-        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.3.0','MiniMax H3 Image Character Sheet Designer v1.5.0'})
+        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.5.0','MiniMax H3 Image Character Sheet Designer v1.5.0'})
         self.assertTrue(module.NODE_CLASS_MAPPINGS['H3CharacterSheetDesignerReference13'].DEPRECATED)
 
     def test_outfit_only_has_shared_object_scope_for_front_and_back(self):

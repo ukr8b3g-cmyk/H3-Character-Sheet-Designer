@@ -11,6 +11,10 @@ ROLE_PARTS = {
     'hands': ('hands',),
     'footwear': ('footwear',),
 }
+ROLE_NAMES = {'face': 'facial appearance', 'head': 'head appearance',
+              'clothing': 'outfit', 'clothing_front': 'front of the outfit',
+              'clothing_back': 'back of the outfit', 'hands': 'hands and gloves',
+              'footwear': 'footwear'}
 REAR_VIEWS = frozenset(('face_back', 'body_back', 'clothing_back'))
 
 

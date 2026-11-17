@@ -113,7 +113,7 @@ Object.assign(JA, {
   numberingProvisional: '接続に基づくPicture予定番号です。実際の画像は実行時に確定します。',
 });
 export const translations = {en: EN, ja: JA};
-const imageTranslations = {
+const screenDirectionTranslations = {
   en: {...EN,
     face_left: 'Right-facing profile', face_left_tip: 'Strict profile facing screen right, head through chest',
     face_right: 'Left-facing profile', face_right_tip: 'Strict profile facing screen left, head through chest',
@@ -143,7 +143,7 @@ export function errorText(error, locale = 'en') {
   const t = translations[locale] ?? EN;
   const code = error instanceof StateError ? error.code : error?.serverCode;
   if (code === 'no_effective_views') return locale === 'ja' ? '衣服以外のビューを1つ以上選んでください。' : 'Select at least one non-clothing view.';
-  if (code === 'no_clothing_unsupported_node') return locale === 'ja' ? '衣服なしはMiniMax H3 Image版とP-H3 v1.3版で使えます。' : 'Use MiniMax H3 Image or P-H3 v1.3 for No clothing.';
+  if (code === 'no_clothing_unsupported_node') return locale === 'ja' ? '衣服なしはMiniMax H3 Image版と現行のP-H3版で使えます。' : 'Use MiniMax H3 Image or the current P-H3 node for No clothing.';
   if (code === 'no_clothing_reference_conflict' && locale === 'ja') {
     const slot = /^Extra reference ([1-3]) /.exec(error.serverMessage ?? '')?.[1];
     return `追加参照${slot ? ` ${slot}` : ''}が衣服専用です。「衣服なし」を使うには接続を外すか、参照の役割を変更してください。`;
@@ -168,14 +168,14 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   const id = `h3-reference13-${++sequence}`;
   const root = element('section', 'h3-designer h3-reference13'); root.dataset.instance = id; root.classList.toggle('h3-reference', reference); root.setAttribute('aria-label', reference ? 'H3 Character Sheet Designer Reference' : 'H3 Character Sheet Designer');
   root.classList.toggle('h3-multi-reference', multiReference);
-  const nodeVersion = versionLabel ?? (v13 ? 'v1.3.0' : 'v1.2.2');
+  const nodeVersion = versionLabel ?? (v13 ? 'v1.5.0' : 'v1.2.2');
   root.dataset.nodeVersion = nodeVersion;
   root.setAttribute('aria-label', `H3 Character Sheet Designer ${nodeVersion}`);
   root.classList.toggle('h3-v13', v13);
   const viewIds = multiReference ? MULTI_VIEW_IDS : VIEW_IDS;
   const presets = v13 ? V13_PRESETS : multiReference ? MULTI_PRESETS : PRESETS;
   const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
-  const uiTranslations = imageNode ? imageTranslations : translations;
+  const uiTranslations = v13 ? screenDirectionTranslations : translations;
   let language = locale, t = uiTranslations[locale] ?? uiTranslations.en, disposed = false;
   const partDrafts = new Map(); let selectedPart = PART_IDS[0], activeTab = 'layout';
   const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null; let activeOutput = 0;
@@ -186,7 +186,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   if (multiReference) cards.append(headRow, bodyRow);
   for (const view of viewIds) {
     const card = button('h3-card'); card.dataset.view = view;
-    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: !imageNode && multiReference && MULTI_MIRRORED_VIEWS.includes(view), garment: v13}));
+    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: !v13 && multiReference && MULTI_MIRRORED_VIEWS.includes(view), garment: v13}));
     const check = element('span', 'h3-check', '✓'); check.setAttribute('aria-hidden', 'true');
     const label = element('span', 'h3-card-label'); card.append(figure, check, label);
     listen(card, 'click', () => act(() => controller.toggle(view)));
@@ -577,7 +577,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       const excluded = natural && CLOTHING_VIEWS.includes(view);
       card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state || excluded;
       const tip = excluded ? (ja ? '衣服なしのため生成対象外。選択は保持されます。' : 'Excluded in No clothing. Your selection is kept.')
-        : multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : !imageNode && multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
+        : multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : !v13 && multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
       card.title = tip; card.setAttribute('aria-label', `${t[view]}: ${tip}`); label.textContent = t[view];
     }
     presetLabel.textContent = t.preset; preset.disabled = !state; preset.value = Object.entries(presets).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';

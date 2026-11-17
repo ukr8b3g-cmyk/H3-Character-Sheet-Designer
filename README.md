@@ -7,11 +7,11 @@ Create character reference sheets with native MiniMax H3 image-reference conditi
 
 ## What's New — v1.5.0
 
-- **MiniMax H3 Image Head · 6 views** uses a shared three-column, two-row arrangement with Layout Image on or off. The preview and prompt use the same view positions and screen-facing directions.
+- **Head · 6 views** uses the same three-column, two-row arrangement in MiniMax H3 Image and P-H3, with Layout Image on or off. The preview and prompt use the same view positions and screen-facing directions.
 - With **Use Layout Image** on, the borderless guide reserves more space above the top row. The prompt uses the character reference for appearance and the guide for placement and viewing angles.
-- The same [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) and [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) workflow files are included. The MiniMax H3 Image Designer now displays **v1.5.0**.
+- The same [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) and [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) workflow files are included. Both current Designer nodes display **v1.5.0**.
 
-A fixed-seed GPU test at 1888 × 1792 produced all six angles in the expected positions, with the upper horn tips visible. The rightmost hair touched the frame in that test. Framing can vary by reference and seed.
+A MiniMax H3 Image GPU test at 1888 × 1792 with a fixed seed produced all six angles in the expected positions, with the upper horn tips visible. The rightmost hair touched the frame in that test. With matching inputs and dimensions, both nodes produce the same Head 6 prompt and guide. The models can generate different results.
 
 ## What's New — v1.4.5
 
@@ -156,7 +156,7 @@ In Part prompts assign extra references to Same character, Face, Head/face/hair,
 
 | Node ID / display version | Purpose |
 | --- | --- |
-| `H3CharacterSheetDesignerReferenceV13` / **v1.3.0** | Current workflow and common guide |
+| `H3CharacterSheetDesignerReferenceV13` / **v1.5.0** | Current P-H3 workflow |
 | `H3CharacterSheetDesignerReference13` / **v1.2.2** | Previous behavior for existing Reference13 workflows / comparison |
 
 These are the previous node versions. Earlier Designer, Reference, Multi Reference and Reference V1.1 IDs are not registered in v1.3. Their historical source/workflow files and [old releases](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2) remain available; use an earlier release if those IDs are required. Saved workflows and user node titles are not automatically rewritten. V1.2.2 preserves its compiler/state behavior; its shared UI also has the Worn switch removed.
@@ -192,9 +192,9 @@ v1.5.0 changes the Head · 6 views layout, guide, and prompt, so an existing wor
 
 ### v1.5.0の変更点
 
-MiniMax H3 Image版の **Head · 6 views** は、Layout ImageのON／OFFとも3列×2段です。プレビュー、プロンプト、配置ガイドで各ビューの位置と画面上の向きを揃えました。ONでは枠線のないガイドを使い、上段に余白を取ります。人物参照は肌・髪・衣装などの見た目に、ガイド画像は位置と向きに使うよう指示します。
+MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／OFFとも3列×2段です。プレビュー、プロンプト、配置ガイドで各ビューの位置と画面上の向きを揃えました。ONでは枠線のないガイドを使い、上段に余白を取ります。人物参照は肌・髪・衣装などの見た目に、ガイド画像は位置と向きに使うよう指示します。同じ入力条件・寸法なら両版のHead 6のガイドとプロンプトは一致し、生成結果はモデルによって変わります。
 
-配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。MiniMax H3 Image Designerの表示は **v1.5.0** です。
+配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。現行ノードの表示は両方とも **v1.5.0** です。
 
 ### 旧バージョンの入手とインストール
 

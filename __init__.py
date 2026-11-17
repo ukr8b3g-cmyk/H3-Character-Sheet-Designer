@@ -14,7 +14,7 @@ NODE_CLASS_MAPPINGS = {
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "H3CharacterSheetDesignerReference13": "H3 Character Sheet Designer v1.2.2",
-    "H3CharacterSheetDesignerReferenceV13": "H3 Character Sheet Designer v1.3.0",
+    "H3CharacterSheetDesignerReferenceV13": "H3 Character Sheet Designer v1.5.0",
     "MiniMaxH3ImageCharacterSheetDesigner": "MiniMax H3 Image Character Sheet Designer v1.5.0",
 }
 WEB_DIRECTORY = "./web"
