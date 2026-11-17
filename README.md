@@ -171,12 +171,24 @@ These are the previous node versions. Earlier Designer, Reference, Multi Referen
 
 ## Installation and updates
 
+[Download the v1.5.0 package](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip). It includes the Designer and both workflow JSONs.
+
+### New installation
+
+1. Stop ComfyUI. Extract the ZIP into a folder named `H3-Character-Sheet-Designer` directly under `ComfyUI/custom_nodes`. The `__init__.py` file should be directly inside the Designer folder.
+2. Start ComfyUI and reload the browser. Open either JSON from the package's `workflows` folder. Install the model files listed in that workflow's Model Links note and select them in the model loaders. The MiniMax H3 Image workflow requires ComfyUI 0.45.0 or later.
+
+For a Git installation, run these commands from the directory that contains `ComfyUI`:
+
 ```sh
 cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-Update existing installations through your usual Git/Manager workflow, restart ComfyUI, and reload the browser. Model weights are separate downloads. Check the [Comfy Registry listing](https://registry.comfy.org/nodes/h3-character-sheet-designer) for the version available through Manager.
+### Update to v1.5.0
+
+1. Save your open workflows and stop ComfyUI. Move the existing Designer folder outside `ComfyUI/custom_nodes` as a backup. Extract the v1.5.0 package to the original location so ComfyUI loads one copy of the Designer. For an existing Git clone on `main`, use `git pull --ff-only` in that clone.
+2. Restart the ComfyUI installation you updated and reload the browser. Open the matching v1.5.0 workflow from `workflows`. Check that the Designer node title ends in **v1.5.0** and that **Head · 6 views** shows three columns and two rows.
 
 ### Install an older version
 
@@ -197,6 +209,16 @@ MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／O
 **衣服なし／体表を保持**では、白い余白で区切った淡い6面で配置を示します。プレビューとガイドは同じ配置を使い、生成時の顔の向きは各面のプロンプトで指定します。
 
 配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。現行ノードの表示は両方とも **v1.5.0** です。
+
+### 新規インストール
+
+1. ComfyUIを停止し、[v1.5.0の本体ZIP](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip)を展開します。`ComfyUI/custom_nodes/H3-Character-Sheet-Designer/__init__.py` となるように配置してください。
+2. ComfyUIを起動してブラウザを再読み込みし、同梱の `workflows` から使うJSONを開きます。ワークフロー内のModel Linksにあるモデルを導入し、各ローダーで選択します。MiniMax H3 Image版にはComfyUI 0.45.0以上が必要です。
+
+### v1.5.0へ更新
+
+1. 開いているワークフローを保存し、ComfyUIを停止します。既存のDesignerフォルダーを `custom_nodes` の外へバックアップし、同じ場所にv1.5.0の本体を展開します。Gitで導入している場合は、そのクローンの `main` で `git pull --ff-only` を実行できます。
+2. 更新したComfyUIを起動し直し、ブラウザを再読み込みします。同梱JSONを開き、両版のノード名が **v1.5.0** と表示され、**Head · 6 views** が3列×2段になることを確認します。
 
 ### 旧バージョンの入手とインストール
 
