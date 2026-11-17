@@ -113,6 +113,20 @@ Object.assign(JA, {
   numberingProvisional: '接続に基づくPicture予定番号です。実際の画像は実行時に確定します。',
 });
 export const translations = {en: EN, ja: JA};
+const imageTranslations = {
+  en: {...EN,
+    face_left: 'Right-facing profile', face_left_tip: 'Strict profile facing screen right, head through chest',
+    face_right: 'Left-facing profile', face_right_tip: 'Strict profile facing screen left, head through chest',
+    face_3q_left: 'Right-facing three-quarter', face_3q_left_tip: 'Three-quarter portrait facing screen right',
+    face_3q_right: 'Left-facing three-quarter', face_3q_right_tip: 'Three-quarter portrait facing screen left',
+    body_left: 'Right-facing side', body_left_tip: 'Full-body profile facing screen right, head to soles'},
+  ja: {...JA,
+    face_left: '右向き横顔', face_left_tip: '画面右を向く真横の顔。頭から胸まで',
+    face_right: '左向き横顔', face_right_tip: '画面左を向く真横の顔。頭から胸まで',
+    face_3q_left: '右向き斜め', face_3q_left_tip: '画面右を向く斜めの顔',
+    face_3q_right: '左向き斜め', face_3q_right_tip: '画面左を向く斜めの顔',
+    body_left: '右向き全身側面', body_left_tip: '画面右を向く全身側面。頭頂から靴底まで'},
+};
 const multiTips = {
   en: {face_left: 'H3 anatomical-left strict profile; nose toward the RIGHT image edge',
     face_right: 'H3 anatomical-right strict profile; nose toward the LEFT image edge',
@@ -161,7 +175,8 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   const viewIds = multiReference ? MULTI_VIEW_IDS : VIEW_IDS;
   const presets = v13 ? V13_PRESETS : multiReference ? MULTI_PRESETS : PRESETS;
   const abort = new AbortController(); const listen = (el, type, handler) => el.addEventListener(type, handler, {signal: abort.signal});
-  let language = locale, t = translations[locale] ?? EN, disposed = false;
+  const uiTranslations = imageNode ? imageTranslations : translations;
+  let language = locale, t = uiTranslations[locale] ?? uiTranslations.en, disposed = false;
   const partDrafts = new Map(); let selectedPart = PART_IDS[0], activeTab = 'layout';
   const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null; let activeOutput = 0;
   const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
@@ -171,7 +186,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   if (multiReference) cards.append(headRow, bodyRow);
   for (const view of viewIds) {
     const card = button('h3-card'); card.dataset.view = view;
-    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: multiReference && MULTI_MIRRORED_VIEWS.includes(view), garment: v13}));
+    const figure = element('span', 'h3-card-figure'); figure.append(createArtwork(view, `${id}-card-${view}`, {mirror: !imageNode && multiReference && MULTI_MIRRORED_VIEWS.includes(view), garment: v13}));
     const check = element('span', 'h3-check', '✓'); check.setAttribute('aria-hidden', 'true');
     const label = element('span', 'h3-card-label'); card.append(figure, check, label);
     listen(card, 'click', () => act(() => controller.toggle(view)));
@@ -551,7 +566,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   function render(reason) {
     if (disposed) return;
     if (reason === 'restore') { viewDirty = false; viewComposing = false; activeOutput = 0; drafts.clear(); partDrafts.clear(); customHeight = false; localError = null; }
-    t = translations[language] ?? EN; root.lang = language;
+    t = uiTranslations[language] ?? uiTranslations.en; root.lang = language;
     const state = controller.state, current = controller.isCurrentPreview;
 
     const natural = state?.clothing_type === 'none', ja = language === 'ja';
@@ -562,7 +577,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       const excluded = natural && CLOTHING_VIEWS.includes(view);
       card.setAttribute('aria-pressed', String(Boolean(state?.views.includes(view)))); card.disabled = !state || excluded;
       const tip = excluded ? (ja ? '衣服なしのため生成対象外。選択は保持されます。' : 'Excluded in No clothing. Your selection is kept.')
-        : multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
+        : multiReference && view === 'hands' ? t.multiHandsTip : multiReference && (v13 || state?.clothing_mode === 'garment') && view.startsWith('clothing_') ? t.garmentTip : !imageNode && multiReference && multiTips[language]?.[view] || t[`${view}_tip`];
       card.title = tip; card.setAttribute('aria-label', `${t[view]}: ${tip}`); label.textContent = t[view];
     }
     presetLabel.textContent = t.preset; preset.disabled = !state; preset.value = Object.entries(presets).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';

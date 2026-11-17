@@ -14,6 +14,75 @@ from h3_character_sheet.view_catalog_13 import PRESETS, VIEW_IDS
 
 
 class MiniMaxImageTests(unittest.TestCase):
+    def test_head_six_uses_the_same_three_columns_and_white_gaps_with_or_without_guide(self):
+        state = {**DEFAULT_STATE, 'views': list(PRESETS['head']), 'resolution_profile': 'high'}
+        raw = json.dumps(state)
+        on = compile_minimax_image_state(raw, use_layout_image=True)
+        off = compile_minimax_image_state(raw, use_layout_image=False)
+        self.assertEqual(on['state']['views'], list(PRESETS['head']))
+        self.assertEqual(on['state_json'], off['state_json'])
+        self.assertEqual((on['width'], on['height']), (off['width'], off['height']))
+        self.assertEqual(on['semantic_layout'], off['semantic_layout'])
+        self.assertTrue(on['guide_enabled'])
+        self.assertFalse(off['guide_enabled'])
+        self.assertIn("Use <Picture 1> as the appearance reference for the character's "
+                      "skin, hair, clothing, colors, and illustration style in all six portraits.", on['prompt'])
+        self.assertIn('<Picture 2> supplies the positions and viewing angles in two rows and three columns.',
+                      on['prompt'])
+        self.assertIn('The entire outline of each upper-row head', on['prompt'])
+        self.assertNotIn('upper-row head', off['prompt'])
+        self.assertNotIn('as the appearance reference', off['prompt'])
+        self.assertNotIn('<Picture 2>', off['prompt'])
+
+        def ordered(layout):
+            return [p['id'] for p in sorted(layout['panels'], key=lambda p: (p['rect'][1], p['rect'][0]))]
+
+        self.assertEqual(ordered(on['semantic_layout']), [
+            'face_front', 'face_right', 'face_3q_right', 'face_left', 'face_3q_left', 'face_back'])
+        upper_views = set(ordered(on['semantic_layout'])[:3])
+        off_panels = {panel['id']: panel for panel in off['guide_geometry']['panels']}
+        for panel in on['guide_geometry']['panels']:
+            off_panel = off_panels[panel['id']]
+            self.assertEqual(panel['bounds'], off_panel['bounds'])
+            if panel['id'] in upper_views:
+                x, y, width, height = panel['rect']
+                old_x, old_y, old_width, old_height = off_panel['rect']
+                self.assertGreater(y, old_y)
+                self.assertEqual(y + height, old_y + old_height)
+                self.assertLessEqual(abs((2 * x + width) - (2 * old_x + old_width)), 1)
+            else:
+                self.assertEqual(panel, off_panel)
+        for result in (on, off):
+            self.assertIn('two rows and three columns', result['prompt'])
+            self.assertIn('In the upper-center panel, show a strict side profile with the face pointing toward the left edge', result['prompt'])
+            self.assertIn('In the lower-left panel, show a strict side profile with the face pointing toward the right edge', result['prompt'])
+        self.assertEqual(on['guide_geometry']['frame_width'], 0)
+        guide = render_reference13_guide(on['guide_geometry'], on['semantic_layout'])
+        for x in (guide.width // 3, guide.width * 2 // 3):
+            self.assertEqual(guide.crop((x, 0, x + 1, guide.height)).getextrema(), ((255, 255),) * 3)
+        for y in (0, guide.height // 2):
+            self.assertEqual(guide.crop((0, y, guide.width, y + 1)).getextrema(), ((255, 255),) * 3)
+        for panel in on['guide_geometry']['panels']:
+            x, y, width, height = panel['rect']
+            self.assertNotEqual(guide.crop((x, y, x + width, y + height)).getextrema(), ((255, 255),) * 3)
+
+    def test_guided_head_six_uses_natural_appearance_in_no_clothing_mode(self):
+        state = {**DEFAULT_STATE, 'views': list(PRESETS['head']), 'clothing_type': 'none'}
+        result = compile_minimax_image_state(json.dumps(state), use_layout_image=True)
+        self.assertIn("Use <Picture 1> as the appearance reference for the character's "
+                      "natural body surface, hair, markings, colors, and illustration style in all six portraits.",
+                      result['prompt'])
+        self.assertNotIn('skin, hair, clothing', result['prompt'])
+
+    def test_guided_head_six_keeps_user_view_wording_at_its_new_position(self):
+        custom = {'face_back': 'Show a braided knot.', 'face_left': ''}
+        state = {**DEFAULT_STATE, 'views': list(PRESETS['head']), 'view_prompts': custom}
+        for enabled in (True, False):
+            result = compile_minimax_image_state(json.dumps(state), use_layout_image=enabled)
+            self.assertEqual(result['state']['view_prompts'], custom)
+            self.assertIn('The lower-right panel. Show a braided knot.', result['prompt'])
+            self.assertIn('The lower-left panel. One reserved view area.', result['prompt'])
+
     def test_no_clothing_uses_eleven_views_and_preserves_saved_choices(self):
         state = {**DEFAULT_STATE, 'views': list(VIEW_IDS), 'clothing_type': 'none',
                  'hand_state': 'gloved', 'footwear_state': 'unshod',

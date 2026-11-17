@@ -110,7 +110,7 @@ class V13Tests(unittest.TestCase):
         with patch.dict(sys.modules,{'h3_registration_check':module,'server':None}):
             spec.loader.exec_module(module)
         self.assertEqual(set(module.NODE_CLASS_MAPPINGS),{'H3CharacterSheetDesignerReference13','H3CharacterSheetDesignerReferenceV13','MiniMaxH3ImageCharacterSheetDesigner'})
-        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.3.0','MiniMax H3 Image Character Sheet Designer v1.4.0'})
+        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.3.0','MiniMax H3 Image Character Sheet Designer v1.5.0'})
         self.assertTrue(module.NODE_CLASS_MAPPINGS['H3CharacterSheetDesignerReference13'].DEPRECATED)
 
     def test_outfit_only_has_shared_object_scope_for_front_and_back(self):

@@ -1,3 +1,7 @@
+# v1.5.0
+
+Arrange MiniMax H3 Image Head · 6 views in three columns and two rows. Align the preview, guide, and prompt, use screen-facing direction labels, and add top-row headroom to the borderless layout guide. The MiniMax node displays v1.5.0. Both bundled workflow files retain their existing names and wiring. See the [older-version installation steps](README.md#install-an-older-version) for the original layout.
+
 # v1.4.5
 
 Refine the 11-view MiniMax H3 Image prompt in no-clothing mode. With Layout Image on and an edited full-body side prompt, the prompt assigns each portrait to its slot and requests white gaps between views. The shared reference stance applies only to unedited full-body views. See the [release notes](docs/releases/v1.4.5.md).

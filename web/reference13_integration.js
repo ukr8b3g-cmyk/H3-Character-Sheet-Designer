@@ -152,7 +152,7 @@ export function installDesigner(node, app, api) {
     sync();
   } : null;
   try {
-    ui = createDesignerUI({controller, v13, imageNode, versionLabel: imageNode ? "v1.4.0" : undefined, locale: getLocale(app), reference, multiReference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
+    ui = createDesignerUI({controller, v13, imageNode, versionLabel: imageNode ? "v1.5.0" : undefined, locale: getLocale(app), reference, multiReference, useLayoutImage, readStyle, writeStyle, compatibilityWarning: Boolean(node.graph && (typeof node.graph.beforeChange !== 'function' || typeof node.graph.afterChange !== 'function'))});
     let name = 'h3_designer_ui', suffix = 1;
     while (node.widgets.some(candidate => candidate.name === name)) name = `h3_designer_ui_${suffix++}`;
     widget = node.addDOMWidget(name, 'H3_DESIGNER_UI', ui.root, {

@@ -72,8 +72,9 @@ def render_reference13_guide(geometry, layout):
             x, y, w, h = panel['rect']
             artwork = artwork.resize((w, h), Image.Resampling.LANCZOS)
             canvas.paste(artwork, (x, y), artwork)
-        left, top, right, bottom = panel['bounds']
-        draw.rectangle((left, top, max(left, right-1), max(top, bottom-1)), outline='black', width=geometry['frame_width'])
+        if geometry['frame_width']:
+            left, top, right, bottom = panel['bounds']
+            draw.rectangle((left, top, max(left, right-1), max(top, bottom-1)), outline='black', width=geometry['frame_width'])
     return canvas
 
 

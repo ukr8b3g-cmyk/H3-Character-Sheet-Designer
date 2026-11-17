@@ -216,3 +216,47 @@ domTest('V1.3 draws the same supplied guide geometry with native guide switch OF
   assert.equal(item.widgets.find(w=>w.name==='use_layout_image').value,false);
   assert(record.ui.root.textContent.includes('Layout guide'));
 });
+
+domTest('MiniMax shows the same borderless Head 6 preview on both sides of the layout switch', async t => {
+  const h = setup(); t.after(h.cleanup);
+  const {item, record} = h.node('MiniMaxH3ImageCharacterSheetDesigner');
+  const root = record.ui.root;
+  choose(root.querySelector('.h3-preset-row select'), 'head');
+  const stage = root.querySelector('[data-preview-stage]');
+  Object.defineProperties(stage, {clientWidth: {value: 512}, clientHeight: {value: 450}});
+  const views = ['face_front', 'face_right', 'face_3q_right', 'face_left', 'face_3q_left', 'face_back'];
+  const native = item.widgets.find(widget => widget.name === 'use_layout_image');
+  const positions = [];
+  for (const enabled of [false, true]) {
+    native.value = enabled; record.sync();
+    const request = h.requests.at(-1), data = JSON.parse(request.options.body);
+    assert.equal(data.use_layout_image, enabled);
+    const ids = JSON.parse(data.state_json).views;
+    const layout = {canvas: [1920, 1792], feet_y: null, panels: ids.map(id => {
+      const index = views.indexOf(id);
+      return {id, rect: [index % 3 / 3, Math.floor(index / 3) / 2, 1 / 3, 1 / 2]};
+    })};
+    const geometry = {canvas: layout.canvas, frame_width: 0, legacy: false, panels: layout.panels.map(({id, rect}) => ({
+      id, bounds: [rect[0] * 1920, rect[1] * 1792, (rect[0] + rect[2]) * 1920, (rect[1] + rect[3]) * 1792],
+      rect: [rect[0] * 1920 + 32, rect[1] * 1792 + 32, 576, 832], crop: [0, 0, 100, 100], mirror: false, blank: false,
+    }))};
+    request.resolve({ok: true, json: async () => ({width: 1920, height: 1792, max_resolution: 16384,
+      layout, semantic_layout: layout, guide_geometry: geometry, guide_enabled: enabled, prompt: 'preview'})});
+    await tick();
+    const sheet = root.querySelector('.h3-sheet');
+    assert.equal(sheet.style.getPropertyValue('--h3-frame-width'), '0px');
+    positions.push(views.map(id => {
+      const panel = sheet.querySelector(`[data-panel="${id}"]`);
+      return [panel.style.left, panel.style.top];
+    }));
+  }
+  assert.deepEqual(positions[0], positions[1]);
+  assert.deepEqual(positions[0].map(([, top]) => top), ['0%', '0%', '0%', '50%', '50%', '50%']);
+  for (const view of ['face_left', 'face_right', 'face_3q_left', 'face_3q_right', 'body_left']) {
+    const card = root.querySelector(`[data-view="${view}"]`);
+    assert.equal(card.querySelector('[data-artwork]').style.transform, '');
+    assert.match(card.title, /screen (?:left|right)/);
+  }
+  h.locale('ja');
+  assert.equal(root.querySelector('[data-view="face_left"] .h3-card-label').textContent, '右向き横顔');
+});

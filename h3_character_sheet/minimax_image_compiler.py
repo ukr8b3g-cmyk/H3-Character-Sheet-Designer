@@ -45,6 +45,17 @@ ROLE_NAMES = {'face': 'facial appearance', 'head': 'head appearance',
               'clothing_back': 'back of the outfit', 'hands': 'hands and gloves',
               'footwear': 'footwear'}
 
+HEAD_SIX_PANELS = (
+    ('face_front', 'upper-left', 'a front-facing portrait'),
+    ('face_right', 'upper-center', 'a strict side profile with the face pointing toward the left edge of that panel'),
+    ('face_3q_right', 'upper-right', 'a three-quarter portrait angled toward the left edge of that panel'),
+    ('face_left', 'lower-left', 'a strict side profile with the face pointing toward the right edge of that panel'),
+    ('face_3q_left', 'lower-center', 'a three-quarter portrait angled toward the right edge of that panel'),
+    ('face_back', 'lower-right', 'the head viewed directly from behind'),
+)
+HEAD_SIX_FRAMING = ('Show the complete head and upper shoulders in every portrait at matching scale, '
+                    'with a small white margin above the highest points of the silhouette and plain white space between the portraits.')
+
 
 def _arranged_columns(layout):
     columns = {}
@@ -75,6 +86,28 @@ def _standard_five_view_guide(layout, state):
             fit_height = min(height, bottom - round(panel_height * 0.035) - y)
             fit_width = round(width * fit_height / height)
             panel['rect'] = [(left + right - fit_width) // 2, y, fit_width, fit_height]
+    return geometry
+
+
+def _head_six_guide(layout, state, *, use_layout_image):
+    rects = {}
+    for index, (view, _, _) in enumerate(HEAD_SIX_PANELS):
+        row, column = divmod(index, 3)
+        rects[view] = [(column + .045) / 3, (row + .065) / 2, .91 / 3, .89 / 2]
+    for panel in layout['panels']:
+        panel['rect'] = rects[panel['id']]
+    geometry = derive_guide_geometry(layout, state, compact=True)
+    geometry['frame_width'] = 0
+    if use_layout_image:
+        upper_views = {view for view, _, _ in HEAD_SIX_PANELS[:3]}
+        for panel in geometry['panels']:
+            if panel['id'] in upper_views and not panel['blank']:
+                _, top, _, bottom = panel['bounds']
+                x, y, width, height = panel['rect']
+                inset = min(height - 1, round((bottom - top) * 0.18))
+                new_height = height - inset
+                new_width = max(1, round(width * new_height / height))
+                panel['rect'] = [x + (width - new_width) // 2, y + inset, new_width, new_height]
     return geometry
 
 
@@ -142,6 +175,8 @@ def compile_minimax_image_state(state_json, **kwargs):
     result = compile_reference_v13_state(state_json, **kwargs)
     saved = result['state']
     state = {**saved, 'views': effective_views(saved)}
+    views = state['views']
+    head_six = set(views) == set(PORTRAIT_IDS)
     natural = state['clothing_type'] == 'none'
     if not natural and result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
         result['guide_geometry'] = _standard_five_view_guide(result['semantic_layout'], state)
@@ -149,13 +184,15 @@ def compile_minimax_image_state(state_json, **kwargs):
         saved['resolution_profile'] = profile
         result['state_json'] = serialize_reference13_state(saved)
         _apply_resolution(result, profile)
+    if head_six:
+        result['guide_geometry'] = _head_six_guide(
+            result['semantic_layout'], state, use_layout_image=result['guide_enabled'])
     result['experimental'] = result['pixel_count'] > MAX_AUTO_PIXELS
     refs = result['reference_plan']
     slots = ('character_image', 'layout_image', 'reference_image_1',
              'reference_image_2', 'reference_image_3')
     for ref in refs:
         ref['core_input'] = f"images.image_{slots.index(ref['source'])}"
-    views = state['views']
     overrides = state.get('view_prompts', {})
     single = len(views) == 1
     all_views = len(views) == len(VIEW_IDS) and not result['guide_enabled']
@@ -174,12 +211,24 @@ def compile_minimax_image_state(state_json, **kwargs):
         lines = [f'Create one {subject} reference sheet from <Picture 1>.',
                  f'Preserve the same {subject} design and rendering style across all views.',
                  'White background. Each requested view appears once.']
+    if not natural and any(view in BODY_IDS for view in views):
+        scope = 'in the full-body view' if single else 'across the full-body views'
+        lines.append(f'Match the relative proportions of the head, torso, and legs in <Picture 1> {scope}.')
     if natural and any(view in (*BODY_IDS, *PORTRAIT_IDS) for view in views):
         lines.append(NATURAL_SURFACE)
     for ref in refs:
         if ref['role'] == 'layout':
             if single:
                 lines.append(f"Use {ref['tag']} for framing.")
+            elif head_six:
+                appearance_details = ('natural body surface, hair, markings, colors, and illustration style' if natural
+                                      else 'skin, hair, clothing, colors, and illustration style')
+                lines.append(f"Use <Picture 1> as the appearance reference for the character's {appearance_details} "
+                             f"in all six portraits. {ref['tag']} supplies the positions and viewing angles in "
+                             f"two rows and three columns. {HEAD_SIX_FRAMING} "
+                             "A narrow band of plain white space runs across the top of the sheet. "
+                             "The entire outline of each upper-row head, including any horn tips, ears, "
+                             "or headwear, fits below this space.")
             else:
                 placement = 'frame positions and sizes' if natural else 'arrangement and viewing directions'
                 lines.append(f"{ref['tag']} supplies the {placement}. "
@@ -189,11 +238,13 @@ def compile_minimax_image_state(state_json, **kwargs):
     if any(ref['source'] in slots[2:] for ref in refs):
         lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
                      'If dedicated references for the same role conflict, prefer the later input.')
+    if head_six and not result['guide_enabled']:
+        lines.append(f'Arrange six portraits in two rows and three columns. {HEAD_SIX_FRAMING}')
     columns = _arranged_columns(result['semantic_layout'])
     portrait_rows = (natural and result['guide_enabled'] and 'body_left' in overrides
                      and [len(column) for column in columns] == [3, 3, 1, 1, 1, 2]
                      and set(views) == set((*PORTRAIT_IDS, *BODY_IDS, 'hands', 'feet')))
-    if not (single or all_views or hand_foot_pair):
+    if not (single or all_views or hand_foot_pair or head_six):
         placement = 'Arrange columns from left to right; within a stacked column, read top to bottom:'
         if natural and len(views) == 11:
             if [len(column) for column in columns] == [3, 3, 1, 1, 1, 2]:
@@ -225,6 +276,8 @@ def compile_minimax_image_state(state_json, **kwargs):
             defaults['hands'] += ' Retain reference hand coverings when present.'
         if state['footwear_state'] == 'reference':
             defaults['feet'] += ' Retain reference footwear when present.'
+    if head_six:
+        defaults.update({view: f'Show {description}.' for view, _, description in HEAD_SIX_PANELS})
     records = []
     view_text = {}
     scopes = applicable_settings(state)
@@ -244,7 +297,7 @@ def compile_minimax_image_state(state_json, **kwargs):
             text = ' '.join([text, *extras]).strip()
             if text or not single:
                 descriptions.append(text or 'One reserved view area.')
-            if all_views or hand_foot_pair or portrait_rows:
+            if all_views or hand_foot_pair or portrait_rows or head_six:
                 view_text[view] = descriptions[-1]
             records.append(f'{view}: {text}')
         if single:
@@ -252,9 +305,16 @@ def compile_minimax_image_state(state_json, **kwargs):
         elif portrait_rows and index == 1:
             for row, left, right in zip(('Top', 'Middle', 'Bottom'), *columns[:2]):
                 lines.append(f"{row} portrait row. Left slot: {view_text[left['id']]} Right slot: {view_text[right['id']]}")
-        elif not (all_views or hand_foot_pair or (portrait_rows and index == 0)):
+        elif not (all_views or hand_foot_pair or head_six or (portrait_rows and index == 0)):
             lines.append(' / '.join(descriptions))
-    if all_views:
+    if head_six:
+        for view, position, _ in HEAD_SIX_PANELS:
+            text = view_text[view]
+            if view in overrides:
+                lines.append(f"The {position} panel. {text}")
+            else:
+                lines.append(f"In the {position} panel, show {text.removeprefix('Show ')}")
+    elif all_views:
         lines.extend(_all_view_layout(view_text))
     elif hand_foot_pair:
         lines.extend((f"Upper half: {view_text['hands']}", f"Lower half: {view_text['feet']}"))
