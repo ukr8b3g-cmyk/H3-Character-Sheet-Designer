@@ -39,6 +39,18 @@ def build_appearance_policy(state, references):
     return tuple(policy)
 
 
+def unused_reference_instructions(references, appearance_policy):
+    eligible_sources = {item['source'] for item in appearance_policy}
+    return {
+        ref['source']: (
+            f"{ref['tag']} has role {ref['role']}, but no eligible part is visible in the selected views. "
+            'Ignore it for appearance changes.'
+        )
+        for ref in references
+        if ref['role'] in ROLE_PARTS and ref['source'] not in eligible_sources
+    }
+
+
 def applicable_references(policy, parts, view=None):
     return tuple(reference for reference in policy
                  if any(part in reference['parts'] and

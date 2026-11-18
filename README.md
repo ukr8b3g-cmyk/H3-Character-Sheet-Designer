@@ -1,15 +1,22 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.5.0**
+[日本語](#日本語) · **Package v1.5.1**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.5.1
+
+- Honor the selected rendering style in MiniMax H3 Image and P-H3 without also requesting the reference image’s style.
+- Instruct the model to ignore dedicated references for appearance changes when their assigned part is absent from the selected views.
+- Match P-H3 node help and preview input names to the bundled workflow’s actual conditioning inputs.
+- Match P-H3 UNET and LoRA download metadata to the selected model paths.
 
 ## What's New — v1.5.0
 
 - **Head · 6 views** uses the same three-column, two-row arrangement in MiniMax H3 Image and P-H3, with Layout Image on or off. The preview and prompt use the same view positions and screen-facing directions.
 - With **Use Layout Image** on, the borderless guide leaves space above the top row. The character reference supplies the appearance. In **No clothing · natural body surface**, six pale areas separated by white space mark placement in the preview and guide, and the per-view prompts specify the viewing angles.
-- The same [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) and [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) workflow files are included. Both current Designer nodes display **v1.5.0**.
+- The same [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) and [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) workflow files are included. Both current Designer nodes display **v1.5.1**.
 
 A MiniMax H3 Image GPU test at 1888 × 1792 with a fixed seed produced all six angles in the expected positions, with the upper horn tips visible. The rightmost hair touched the frame in that test. With matching inputs and dimensions, both nodes produce the same Head 6 prompt and guide. The models can generate different results.
 
@@ -156,7 +163,7 @@ In Part prompts assign extra references to Same character, Face, Head/face/hair,
 
 | Node ID / display version | Purpose |
 | --- | --- |
-| `H3CharacterSheetDesignerReferenceV13` / **v1.5.0** | Current P-H3 workflow |
+| `H3CharacterSheetDesignerReferenceV13` / **v1.5.1** | Current P-H3 workflow |
 | `H3CharacterSheetDesignerReference13` / **v1.2.2** | Previous behavior for existing Reference13 workflows / comparison |
 
 These are the previous node versions. Earlier Designer, Reference, Multi Reference and Reference V1.1 IDs are not registered in v1.3. Their historical source/workflow files and [old releases](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/tag/v1.2.2) remain available; use an earlier release if those IDs are required. Saved workflows and user node titles are not automatically rewritten. V1.2.2 preserves its compiler/state behavior; its shared UI also has the Worn switch removed.
@@ -171,7 +178,7 @@ These are the previous node versions. Earlier Designer, Reference, Multi Referen
 
 ## Installation and updates
 
-[Download the v1.5.0 package](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip). It includes the Designer and both workflow JSONs.
+[Download the v1.5.1 package](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.1/H3-Character-Sheet-Designer-v1.5.1.zip). It includes the Designer and both workflow JSONs.
 
 ### New installation
 
@@ -185,10 +192,10 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-### Update to v1.5.0
+### Update to v1.5.1
 
-1. Save your open workflows and stop ComfyUI. Move the existing Designer folder outside `ComfyUI/custom_nodes` as a backup. Extract the v1.5.0 package to the original location so ComfyUI loads one copy of the Designer. For an existing Git clone on `main`, use `git pull --ff-only` in that clone.
-2. Restart the ComfyUI installation you updated and reload the browser. Open the matching v1.5.0 workflow from `workflows`. Check that the Designer node title ends in **v1.5.0** and that **Head · 6 views** shows three columns and two rows.
+1. Save your open workflows and stop ComfyUI. Move the existing Designer folder outside `ComfyUI/custom_nodes` as a backup. Extract the v1.5.1 package to the original location so ComfyUI loads one copy of the Designer. For an existing Git clone on `main`, use `git pull --ff-only` in that clone.
+2. Restart the ComfyUI installation you updated and reload the browser. Open the matching v1.5.1 workflow from `workflows`. Check that the Designer node title ends in **v1.5.1** and that **Head · 6 views** shows three columns and two rows.
 
 ### Install an older version
 
@@ -202,23 +209,30 @@ v1.5.0 changes the Head · 6 views layout, guide, and prompt, so an existing wor
 
 ## 日本語
 
+### v1.5.1の変更点
+
+- MiniMax H3 Image版とP-H3版で、画風を指定したときに参照画像の画風を求める指示が重ならないようにしました。
+- 選択したビューに対象部位がない追加参照には、外見の変更に使用しないよう指示します。
+- P-H3版のノード説明とプレビューAPIの接続先をワークフローの実配線に合わせました。
+- P-H3版のUNET・LoRAの取得情報を、選択済みモデルのサブフォルダー付きの名前に合わせました。
+
 ### v1.5.0の変更点
 
 MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／OFFとも3列×2段です。プレビュー、プロンプト、配置ガイドで各ビューの位置と画面上の向きを揃えました。ONでは枠線のないガイドを使い、上段に余白を取ります。同じ入力条件・寸法なら両版のHead 6のガイドとプロンプトは一致し、生成結果はモデルによって変わります。
 
 **衣服なし／体表を保持**では、白い余白で区切った淡い6面で配置を示します。プレビューとガイドは同じ配置を使い、生成時の顔の向きは各面のプロンプトで指定します。
 
-配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。現行ノードの表示は両方とも **v1.5.0** です。
+配布ワークフローは [MiniMax H3 Image](workflows/MiniMax%20H3%20Image%20Character%20Sheet%20Designer.json) と [P-H3 Subgraph](workflows/H3%20Character%20Sheet%20Designer%20-%20P-H3%20Subgraph.json) の2本です。現行ノードの表示は両方とも **v1.5.1** です。
 
 ### 新規インストール
 
-1. ComfyUIを停止し、[v1.5.0の本体ZIP](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip)を展開します。`ComfyUI/custom_nodes/H3-Character-Sheet-Designer/__init__.py` となるように配置してください。
+1. ComfyUIを停止し、[v1.5.1の本体ZIP](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.1/H3-Character-Sheet-Designer-v1.5.1.zip)を展開します。`ComfyUI/custom_nodes/H3-Character-Sheet-Designer/__init__.py` となるように配置してください。
 2. ComfyUIを起動してブラウザを再読み込みし、同梱の `workflows` から使うJSONを開きます。ワークフロー内のModel Linksにあるモデルを導入し、各ローダーで選択します。MiniMax H3 Image版にはComfyUI 0.45.0以上が必要です。
 
-### v1.5.0へ更新
+### v1.5.1へ更新
 
-1. 開いているワークフローを保存し、ComfyUIを停止します。既存のDesignerフォルダーを `custom_nodes` の外へバックアップし、同じ場所にv1.5.0の本体を展開します。Gitで導入している場合は、そのクローンの `main` で `git pull --ff-only` を実行できます。
-2. 更新したComfyUIを起動し直し、ブラウザを再読み込みします。同梱JSONを開き、両版のノード名が **v1.5.0** と表示され、**Head · 6 views** が3列×2段になることを確認します。
+1. 開いているワークフローを保存し、ComfyUIを停止します。既存のDesignerフォルダーを `custom_nodes` の外へバックアップし、同じ場所にv1.5.1の本体を展開します。Gitで導入している場合は、そのクローンの `main` で `git pull --ff-only` を実行できます。
+2. 更新したComfyUIを起動し直し、ブラウザを再読み込みします。同梱JSONを開き、両版のノード名が **v1.5.1** と表示され、**Head · 6 views** が3列×2段になることを確認します。
 
 ### 旧バージョンの入手とインストール
 

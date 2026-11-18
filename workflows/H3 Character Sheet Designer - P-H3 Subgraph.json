@@ -439,7 +439,7 @@
       ],
       "properties": {
         "cnr_id": "h3-character-sheet-designer",
-        "ver": "1.5.0",
+        "ver": "1.5.1",
         "Node name for S&R": "H3CharacterSheetDesignerReferenceV13"
       },
       "widgets_values": [
@@ -942,10 +942,10 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "## P-H3 v1.5.0\n\n**Install or update**  \n[Download v1.5.0 (node and both workflows)](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip)  \nPlace the Designer folder in `ComfyUI/custom_nodes`. For an update, move the existing Designer folder outside `custom_nodes` as a backup, then install this package. Restart ComfyUI and reload the browser. The installed Designer node title ends in **v1.5.0**. **Head · 6 views** shows three columns and two rows.\n\n**Designer** H3 Character Sheet Designer v1.5.0  \n**Conditioning** P-H3 Image Conditioning\n\n**Diffusion model**  \n[minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[p-h3-image_text_encoder_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[p-h3-image_vae_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors)  \nComfyUI/models/vae/\n\n**LoRA**  \n[p-h3-image_lora_bf16.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors)  \nComfyUI/models/loras/P-H3-Image/\n\n**CLIP type** minimax\n"
+        "## P-H3 v1.5.1\n\n**Install or update**  \n[Download v1.5.1 (node and both workflows)](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.1/H3-Character-Sheet-Designer-v1.5.1.zip)  \nPlace the Designer folder in `ComfyUI/custom_nodes`. For an update, move the existing Designer folder outside `custom_nodes` as a backup, then install this package. Restart ComfyUI and reload the browser. The installed Designer node title ends in **v1.5.1**. **Head · 6 views** shows three columns and two rows.\n\n**Designer** H3 Character Sheet Designer v1.5.1  \n**Conditioning** P-H3 Image Conditioning\n\n**Diffusion model**  \n[minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[p-h3-image_text_encoder_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[p-h3-image_vae_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors)  \nComfyUI/models/vae/\n\n**LoRA**  \n[p-h3-image_lora_bf16.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors)  \nComfyUI/models/loras/P-H3-Image/\n\n**CLIP type** minimax\n"
       ],
       "widgets_values_named": {
-        "text": "## P-H3 v1.5.0\n\n**Install or update**  \n[Download v1.5.0 (node and both workflows)](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.0/H3-Character-Sheet-Designer-v1.5.0.zip)  \nPlace the Designer folder in `ComfyUI/custom_nodes`. For an update, move the existing Designer folder outside `custom_nodes` as a backup, then install this package. Restart ComfyUI and reload the browser. The installed Designer node title ends in **v1.5.0**. **Head · 6 views** shows three columns and two rows.\n\n**Designer** H3 Character Sheet Designer v1.5.0  \n**Conditioning** P-H3 Image Conditioning\n\n**Diffusion model**  \n[minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[p-h3-image_text_encoder_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[p-h3-image_vae_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors)  \nComfyUI/models/vae/\n\n**LoRA**  \n[p-h3-image_lora_bf16.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors)  \nComfyUI/models/loras/P-H3-Image/\n\n**CLIP type** minimax\n"
+        "text": "## P-H3 v1.5.1\n\n**Install or update**  \n[Download v1.5.1 (node and both workflows)](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.1/H3-Character-Sheet-Designer-v1.5.1.zip)  \nPlace the Designer folder in `ComfyUI/custom_nodes`. For an update, move the existing Designer folder outside `custom_nodes` as a backup, then install this package. Restart ComfyUI and reload the browser. The installed Designer node title ends in **v1.5.1**. **Head · 6 views** shows three columns and two rows.\n\n**Designer** H3 Character Sheet Designer v1.5.1  \n**Conditioning** P-H3 Image Conditioning\n\n**Diffusion model**  \n[minimax_h3_fl2va_pruned_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors)  \nComfyUI/models/diffusion_models/minimax/\n\n**Text encoder**  \n[p-h3-image_text_encoder_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/text_encoders/p-h3-image_text_encoder_int8_convrot.safetensors)  \nComfyUI/models/text_encoders/\n\n**VAE**  \n[p-h3-image_vae_int8_convrot.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/vae/p-h3-image_vae_int8_convrot.safetensors)  \nComfyUI/models/vae/\n\n**LoRA**  \n[p-h3-image_lora_bf16.safetensors](https://huggingface.co/PrunaAI/P-H3-Image-Comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors)  \nComfyUI/models/loras/P-H3-Image/\n\n**CLIP type** minimax\n"
       },
       "color": "#222",
       "bgcolor": "#000"
@@ -1412,7 +1412,7 @@
               "Node name for S&R": "UNETLoader",
               "models": [
                 {
-                  "name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+                  "name": "minimax\\minimax_h3_fl2va_pruned_int8_convrot.safetensors",
                   "url": "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
                   "directory": "diffusion_models"
                 }
@@ -1474,7 +1474,7 @@
               "Node name for S&R": "LoraLoaderModelOnly",
               "models": [
                 {
-                  "name": "p-h3-image_lora_bf16.safetensors",
+                  "name": "P-H3-Image\\p-h3-image_lora_bf16.safetensors",
                   "url": "https://huggingface.co/PrunaAI/p-h3-image-comfy/resolve/main/loras/p-h3-image_lora_bf16.safetensors",
                   "directory": "loras"
                 }

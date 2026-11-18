@@ -1,5 +1,5 @@
 """Shared layout and prose for a sheet containing all six portrait views."""
-from .appearance_policy_13 import ROLE_NAMES, build_appearance_policy
+from .appearance_policy_13 import ROLE_NAMES, build_appearance_policy, unused_reference_instructions
 from .guide_13 import derive_guide_geometry
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import part_views
@@ -47,15 +47,17 @@ def apply_head_six(result, state, defaults, *, style):
     result['guide_geometry'] = _head_six_guide(layout, state, use_layout_image=guided)
     refs = result['reference_plan']
     natural = state['clothing_type'] == 'none'
+    style_instruction = STYLE_PROMPTS[style]
+    design = 'character design' if style_instruction else 'character design and rendering style'
     lines = ['Create one character reference sheet from <Picture 1>.',
-             'Preserve the same character design and rendering style across all views.',
+             f'Preserve the same {design} across all views.',
              'White background. Each requested view appears once.']
     if natural:
         lines.append(NATURAL_SURFACE)
     for ref in refs:
         if ref['role'] == 'layout':
-            details = ('natural body surface, hair, markings, colors, and illustration style' if natural
-                       else 'skin, hair, clothing, colors, and illustration style')
+            details = 'natural body surface, hair, markings' if natural else 'skin, hair, clothing'
+            details += ', and colors' if style_instruction else ', colors, and illustration style'
             placement = (
                 f"Use the six pale areas in {ref['tag']} to place the portraits in two rows and three columns."
                 if natural else
@@ -68,6 +70,8 @@ def apply_head_six(result, state, defaults, *, style):
                          "or headwear, fits below this space.")
         elif ref['role'] == 'same_character':
             lines.append(f"{ref['tag']} supplements the same character's appearance.")
+    appearance = build_appearance_policy(state, refs)
+    lines.extend(unused_reference_instructions(refs, appearance).values())
     if any(ref['source'].startswith('reference_image_') for ref in refs):
         lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
                      'If dedicated references for the same role conflict, prefer the later input.')
@@ -76,7 +80,6 @@ def apply_head_six(result, state, defaults, *, style):
 
     defaults = {**defaults, **{view: f'Show {description}.' for view, _, description in HEAD_SIX_PANELS}}
     overrides = state.get('view_prompts', {})
-    appearance = build_appearance_policy(state, refs)
     view_text = {}
     for view, position, _ in HEAD_SIX_PANELS:
         extras = [f"Use {ref['tag']} for {ROLE_NAMES[ref['role']]}." for ref in appearance
@@ -89,8 +92,8 @@ def apply_head_six(result, state, defaults, *, style):
             lines.append(f"The {position} panel. {text or 'One reserved view area.'}")
         else:
             lines.append(f"In the {position} panel, show {text.removeprefix('Show ')}")
-    if STYLE_PROMPTS[style]:
-        lines.append(STYLE_PROMPTS[style])
+    if style_instruction:
+        lines.append(style_instruction)
     panels = sorted(layout['panels'], key=lambda panel: tuple(panel['rect'][:2]))
     records = [f"{panel['id']}: {view_text[panel['id']]}" for panel in panels]
     result.update(prompt='\n'.join(lines), default_view_prompts=defaults, view_prompts=records)

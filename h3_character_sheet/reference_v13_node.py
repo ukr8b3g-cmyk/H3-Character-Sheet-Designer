@@ -14,10 +14,10 @@ from .multi_reference_node import validate_reference_image
 
 class H3CharacterSheetDesignerReferenceV13:
     CATEGORY = 'H3/Character Sheet'
-    DESCRIPTION = ('v1.5.0. P-H3 sheet with up to 13 views, one character image and three optional same-character references. '
-                   'Wire character_image, layout_image, reference_image_1, reference_image_2 and reference_image_3 '
-                   'to H3 ref_images.ref_image_0, 1, 2, 3 and 4. Picture numbers skip None images. '
-                   'OFF returns no layout image. One sheet per execution.')
+    DESCRIPTION = ('v1.5.1. P-H3 sheet with up to 13 views, one character image and three optional references. '
+                   'On P-H3 Image Conditioning, connect character_image to images.image_1, layout_image to images.image_2, '
+                   'and reference_image_1 through reference_image_3 to images.image_3 through images.image_5, in order. '
+                   'Picture numbers skip None images. OFF returns no layout image. One sheet per execution.')
     RETURN_TYPES = ('STRING', 'INT', 'INT', 'IMAGE', 'IMAGE', 'IMAGE', 'IMAGE', 'IMAGE')
     RETURN_NAMES = ('prompt', 'width', 'height', 'layout_image', 'character_image',
                     'reference_image_1', 'reference_image_2', 'reference_image_3')

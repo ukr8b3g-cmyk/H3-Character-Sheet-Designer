@@ -1,3 +1,10 @@
+# v1.5.1
+
+- Honor the selected rendering style in MiniMax H3 Image and P-H3 without also requesting the reference image’s style.
+- Instruct the model to ignore dedicated references for appearance changes when their assigned part is absent from the selected views.
+- Match P-H3 node help and preview input names to the bundled workflow’s actual conditioning inputs.
+- Match P-H3 UNET and LoRA download metadata to the selected model paths.
+
 # v1.5.0
 
 Arrange Head · 6 views in three columns and two rows for MiniMax H3 Image and P-H3. Both use the same guide and Head 6 prompt at matching dimensions, screen-facing direction labels, and additional top-row headroom in Layout Image mode. Both current nodes display v1.5.0. Both bundled workflows retain their existing names and wiring. See the [older-version installation steps](README.md#install-an-older-version) for the original layout.

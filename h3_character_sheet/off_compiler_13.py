@@ -246,8 +246,9 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
                    'Keep the requested crop at a natural scale with a small margin.' if natural else
                    'Create a new finished sheet using the appearance from <Picture 1> and applicable part references. '
                    'Read position, facing direction, pose and framing from <Picture 2> for the assigned views described below. '
-                   'Scale each requested view to make full use of its region, keeping the complete requested crop visible at natural proportions with a small margin. '
-                   f"Render all {len(state['views'])} selected views in the same rendering style as <Picture 1>."
+                   'Scale each requested view to make full use of its region, keeping the complete requested crop visible at natural proportions with a small margin.'
+                   + (f" Render all {len(state['views'])} selected views in the same rendering style as <Picture 1>."
+                      if style == 'none' else '')
                    if optimize_outfit else
                    'Use <Picture 2> for region placement, orientation and crop only. Its mannequin anatomy is not an appearance reference. '
                    + ('Replace the placeholder in the single assigned region; do not duplicate it. ' if single else 'Replace every placeholder in its own assigned region. ')

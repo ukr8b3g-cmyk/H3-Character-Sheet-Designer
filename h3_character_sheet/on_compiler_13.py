@@ -7,7 +7,7 @@ from .view_catalog_13 import VIEW_IDS
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import effective_views, parse_reference13_state, serialize_reference13_state
 from .multi_reference_compiler import ROLE_INSTRUCTIONS
-from .appearance_policy_13 import build_appearance_policy
+from .appearance_policy_13 import build_appearance_policy, unused_reference_instructions
 EXTRA_INPUTS = ('reference_image_1', 'reference_image_2', 'reference_image_3')
 
 
@@ -67,12 +67,11 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
         prompt = compile_off_prompt_13(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
     else:
         prompt = compile_extended_prompt(state, layout, style=style, guide_geometry=geometry, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
-    eligible_sources = {item['source'] for item in appearance_policy}
     extras = [item for item in references if item['source'] in EXTRA_INPUTS]
     if extras:
+        unused = unused_reference_instructions(extras, appearance_policy)
         instructions = '\n'.join(
-            (f"{item['tag']} has role {item['role']}, but no eligible part is visible in the selected views. Ignore it for appearance changes."
-             if item['role'] != 'same_character' and item['source'] not in eligible_sources else
+            (unused[item['source']] if item['source'] in unused else
              f"{item['tag']} has role {item['role']}: {ROLE_INSTRUCTIONS[item['role']]} "
              'Apply only to relevant visible parts of the same character. Explicit part instructions and appearance choices take precedence, then dedicated references, then same-character supplements and Picture 1. '
              'Do not transfer source identity, pose, background or layout outside the assigned role. '

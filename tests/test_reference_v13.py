@@ -49,7 +49,10 @@ class V13Tests(unittest.TestCase):
                                 if not line.startswith(('<Picture 2> is ', '<Picture 2> provides spatial guidance:', 'Use <Picture 2> for region placement', 'Create a new finished sheet', 'Align feet or footwear bottoms'))]
                     self.assertEqual(content(old['prompt']),content(new['prompt']))
                     self.assertEqual(old['layout']['canvas'][1],new['layout']['canvas'][1])
-                    self.assertEqual(old['reference_plan'],new['reference_plan'])
+                    self.assertEqual(
+                        [(ref['source'], ref['role'], ref['picture_number'], ref['tag']) for ref in old['reference_plan']],
+                        [(ref['source'], ref['role'], ref['picture_number'], ref['tag']) for ref in new['reference_plan']],
+                    )
 
     def test_head_six_matches_minimax_layout_and_prompt_at_the_same_size(self):
         state = {
@@ -73,8 +76,113 @@ class V13Tests(unittest.TestCase):
                 lower_left = next(line for line in ph3['prompt'].splitlines() if line.startswith('The lower-left panel.'))
                 self.assertIn('Silver hair.', lower_left)
                 self.assertIn('The lower-right panel. Show a braid.', ph3['prompt'])
-                self.assertEqual(ph3['reference_plan'][-1]['core_input'], 'ref_images.ref_image_3')
+                self.assertEqual(ph3['reference_plan'][-1]['core_input'], 'images.image_4')
                 self.assertEqual(image['reference_plan'][-1]['core_input'], 'images.image_3')
+
+    def test_preview_reference_input_names_match_ph3_workflow_wiring(self):
+        from itertools import product
+        from pathlib import Path
+        from h3_character_sheet.reference_v13_preview import compile_preview_request
+
+        path = Path(__file__).resolve().parents[1] / 'workflows' / 'H3 Character Sheet Designer - P-H3 Subgraph.json'
+        workflow = json.loads(path.read_text(encoding='utf-8-sig'))
+        designer = next(node for node in workflow['nodes'] if node['type'] == 'H3CharacterSheetDesignerReferenceV13')
+        output_links = {link[0]: link for link in workflow['links']}
+        nodes = {node['id']: node for node in workflow['nodes']}
+        subgraphs = {graph['id']: graph for graph in workflow['definitions']['subgraphs']}
+        sources = ('character_image', 'layout_image', 'reference_image_1', 'reference_image_2', 'reference_image_3')
+        wired_inputs = {}
+        for output in designer['outputs']:
+            if output['name'] not in sources:
+                continue
+            outer_link, = output['links']
+            wrapper = nodes[output_links[outer_link][3]]
+            graph = subgraphs[wrapper['type']]
+            input_name = wrapper['inputs'][output_links[outer_link][4]]['name']
+            graph_input = next(port for port in graph['inputs'] if port['name'] == input_name)
+            conditioning = next(node for node in graph['nodes'] if node['type'] == 'PH3ImageConditioning')
+            wire, = (link for link in graph['links'] if link['id'] in graph_input['linkIds']
+                     and link['target_id'] == conditioning['id'])
+            wired_inputs[output['name']] = conditioning['inputs'][wire['target_slot']]['name']
+
+        self.assertEqual(set(wired_inputs), set(sources))
+        for preset in ('five', 'head'):
+            raw = json.dumps({**DEFAULT_STATE, 'views': list(PRESETS[preset])})
+            for guide, *extras in product((False, True), repeat=4):
+                with self.subTest(preset=preset, guide=guide, extras=extras):
+                    body = json.dumps({'state_json': raw, 'use_layout_image': guide,
+                                       'reference_presence': dict(zip(sources[2:], extras))}).encode()
+                    plan = compile_preview_request(body, max_resolution=16384)['reference_plan']
+                    selected = [source for source, present in zip(sources, (True, guide, *extras)) if present]
+                    self.assertEqual(
+                        [(ref['source'], ref['core_input'], ref['tag']) for ref in plan],
+                        [(source, wired_inputs[source], f'<Picture {number}>')
+                         for number, source in enumerate(selected, start=1)],
+                    )
+
+    def test_selected_style_replaces_reference_rendering_in_both_nodes(self):
+        from h3_character_sheet.reference_compiler import STYLE_PROMPTS
+
+        view_sets = (PRESETS['head'], PRESETS['five'], ('hands', 'feet'), ('face_front',))
+        for compiler in (compile_minimax_image_state, compile_reference_v13_state):
+            for views in view_sets:
+                for guide in (False, True):
+                    for clothing in ('reference', 'none'):
+                        raw = json.dumps({**DEFAULT_STATE, 'views': list(views), 'clothing_type': clothing})
+                        baseline = compiler(raw, use_layout_image=guide)
+                        self.assertIn('rendering style', baseline['prompt'])
+                        for style, instruction in STYLE_PROMPTS.items():
+                            if not instruction:
+                                continue
+                            with self.subTest(compiler=compiler.__name__, views=views, guide=guide, clothing=clothing, style=style):
+                                result = compiler(raw, use_layout_image=guide, style=style)
+                                prompt = result['prompt']
+                                self.assertEqual(prompt.count(instruction), 1)
+                                for conflict in ('and illustration style', 'and rendering style',
+                                                 'rendering style of <Picture 1>', 'rendering style as <Picture 1>'):
+                                    self.assertNotIn(conflict, prompt)
+                                self.assertEqual(result['guide_geometry'], baseline['guide_geometry'])
+                                self.assertEqual(result['reference_plan'], baseline['reference_plan'])
+
+    def test_unused_reference_keeps_its_number_and_image_in_preview_and_node_output(self):
+        import torch
+        from unittest.mock import patch
+        from h3_character_sheet import minimax_image_node, reference_v13_node
+        from h3_character_sheet.minimax_image_preview import compile_preview_request as image_preview
+        from h3_character_sheet.reference_v13_preview import compile_preview_request as ph3_preview
+
+        modules = ((minimax_image_node, minimax_image_node.MiniMaxH3ImageCharacterSheetDesigner, image_preview),
+                   (reference_v13_node, reference_v13_node.H3CharacterSheetDesignerReferenceV13, ph3_preview))
+        character, face, shoes = (torch.full((1, 16, 16, 3), value) for value in (0.0, 0.5, 1.0))
+        roles = {'reference_image_1': 'face', 'reference_image_2': 'same_character',
+                 'reference_image_3': 'footwear'}
+        presence = {'reference_image_1': True, 'reference_image_3': True}
+        for module, node_type, preview in modules:
+            with patch.object(module, 'runtime_max_resolution', return_value=16384):
+                for views, unused_role in ((PRESETS['head'], 'footwear'), (('face_front',), 'footwear'), (('feet',), 'face')):
+                    state = {**DEFAULT_STATE, 'views': list(views), 'reference_roles': roles,
+                             'size': {**DEFAULT_STATE['size'], 'mode': 'manual', 'manual_width': 512, 'manual_height': 512}}
+                    raw = json.dumps(state)
+                    for guide in (False, True):
+                        with self.subTest(node=node_type.__name__, views=views, guide=guide):
+                            request = {'state_json': raw, 'use_layout_image': guide, 'style': 'watercolor',
+                                       'reference_presence': presence}
+                            data = preview(json.dumps(request).encode(), max_resolution=16384)
+                            output = node_type().compile(raw, character, reference_image_1=face,
+                                                         reference_image_3=shoes, use_layout_image=guide, style='watercolor')
+                            self.assertEqual(output[0], data['prompt'])
+                            self.assertEqual(output[1:3], (data['width'], data['height']))
+                            self.assertEqual(output[3] is not None, guide)
+                            self.assertIs(output[4], character)
+                            self.assertIs(output[5], face)
+                            self.assertIsNone(output[6])
+                            self.assertIs(output[7], shoes)
+                            unused_number = (3 if guide else 2) + (unused_role == 'footwear')
+                            self.assertEqual(output[0].count(
+                                f'<Picture {unused_number}> has role {unused_role}, but no eligible part is visible '
+                                'in the selected views. Ignore it for appearance changes.'), 1)
+                            self.assertEqual(output[0].count('Ignore it for appearance changes.'), 1)
+                            self.assertEqual(data['reference_plan'][-1]['tag'], f'<Picture {4 if guide else 3}>')
 
     def test_four_reference_passthrough_and_output_contract(self):
         import torch
@@ -135,7 +243,7 @@ class V13Tests(unittest.TestCase):
         with patch.dict(sys.modules,{'h3_registration_check':module,'server':None}):
             spec.loader.exec_module(module)
         self.assertEqual(set(module.NODE_CLASS_MAPPINGS),{'H3CharacterSheetDesignerReference13','H3CharacterSheetDesignerReferenceV13','MiniMaxH3ImageCharacterSheetDesigner'})
-        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.5.0','MiniMax H3 Image Character Sheet Designer v1.5.0'})
+        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.5.1','MiniMax H3 Image Character Sheet Designer v1.5.1'})
         self.assertTrue(module.NODE_CLASS_MAPPINGS['H3CharacterSheetDesignerReference13'].DEPRECATED)
 
     def test_outfit_only_has_shared_object_scope_for_front_and_back(self):

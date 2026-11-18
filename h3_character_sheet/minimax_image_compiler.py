@@ -8,7 +8,7 @@ from .head_six import apply_head_six
 from .on_compiler_13 import compile_reference13_state
 from .state_13 import applicable_settings, effective_views, part_views, serialize_reference13_state
 from .reference_compiler import STYLE_PROMPTS
-from .appearance_policy_13 import ROLE_NAMES, build_appearance_policy
+from .appearance_policy_13 import ROLE_NAMES, build_appearance_policy, unused_reference_instructions
 from .view_catalog_13 import BODY_IDS, NATURAL_SURFACE, NATURAL_VIEW_PROMPTS, PORTRAIT_IDS, PRESETS, VIEW_IDS
 
 RESOLUTION_PROFILES = ('current', 'high', 'max_8mp', 'max_16mp')
@@ -165,26 +165,32 @@ def compile_minimax_image_state(state_json, **kwargs):
             defaults['hands'] += ' Retain reference hand coverings when present.'
         if state['footwear_state'] == 'reference':
             defaults['feet'] += ' Retain reference footwear when present.'
+    style = kwargs.get('style', 'none')
     if set(views) == set(PORTRAIT_IDS):
-        return apply_head_six(result, state, defaults, style=kwargs.get('style', 'none'))
+        return apply_head_six(result, state, defaults, style=style)
 
+    style_instruction = STYLE_PROMPTS[style]
     overrides = state.get('view_prompts', {})
     single = len(views) == 1
     all_views = len(views) == len(VIEW_IDS) and not result['guide_enabled']
     hand_foot_pair = set(views) == {'hands', 'feet'} and not result['guide_enabled']
     garment_only = all(v.startswith('clothing_') for v in views)
     subject = 'outfit' if garment_only else 'character'
+    design = f'{subject} design'
+    if not style_instruction:
+        design += ' and rendering style'
     if single:
         target = ('detail illustration from <Picture 1>' if views[0] in {'hands', 'feet'}
                   else f'illustration of the {subject} from <Picture 1>')
         lines = [f'Create a single centered {target}.']
     elif hand_foot_pair:
         lines = ['Create exactly two borderless close-up views from <Picture 1>, one above the other on a white canvas. '
-                 'Leave a clear band of blank white space between the views.',
-                 'Match the rendering style of <Picture 1>.']
+                 'Leave a clear band of blank white space between the views.']
+        if not style_instruction:
+            lines.append('Match the rendering style of <Picture 1>.')
     else:
         lines = [f'Create one {subject} reference sheet from <Picture 1>.',
-                 f'Preserve the same {subject} design and rendering style across all views.',
+                 f'Preserve the same {design} across all views.',
                  'White background. Each requested view appears once.']
     if not natural and any(view in BODY_IDS for view in views):
         scope = 'in the full-body view' if single else 'across the full-body views'
@@ -201,6 +207,8 @@ def compile_minimax_image_state(state_json, **kwargs):
                              f"Render the finished {subject} from <Picture 1> at a clear, generous scale in each area.")
         elif ref['role'] == 'same_character':
             lines.append(f"{ref['tag']} supplements the same {subject}'s appearance.")
+    appearance = build_appearance_policy(state, refs)
+    lines.extend(unused_reference_instructions(refs, appearance).values())
     if any(ref['source'] in slots[2:] for ref in refs):
         lines.append('Follow selected settings first, then compatible part instructions, then dedicated references. '
                      'If dedicated references for the same role conflict, prefer the later input.')
@@ -229,7 +237,6 @@ def compile_minimax_image_state(state_json, **kwargs):
     records = []
     view_text = {}
     scopes = applicable_settings(state)
-    appearance = build_appearance_policy(state, refs)
     for index, column in enumerate(columns):
         descriptions = []
         for panel in column:
@@ -260,12 +267,11 @@ def compile_minimax_image_state(state_json, **kwargs):
     elif hand_foot_pair:
         lines.extend((f"Upper half: {view_text['hands']}", f"Lower half: {view_text['feet']}"))
     if single:
-        lines.extend((f'Preserve the {subject} design and rendering style.', 'Plain white background.'))
+        lines.extend((f'Preserve the {design}.', 'Plain white background.'))
         if views[0].startswith('body_') and views[0] not in overrides:
             lines.append('Keep a small margin around the complete figure.')
-    style = STYLE_PROMPTS[kwargs.get('style', 'none')]
-    if style:
-        lines.append(style)
+    if style_instruction:
+        lines.append(style_instruction)
     separator = ' ' if single else '\n'
     result.update(prompt=separator.join(lines), default_view_prompts=defaults, view_prompts=records)
     return result
