@@ -1,3 +1,8 @@
+# v1.5.2
+
+- Describe panel positions in plain language for P-H3's guided 13-view sheets to reduce captions copied from the prompt.
+- Preserve referenced headwear across the nine character views, give the top portraits more headroom, and guide the rear portrait with a pale slot and a headwear instruction. [Issue #10](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/issues/10)
+
 # v1.5.1
 
 - Honor the selected rendering style in MiniMax H3 Image and P-H3 without also requesting the reference image’s style.

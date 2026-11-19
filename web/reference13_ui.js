@@ -168,7 +168,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   const id = `h3-reference13-${++sequence}`;
   const root = element('section', 'h3-designer h3-reference13'); root.dataset.instance = id; root.classList.toggle('h3-reference', reference); root.setAttribute('aria-label', reference ? 'H3 Character Sheet Designer Reference' : 'H3 Character Sheet Designer');
   root.classList.toggle('h3-multi-reference', multiReference);
-  const nodeVersion = versionLabel ?? (v13 ? 'v1.5.1' : 'v1.2.2');
+  const nodeVersion = versionLabel ?? (v13 ? 'v1.5.2' : 'v1.2.2');
   root.dataset.nodeVersion = nodeVersion;
   root.setAttribute('aria-label', `H3 Character Sheet Designer ${nodeVersion}`);
   root.classList.toggle('h3-v13', v13);

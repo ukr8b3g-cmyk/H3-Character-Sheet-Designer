@@ -131,13 +131,13 @@ domTest('two Reference13 nodes keep independent drafts, role choices and native 
   assert.equal(b.item.widgets.find(w => w.name === 'style').value, 'none');
 });
 
-domTest('P-H3 v1.5.1 has object-only clothing cards, screen directions and a dedicated preview route', t => {
+domTest('P-H3 v1.5.2 has object-only clothing cards, screen directions and a dedicated preview route', t => {
   const h = setup(); t.after(h.cleanup);
   const {item, record} = h.node('H3CharacterSheetDesignerReferenceV13');
   const root = record.ui.root;
   assert.equal(root.querySelectorAll('[data-clothing-mode]').length, 0);
-  assert.equal(root.dataset.nodeVersion, 'v1.5.1');
-  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.5.1');
+  assert.equal(root.dataset.nodeVersion, 'v1.5.2');
+  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.5.2');
   const profile = root.querySelector('[data-view="face_right"]');
   assert.equal(profile.querySelector('.h3-card-label').textContent, 'Left-facing profile');
   assert.equal(profile.querySelector('[data-artwork]').style.transform, '');

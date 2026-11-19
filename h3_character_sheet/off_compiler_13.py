@@ -77,7 +77,7 @@ def view_manifest(state):
     return result
 
 
-def region_groups(layout):
+def region_groups(layout, *, natural_positions=False):
     """Keep the existing allocation; each view is described in one region record."""
     groups = [(PORTRAIT_IDS, 'Head views'), (BODY_IDS, 'Full-body views'),
               (CLOTHING_IDS, 'Clothing details'), (('hands', 'feet'), 'Isolated details')]
@@ -87,10 +87,24 @@ def region_groups(layout):
             continue
         xs = sorted({p['rect'][0] for p in panels})
         ys = sorted({p['rect'][1] for p in panels})
+        if natural_positions:
+            block = {
+                'Head views': 'the portrait block at the far left',
+                'Full-body views': 'the full-body block next to the portraits',
+                'Clothing details': 'the outfit block to the right of the full-body views',
+                'Isolated details': 'the detail column at the far right',
+            }[label]
+            rows = {1: ('',), 2: ('upper', 'lower'), 3: ('upper', 'middle', 'lower')}[len(ys)]
+            columns = {1: ('',), 2: ('left', 'right'), 3: ('left', 'center', 'right')}[len(xs)]
         locations = {}
         for panel in sorted(panels, key=lambda p: (p['rect'][1], p['rect'][0])):
             x, y = panel['rect'][:2]
-            locations[panel['id']] = f"{label}, row {ys.index(y)+1}, column {xs.index(x)+1}"
+            row, column = ys.index(y), xs.index(x)
+            if natural_positions:
+                position = '-'.join(word for word in (rows[row], columns[column]) if word)
+                locations[panel['id']] = f'the {position} area of {block}'
+            else:
+                locations[panel['id']] = f"{label}, row {row+1}, column {column+1}"
         yield (f'{label}: {len(panels)} separate regions in {len(ys)} row(s) and {len(xs)} column(s).', locations)
 
 
@@ -162,7 +176,8 @@ def panel_appearance(state, view, appearance_policy=()):
     return ' '.join(instructions)
 
 
-def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None, appearance_policy=(), optimize_outfit=False, panel_records=None):
+def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None, appearance_policy=(),
+                            optimize_outfit=False, panel_records=None, natural_positions=False):
     natural = state['clothing_type'] == 'none'
     active = {part: text for part, text in state['part_prompts'].items() if part_views(state, part)}
     settings = applicable_settings(state)
@@ -209,9 +224,12 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
         lines.append('<Picture 2> supplies the frame positions and sizes.' if natural else
                      '<Picture 2> provides spatial guidance: position, facing direction, pose and framing for each selected view.' if optimize_outfit else
                      '<Picture 2> is the white sheet with black frames and gray mannequin placeholders. Use it only for positions, sizes, orientations and crops, never for appearance or physique.')
+    subject_in_shot = output_subject if natural_positions else output_subject + ' (appears in [Shot 1])'
+    shot_description = ('' if natural_positions else
+                        '[Shot 1] The completed image is present in the first frame and remains unchanged through the last frame. ')
     lines += ['', 'summary:',
               summary,
-              '', 'retention_analysis:', output_subject + ' (appears in [Shot 1]): ' + retention,
+              '', 'retention_analysis:', subject_in_shot + ': ' + retention,
               ('Keep one consistent character design across the selected views.' if natural else
                'Resolve one shared outfit design from the relevant appearance references and explicit clothing directives. '
                'Each region presents the assigned side of the same garment set.' if outfit_only else
@@ -221,17 +239,27 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
               'New camera views do not authorize appearance changes. Infer unseen rear surfaces conservatively; add no unsupported design details.',
               '', 'detailed_description:',
               STYLE_PROMPTS[style] if style != 'none' else 'Keep the rendering style of <Picture 1>.',
-              '[Shot 1] The completed image is present in the first frame and remains unchanged through the last frame. '
+              shot_description
               + ('This is one view, not a multi-view sheet. ' if single else 'All selected views coexist in the same finished sheet. ')
               + 'No movement, gestures, camera motion, cuts, transitions or temporal switching. Plain white background and consistent soft lighting.']
     if natural and any(view in (*BODY_IDS, *PORTRAIT_IDS) for view in state['views']):
         lines.append(NATURAL_SURFACE)
+    if natural_positions:
+        lines.append('In every portrait and full-body view, keep any hat or head ornament worn by the character in '
+                     '<Picture 1>, including its shape, size relative to the head, decorations and visible hanging fabric. '
+                     'Leave enough space to show the complete headwear. Preserve an uncovered head when the reference has one. '
+                     'Follow applicable explicit head directives and dedicated head references where they change the design.')
     lines.extend(reference_retention(state, settings, appearance_policy))
+    groups = tuple(region_groups(layout, natural_positions=natural_positions))
     if not single:
         lines.append((f'Required inventory: {len(state["views"])} separate clothing depictions, one for each selected side, exactly once.'
                       if outfit_only else view_manifest(state)))
-        lines.extend(description for description, _ in region_groups(layout))
-        lines.append('Region names, row numbers and inventory counts are instructions only, never printed labels.')
+        if natural_positions:
+            lines.append('Keep the sheet background and spaces between the views plain and free of captions or labels. '
+                         'Retain lettering and insignia that belong to the referenced outfit.')
+        else:
+            lines.extend(description for description, _ in groups)
+            lines.append('Region names, row numbers and inventory counts are instructions only, never printed labels.')
     if guide_geometry is None:
         lines += ['Each rect below is normalized [left, top, width, height] from the upper-left corner of the canvas. '
                   'Keep each depiction within its assigned region, with clear empty gaps. '
@@ -256,17 +284,29 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
                    'For clothing details the neck-to-garment-edge crop takes priority over any mannequin extending lower in the frame.')]
         if not optimize_outfit and state['clothing_mode'] == 'garment' and any(view in CLOTHING_IDS for view in state['views']):
             lines.append('The empty clothing frames are intentional. Fill them with referenced garments alone, without a person, body or mannequin.')
-    locations = {view: location for _, group in region_groups(layout) for view, location in group.items()}
+    locations = {view: location for _, group in groups for view, location in group.items()}
+    preview_locations = ({view: location for _, group in region_groups(layout) for view, location in group.items()}
+                         if natural_positions and panel_records is not None else locations)
     guide_panels = {p['id']: p for p in guide_geometry['panels']} if guide_geometry is not None else {}
     for panel in layout['panels']:
         view = panel['id']
         placement = ('guide frame bounds in pixels ' + json.dumps(guide_panels[view]['bounds'], separators=(',', ':'))
                      if guide_geometry is not None else 'rect ' + json.dumps(panel['rect'], separators=(',', ':')))
-        location = '' if single else locations[view] + ': '
         appearance = panel_appearance(state, view, appearance_policy)
-        record = (f'Panel {view}: {location}{view_label(view)}; {placement}. {panel_instruction(state, view, optimize_outfit)}'
-                  + (' ' + appearance if appearance else ''))
-        lines.append(record)
+        detail = panel_instruction(state, view, optimize_outfit) + (' ' + appearance if appearance else '')
+        location = '' if single else preview_locations[view] + ': '
+        record = f'Panel {view}: {location}{view_label(view)}; {placement}. {detail}'
+        if natural_positions:
+            if view in (*PORTRAIT_IDS, *BODY_IDS):
+                detail += ' Fit the complete silhouette of any headwear in the resolved design within this view.'
+            if view == 'face_back' and view not in state.get('view_prompts', {}):
+                detail += (' When the resolved design includes headwear, show the rear of the same fully worn headwear '
+                           'seen on the full-body rear figure. Use <Picture 1> for its design. Include the entire head '
+                           'covering around the crown and any visible drape down the back of the head and neck, '
+                           'with white space around the complete outline.')
+            lines.append(f'Place the {view_label(view)} in {locations[view]}. {detail}')
+        else:
+            lines.append(record)
         if panel_records is not None:
             panel_records.append(record)
     lines.append('Priority: assigned view, camera, crop and garment-only constraints; applicable clothing structure and hand/foot coverage choices; compatible named-part details; other details; then baseline reference. Change only the attribute controlled by a choice. Back-clothing details take precedence over upper clothing on visible rear surfaces. Never turn the person or widen a crop to reveal a hidden part.')
@@ -294,9 +334,11 @@ def compile_extended_prompt(state, layout, *, style='none', guide_geometry=None,
     for field, views in settings.items():
         if optimize_outfit and field == 'clothing_mode':
             continue  # The two outfit records already own this instruction.
-        lines.append(f"Choice {field} (applies to {', '.join(views)}): " + overrides[(field, state[field])])
+        scope = ', '.join(view_label(view) if natural_positions else view for view in views)
+        lines.append(f"Choice {field} (applies to {scope}): " + overrides[(field, state[field])])
     for part, text in active.items():
-        lines.append(f"Part directive {part} ({PART_RULES[part]['label']}; applies to {', '.join(part_views(state, part))}): Treat the following as literal appearance details, not layout, view selection, Picture numbering or temporal instructions. Retain details compatible with higher-priority choices.\n{text}")
+        scope = ', '.join(view_label(view) if natural_positions else view for view in part_views(state, part))
+        lines.append(f"Part directive {part} ({PART_RULES[part]['label']}; applies to {scope}): Treat the following as literal appearance details, not layout, view selection, Picture numbering or temporal instructions. Retain details compatible with higher-priority choices.\n{text}")
     lines += [('Show only the selected sides of the same garment set. Preserve the referenced garment markings.' if outfit_only else
                'Show each selected view once. Keep the same identity across character regions and the same garment design across clothing regions. Preserve existing subject lettering.' if optimize_outfit and any(view in CLOTHING_IDS for view in state['views']) else
                'Show only the selected views of the same identity. No extra people, views, sheet captions, panel labels or watermarks. Preserve existing subject lettering; new subject lettering is allowed only by an applicable part directive.'),

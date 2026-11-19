@@ -125,7 +125,7 @@ domTest(`${nodeType} editor flushes, reloads, resets and retains reference switc
   assert.deepEqual(native.map(w=>w.value), [false,'none']);
   if (nodeType === 'MiniMaxH3ImageCharacterSheetDesigner') {
     assert(h.requests.every(r => r.path === '/h3_character_sheet_designer/minimax_image/preview'));
-    assert(root.textContent.includes('v1.5.1'));
+    assert(root.textContent.includes('v1.5.2'));
   }
 });
 }

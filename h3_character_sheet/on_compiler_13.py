@@ -1,6 +1,6 @@
 """Shared Reference13 compile entry; only ON derives guide geometry."""
 from .compiler import DEFAULT_MAX_RESOLUTION, EXPERIMENTAL_PIXEL_THRESHOLD, StateValidationError
-from .guide_13 import derive_guide_geometry, tighten_guide_layout, fit_auto_body_height, _contained_size
+from .guide_13 import derive_guide_geometry, tighten_guide_layout, fit_auto_body_height, frame_full_sheet_headwear, _contained_size
 from .layout_13 import compute_semantic_layout
 from .off_compiler_13 import compile_extended_prompt, compile_off_prompt_13, panel_instruction
 from .view_catalog_13 import VIEW_IDS
@@ -12,7 +12,7 @@ EXTRA_INPUTS = ('reference_image_1', 'reference_image_2', 'reference_image_3')
 
 
 def compile_reference13_state(state_json, *, use_layout_image=False, style='none', max_resolution=DEFAULT_MAX_RESOLUTION,
-                              reference_presence=None, optimize_outfit=False):
+                              reference_presence=None, optimize_outfit=False, describe_full_sheet_positions=False):
     if type(use_layout_image) is not bool:
         raise StateValidationError('use_layout_image must be boolean.', 'invalid_request')
     if type(style) is not str or style not in STYLE_PROMPTS:
@@ -27,6 +27,7 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
     if optimize_outfit:
         saved["clothing_mode"] = "garment"
     state = {**saved, 'views': effective_views(saved)}
+    full_sheet_positions = describe_full_sheet_positions and set(state['views']) == set(VIEW_IDS)
     natural = state['clothing_type'] == 'none'
     roles = state.get('reference_roles', {})
     if natural:
@@ -51,6 +52,8 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
                 left, top, right, bottom = panel["bounds"]
                 w, h = _contained_size((320, 500), (right-left-2, bottom-top-2))
                 panel["rect"] = [left+(right-left-w)//2, top+(bottom-top-h)//2, w, h]
+    if full_sheet_positions and geometry is not None:
+        frame_full_sheet_headwear(geometry)
     # Fixed Core wires, with packed Picture numbering that skips absent images.
     # Keep this independent from the legacy four-wire plan used by older nodes.
     ordered = [('character_image', 'character', True), ('layout_image', 'layout', use_layout_image)]
@@ -66,7 +69,10 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
     if not use_layout_image:
         prompt = compile_off_prompt_13(state, layout, style=style, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
     else:
-        prompt = compile_extended_prompt(state, layout, style=style, guide_geometry=geometry, appearance_policy=appearance_policy, optimize_outfit=optimize_outfit, panel_records=panel_records)
+        prompt = compile_extended_prompt(
+            state, layout, style=style, guide_geometry=geometry, appearance_policy=appearance_policy,
+            optimize_outfit=optimize_outfit, panel_records=panel_records,
+            natural_positions=full_sheet_positions)
     extras = [item for item in references if item['source'] in EXTRA_INPUTS]
     if extras:
         unused = unused_reference_instructions(extras, appearance_policy)

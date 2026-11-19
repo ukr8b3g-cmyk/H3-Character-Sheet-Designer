@@ -6,7 +6,8 @@ from .view_catalog_13 import PORTRAIT_IDS
 
 
 def compile_reference_v13_state(state_json, *, style='none', **kwargs):
-    result = compile_reference13_state(state_json, optimize_outfit=True, style=style, **kwargs)
+    result = compile_reference13_state(
+        state_json, optimize_outfit=True, describe_full_sheet_positions=True, style=style, **kwargs)
     sources = ('character_image', 'layout_image', *EXTRA_INPUTS)
     for reference in result['reference_plan']:
         slot = sources.index(reference['source']) + 1

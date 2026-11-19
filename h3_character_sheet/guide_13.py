@@ -49,6 +49,21 @@ def derive_guide_geometry(layout, state, *, compact=False):
             'legacy': legacy, 'panels': panels}
 
 
+def frame_full_sheet_headwear(geometry):
+    """Leave room above the top portraits and guide the rear by position alone."""
+    geometry['panel_fill'] = '#f7f7f7'
+    for panel in geometry['panels']:
+        if panel['id'] == 'face_back':
+            panel['blank'] = True
+        elif panel['id'] in ('face_front', 'face_left'):
+            _, top, _, bottom = panel['bounds']
+            x, y, width, height = panel['rect']
+            inset = min(height - 1, round((bottom - top) * 0.18))
+            new_height = height - inset
+            new_width = max(1, round(width * new_height / height))
+            panel['rect'] = [x + (width - new_width) // 2, y + inset, new_width, new_height]
+
+
 def render_reference13_guide(geometry, layout):
     if geometry['legacy']:
         try:

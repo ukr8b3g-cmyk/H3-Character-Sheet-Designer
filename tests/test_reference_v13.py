@@ -32,6 +32,69 @@ class V13Tests(unittest.TestCase):
                 self.assertFalse(p['blank']);x,y,w,h=p['rect']
                 self.assertLess(image.crop((x+5,y+5,x+w-5,y+h-5)).convert('L').getextrema()[0],200)
 
+    def test_guided_full_sheet_only_sends_natural_positions_to_the_model(self):
+        state = {
+            **DEFAULT_STATE,
+            'views': list(VIEW_IDS),
+            'part_prompts': {'head_hair': 'Silver hair.'},
+            'footwear_state': 'shod',
+            'view_prompts': {'face_3q_left': 'Keep the original expression.'},
+        }
+        for size in (state['size'], {**state['size'], 'mode': 'manual',
+                                    'manual_width': 3968, 'manual_height': 1024}):
+            with self.subTest(size=size):
+                raw = json.dumps({**state, 'size': size})
+                result = compile_reference_v13_state(raw, use_layout_image=True)
+                legacy_format = compile_reference13_state(raw, optimize_outfit=True, use_layout_image=True)
+                for key in ('semantic_layout', 'view_prompts', 'state_json'):
+                    self.assertEqual(result[key], legacy_format[key])
+                geometry = result['guide_geometry']
+                self.assertEqual(geometry['panel_fill'], '#f7f7f7')
+                for panel, original in zip(geometry['panels'], legacy_format['guide_geometry']['panels']):
+                    self.assertEqual(panel['bounds'], original['bounds'])
+                    if panel['id'] in ('face_front', 'face_left'):
+                        self.assertGreater(panel['rect'][1], original['rect'][1])
+                        self.assertLess(panel['rect'][3], original['rect'][3])
+                    elif panel['id'] == 'face_back':
+                        self.assertTrue(panel['blank'])
+                    else:
+                        self.assertEqual(panel, original)
+                prompt = result['prompt']
+                for view in VIEW_IDS:
+                    if '_' in view:
+                        self.assertNotIn(view, prompt)
+                self.assertNotRegex(prompt, r'\[\s*\d+\s*,')
+                self.assertNotIn('[Shot 1]', prompt)
+                panels = [line for line in prompt.splitlines() if line.startswith('Place the ')]
+                positions = [line.split('. ', 1)[0] for line in panels]
+                self.assertEqual(len(positions), 13)
+                self.assertEqual(len(set(positions)), 13)
+                self.assertIn('Place the front portrait in the upper-left area of the portrait block at the far left', positions)
+                self.assertIn('Place the screen-right-facing full-body profile in the center area of the full-body block next to the portraits', positions)
+                self.assertIn('Place the feet and footwear detail in the lower area of the detail column at the far right', positions)
+                self.assertIn('Keep the original expression.', prompt)
+                self.assertIn('Silver hair.', prompt)
+                footwear = next(line for line in prompt.splitlines() if line.startswith('Choice footwear_state'))
+                self.assertIn('feet and footwear detail)', footwear)
+                self.assertIn('keep any hat or head ornament worn by the character in <Picture 1>', prompt)
+                self.assertIn('Preserve an uncovered head when the reference has one.', prompt)
+                self.assertIn('Follow applicable explicit head directives and dedicated head references', prompt)
+                for panel in panels:
+                    person = 'portrait block' in panel or 'full-body block' in panel
+                    self.assertEqual('complete silhouette of any headwear' in panel, person)
+                    self.assertEqual('seen on the full-body rear figure' in panel,
+                                     panel.startswith('Place the rear portrait '))
+                layout_off = compile_reference_v13_state(raw)['prompt']
+                self.assertIn('Panel face_front:', layout_off)
+                self.assertNotIn('complete silhouette of any headwear', layout_off)
+        unguided_subset = json.dumps({**DEFAULT_STATE, 'views': list(PRESETS['five'])})
+        self.assertIn('guide frame bounds in pixels',
+                      compile_reference_v13_state(unguided_subset, use_layout_image=True)['prompt'])
+        edited_rear = json.dumps({**state, 'view_prompts': {'face_back': 'Draw a bare head.'}})
+        prompt = compile_reference_v13_state(edited_rear, use_layout_image=True)['prompt']
+        self.assertIn('Draw a bare head.', prompt)
+        self.assertNotIn('seen on the full-body rear figure', prompt)
+
     def test_successful_non_clothing_prompts_unchanged(self):
         groups=[['face_front','face_left','body_front','body_left','body_back'],
                 ['body_front'],['body_front','body_left','body_back']]
@@ -243,7 +306,7 @@ class V13Tests(unittest.TestCase):
         with patch.dict(sys.modules,{'h3_registration_check':module,'server':None}):
             spec.loader.exec_module(module)
         self.assertEqual(set(module.NODE_CLASS_MAPPINGS),{'H3CharacterSheetDesignerReference13','H3CharacterSheetDesignerReferenceV13','MiniMaxH3ImageCharacterSheetDesigner'})
-        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.5.1','MiniMax H3 Image Character Sheet Designer v1.5.1'})
+        self.assertEqual(set(module.NODE_DISPLAY_NAME_MAPPINGS.values()),{'H3 Character Sheet Designer v1.2.2','H3 Character Sheet Designer v1.5.2','MiniMax H3 Image Character Sheet Designer v1.5.2'})
         self.assertTrue(module.NODE_CLASS_MAPPINGS['H3CharacterSheetDesignerReference13'].DEPRECATED)
 
     def test_outfit_only_has_shared_object_scope_for_front_and_back(self):
@@ -284,8 +347,11 @@ class V13Tests(unittest.TestCase):
             self.assertNotIn('Its silhouettes are schematic placeholders',on['prompt'])
             self.assertNotIn('Preserve every black frame',on['prompt'])
             self.assertNotIn('relative size',on['prompt'])
-            for view in views:
-                self.assertEqual(on['prompt'].count('Panel '+view+':'),1)
+            if views == list(VIEW_IDS):
+                self.assertEqual(sum(line.startswith('Place the ') for line in on['prompt'].splitlines()), len(views))
+            else:
+                for view in views:
+                    self.assertEqual(on['prompt'].count('Panel '+view+':'),1)
             self.assertIsNotNone(on['guide_geometry'])
             self.assertIn('provides spatial guidance',on['prompt'])
             self.assertIn('Create a new finished sheet using the appearance from <Picture 1>',on['prompt'])
@@ -297,7 +363,10 @@ class V13Tests(unittest.TestCase):
                 text=compile_reference_v13_state(json.dumps(state),use_layout_image=guide)['prompt']
                 hits=[line for line in text.splitlines() if 'No human.' in line]
                 self.assertEqual(len(hits),2)
-                self.assertTrue(all(line.startswith(('Panel clothing_front:', 'Panel clothing_back:')) for line in hits))
+                prefixes = (('Place the clothing front ', 'Place the clothing back ')
+                            if guide and views == list(VIEW_IDS) else
+                            ('Panel clothing_front:', 'Panel clothing_back:'))
+                self.assertEqual([line.startswith(prefix) for line, prefix in zip(hits, prefixes)], [True, True])
                 self.assertNotIn('Unworn clothing objects',text)
                 self.assertNotIn('Sleeves and openings are empty',text)
                 self.assertEqual(text.count('The outfit is flat.'),2)
