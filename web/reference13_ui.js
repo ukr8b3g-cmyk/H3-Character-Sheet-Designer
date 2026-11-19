@@ -310,7 +310,8 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     const row = element('div', 'h3r13-choice'), label = element('label'), select = element('select', 'h3-select');
     row.dataset.choiceGroup = field; select.dataset.appearanceChoice = field;
     select.id = `${id}-${field}`; label.htmlFor = select.id;
-    const values = v13 && field === 'clothing_type' ? [...SETTINGS[field], 'none'] : SETTINGS[field];
+    const values = v13 && field === 'clothing_type'
+      ? [...SETTINGS[field], ...(imageNode ? ['short_skirt'] : []), 'none'] : SETTINGS[field];
     for (const value of values) { const option = element('option'); option.value = value; select.append(option); }
     listen(select, 'change', () => act(() => controller.setChoice(field, select.value)));
     row.append(label, select); qualityBox.append(row); qualityMap.set(field, {label, select});
@@ -492,7 +493,10 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       item.select.title = tips[field];
       item.select.value = controller.state?.[field] ?? DEFAULTS[field];
       for (const option of item.select.options) option.textContent = option.value === 'none'
-        ? (ja ? '衣服なし／体表を保持' : 'No clothing · natural body surface') : options[option.value];
+        ? (ja ? '衣服なし／体表を保持' : 'No clothing · natural body surface')
+        : option.value === 'short_skirt'
+          ? (ja ? '短いスカート／参照の丈を保持' : 'Short skirt · match reference hem')
+          : options[option.value];
     }
     qualityHint.textContent = controller.state?.clothing_type === 'none'
       ? (ja ? '体表と模様を保持します。手袋・履物は別設定です。' : 'Preserve the body surface and markings. Hands and footwear use their own settings.')

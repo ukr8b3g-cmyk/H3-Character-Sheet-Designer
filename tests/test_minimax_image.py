@@ -14,6 +14,74 @@ from h3_character_sheet.view_catalog_13 import PRESETS, VIEW_IDS
 
 
 class MiniMaxImageTests(unittest.TestCase):
+    def test_guided_full_sheet_outfit_keeps_two_neutral_areas_and_custom_text(self):
+        state = {**DEFAULT_STATE, 'views': list(VIEW_IDS)}
+        auto = compile_minimax_image_state(json.dumps(state), use_layout_image=True)
+        self.assertEqual(len(auto['view_prompts']), 13)
+        panels = {panel['id']: panel for panel in auto['guide_geometry']['panels']}
+        neutral = {name for name, panel in panels.items() if panel['blank']}
+        self.assertEqual(neutral, {'clothing_front', 'clothing_back'})
+        self.assertLess(panels['clothing_front']['bounds'][0], panels['clothing_back']['bounds'][0])
+        guide = render_reference13_guide(auto['guide_geometry'], auto['semantic_layout'])
+        for name in neutral:
+            left, top, right, bottom = panels[name]['bounds']
+            self.assertEqual(guide.crop((left + 1, top + 1, right - 1, bottom - 1)).getextrema(),
+                             ((239, 239),) * 3)
+        self.assertIn('Include all referenced garments and layers.', auto['prompt'])
+        self.assertIn('right of those same two side-by-side outfit areas', auto['prompt'])
+
+        custom = {**state, 'view_prompts': {'clothing_back': 'Use the custom rear outfit instruction.'}}
+        edited = compile_minimax_image_state(json.dumps(custom), use_layout_image=True)
+        self.assertIn('Use the custom rear outfit instruction.', edited['prompt'])
+        self.assertNotIn('right of those same two side-by-side outfit areas', edited['prompt'])
+
+        for clothing_type, instruction in (('pants', 'Trousers for the lower garment.'),
+                                           ('skirt_robe', 'Skirt or robe for the lower garment.')):
+            with self.subTest(clothing_type=clothing_type):
+                raw = json.dumps({**state, 'clothing_type': clothing_type})
+                selected = compile_minimax_image_state(raw, use_layout_image=True)
+                self.assertEqual(selected['guide_geometry'], auto['guide_geometry'])
+                self.assertEqual(selected['semantic_layout'], auto['semantic_layout'])
+                self.assertEqual(selected['state']['clothing_type'], clothing_type)
+                for view in ('clothing_front', 'clothing_back'):
+                    record, = [text for text in selected['view_prompts'] if text.startswith(f'{view}:')]
+                    self.assertIn('original cut, sleeve length, and hem', record)
+                    self.assertIn('selected lower-garment shape takes precedence', record)
+                    self.assertIn(instruction, record)
+
+        robe = {**state, 'clothing_type': 'skirt_robe'}
+        guided_robe = compile_minimax_image_state(json.dumps(robe), use_layout_image=True)
+        self.assertNotIn('A tall band of plain white space', guided_robe['prompt'])
+        self.assertNotIn('its hem sits along the thigh', guided_robe['prompt'])
+        skirt = {**state, 'clothing_type': 'short_skirt'}
+        guided_skirt = compile_minimax_image_state(json.dumps(skirt), use_layout_image=True)
+        self.assertEqual(guided_skirt['state']['clothing_type'], 'short_skirt')
+        self.assertEqual(json.loads(guided_skirt['state_json'])['clothing_type'], 'short_skirt')
+        self.assertEqual(guided_skirt['guide_geometry'], guided_robe['guide_geometry'])
+        self.assertIn('A tall band of plain white space', guided_skirt['prompt'])
+        hem_views = {record.split(':', 1)[0] for record in guided_skirt['view_prompts']
+                     if 'its hem sits along the thigh' in record}
+        self.assertEqual(hem_views, {'body_front', 'body_left', 'body_back'})
+        custom = {**skirt, 'view_prompts': {'body_front': 'Use the custom front silhouette.'}}
+        edited = compile_minimax_image_state(json.dumps(custom), use_layout_image=True)
+        self.assertIn('Use the custom front silhouette.', edited['prompt'])
+        self.assertNotIn('A tall band of plain white space', edited['prompt'])
+        self.assertNotIn('its hem sits along the thigh', edited['prompt'])
+        unguided = compile_minimax_image_state(json.dumps(skirt), use_layout_image=False)
+        self.assertIn('Match the separate short skirt from <Picture 1>', unguided['prompt'])
+        self.assertNotIn('A tall band of plain white space', unguided['prompt'])
+        with self.assertRaises(StateValidationError):
+            compile_reference_v13_state(json.dumps(skirt), use_layout_image=True)
+
+        for options, guided in (({}, False), ({'clothing_type': 'pants'}, False),
+                                ({'clothing_type': 'skirt_robe'}, False),
+                                ({'views': list(PRESETS['clothing']), 'clothing_type': 'skirt_robe'}, True)):
+            unchanged = compile_minimax_image_state(json.dumps({**state, **options}), use_layout_image=guided)
+            self.assertNotIn('Include all referenced garments and layers.', unchanged['prompt'])
+            self.assertFalse(any(panel['blank'] for panel in unchanged['guide_geometry']['panels']))
+            self.assertNotIn('its hem sits along the thigh', unchanged['prompt'])
+            self.assertEqual(unchanged['default_view_prompts']['clothing_front'], VIEW_PROMPTS['clothing_front'])
+
     def test_head_six_uses_the_same_three_columns_and_white_gaps_with_or_without_guide(self):
         state = {**DEFAULT_STATE, 'views': list(PRESETS['head']), 'resolution_profile': 'high'}
         raw = json.dumps(state)

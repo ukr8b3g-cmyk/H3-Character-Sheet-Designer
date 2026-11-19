@@ -48,6 +48,7 @@ export function normalizeReference13State(state, max = Infinity, imageNode = fal
     if (Object.values(state.reference_roles).some(role => !REFERENCE_ROLES.includes(role))) fail('setting', 'reference_roles');
   }
   for (const [field, values] of Object.entries(SETTINGS)) {
+    if (field === 'clothing_type' && imageNode && state[field] === 'short_skirt') continue;
     if (field === 'clothing_type' && state[field] === 'none') {
       if (!allowNoClothing) fail('no_clothing_unsupported_node');
     } else if (!values.includes(state[field])) fail('setting', field);
@@ -81,7 +82,7 @@ export class Reference13Controller extends DesignerController {
     return super.commit(next);
   }
   setChoice(field, value) {
-    if (!SETTINGS[field]?.includes(value) && !(field === 'clothing_type' && value === 'none')) fail('setting', field);
+    if (!SETTINGS[field]?.includes(value) && !(field === 'clothing_type' && ['none', 'short_skirt'].includes(value))) fail('setting', field);
     this.syncFromSource();
     if (!this.state || (this.state[field] ?? DEFAULTS[field]) === value) return false;
     const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);

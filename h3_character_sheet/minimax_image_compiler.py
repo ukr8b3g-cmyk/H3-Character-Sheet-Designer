@@ -9,7 +9,7 @@ from .on_compiler_13 import compile_reference13_state
 from .state_13 import applicable_settings, effective_views, part_views, serialize_reference13_state
 from .reference_compiler import STYLE_PROMPTS
 from .appearance_policy_13 import ROLE_NAMES, build_appearance_policy, unused_reference_instructions
-from .view_catalog_13 import BODY_IDS, NATURAL_SURFACE, NATURAL_VIEW_PROMPTS, PORTRAIT_IDS, PRESETS, VIEW_IDS
+from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, NATURAL_SURFACE, NATURAL_VIEW_PROMPTS, PORTRAIT_IDS, PRESETS, VIEW_IDS
 
 RESOLUTION_PROFILES = ('current', 'high', 'max_8mp', 'max_16mp')
 EIGHT_MP = 8_000_000
@@ -31,6 +31,22 @@ VIEW_PROMPTS = {
     'hands': 'Close-up of both hands, including their coverings when present in the reference.',
     'feet': 'Close-up of both feet and their footwear when present in the reference.',
 }
+
+GUIDED_OUTFIT_PROMPTS = {
+    'clothing_front': (
+        'The outfit front occupies the left of two side-by-side outfit areas directly to the right of the full-body figures. '
+        'Show the complete front of the outfit from <Picture 1> laid flat on white, from neckline to lowest garment hem. '
+        'Include all referenced garments and layers. Each garment stays intact with its original cut, sleeve length, and hem. '
+        'Only clothing is visible.'
+    ),
+    'clothing_back': (
+        'The outfit back occupies the right of those same two side-by-side outfit areas. '
+        'Show the complete back of the same garment set laid flat on white. '
+        'Include the same garments and layers, each intact with its original cut, sleeve length, and hem. '
+        'Only clothing is visible.'
+    ),
+}
+
 
 SETTINGS = {
     ('hand_state', 'bare'): 'Bare hands.',
@@ -128,10 +144,15 @@ def compile_minimax_image_state(state_json, **kwargs):
     # Only this node accepts the optional setting in its saved state.
     saved = decode_json(state_json)
     profile = None
+    short_skirt = isinstance(saved, dict) and saved.get('schema_version') == 3 and saved.get('clothing_type') == 'short_skirt'
+    if short_skirt:
+        # The shared layout compiler uses the same geometry as Skirt / robe.
+        saved['clothing_type'] = 'skirt_robe'
     if isinstance(saved, dict) and 'resolution_profile' in saved:
         profile = saved.pop('resolution_profile')
         if saved.get('schema_version') != 3 or profile not in RESOLUTION_PROFILES:
             raise StateValidationError('Unknown output resolution profile.', 'invalid_resolution_profile')
+    if profile is not None or short_skirt:
         state_json = json.dumps(saved, ensure_ascii=False, separators=(',', ':'))
     # Reuse validation, sizing, guide rendering and persistence, not video prose.
     result = compile_reference13_state(state_json, optimize_outfit=True, **kwargs)
@@ -141,10 +162,13 @@ def compile_minimax_image_state(state_json, **kwargs):
     natural = state['clothing_type'] == 'none'
     if not natural and result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
         result['guide_geometry'] = _standard_five_view_guide(result['semantic_layout'], state)
+    if short_skirt:
+        saved['clothing_type'] = 'short_skirt'
     if profile is not None:
         saved['resolution_profile'] = profile
-        result['state_json'] = serialize_reference13_state(saved)
         _apply_resolution(result, profile)
+    if profile is not None or short_skirt:
+        result['state_json'] = serialize_reference13_state(saved)
     result['experimental'] = result['pixel_count'] > MAX_AUTO_PIXELS
     refs = result['reference_plan']
     slots = ('character_image', 'layout_image', 'reference_image_1',
@@ -152,6 +176,24 @@ def compile_minimax_image_state(state_json, **kwargs):
     for ref in refs:
         ref['core_input'] = f"images.image_{slots.index(ref['source'])}"
     defaults = dict(VIEW_PROMPTS)
+    overrides = state.get('view_prompts', {})
+    guided_full_sheet = result['guide_enabled'] and not natural and set(views) == set(VIEW_IDS)
+    guide_skirt_framing = (guided_full_sheet and short_skirt and not any(view in overrides for view in BODY_IDS))
+    if guided_full_sheet:
+        geometry = result['guide_geometry']
+        geometry['panel_fill'] = '#efefef'
+        for panel in geometry['panels']:
+            if panel['id'] in CLOTHING_IDS:
+                panel['blank'] = True
+        defaults.update(GUIDED_OUTFIT_PROMPTS)
+        if guide_skirt_framing:
+            for view in BODY_IDS:
+                defaults[view] += (' If the reference outfit includes a separate short skirt, '
+                                   'match where its hem sits along the thigh. '
+                                   'Retain the original length and visible layers of a continuous robe.')
+        if state['clothing_type'] != 'reference':
+            for view in CLOTHING_IDS:
+                defaults[view] += ' The selected lower-garment shape takes precedence where it changes the reference cut.'
     if state['hand_state'] == 'bare':
         defaults['hands'] = 'Close-up of both hands.'
     if state['footwear_state'] == 'unshod':
@@ -170,7 +212,6 @@ def compile_minimax_image_state(state_json, **kwargs):
         return apply_head_six(result, state, defaults, style=style)
 
     style_instruction = STYLE_PROMPTS[style]
-    overrides = state.get('view_prompts', {})
     single = len(views) == 1
     all_views = len(views) == len(VIEW_IDS) and not result['guide_enabled']
     hand_foot_pair = set(views) == {'hands', 'feet'} and not result['guide_enabled']
@@ -201,6 +242,10 @@ def compile_minimax_image_state(state_json, **kwargs):
         if ref['role'] == 'layout':
             if single:
                 lines.append(f"Use {ref['tag']} for framing.")
+            elif guide_skirt_framing:
+                lines.append(f"{ref['tag']} supplies the arrangement, viewing directions, and the exact vertical framing. "
+                             'A tall band of plain white space remains above the three full-body figures, as shown in the guide. '
+                             'Each standing figure begins at the top of its guide silhouette and ends at the same foot level.')
             else:
                 placement = 'frame positions and sizes' if natural else 'arrangement and viewing directions'
                 lines.append(f"{ref['tag']} supplies the {placement}. "
@@ -237,13 +282,17 @@ def compile_minimax_image_state(state_json, **kwargs):
     records = []
     view_text = {}
     scopes = applicable_settings(state)
+    settings = SETTINGS
+    if short_skirt and not guide_skirt_framing:
+        settings = {**SETTINGS, ('clothing_type', 'skirt_robe'):
+                    'Match the separate short skirt from <Picture 1> and keep its reference hem.'}
     for index, column in enumerate(columns):
         descriptions = []
         for panel in column:
             view = panel['id']
             text = overrides.get(view, defaults[view])
-            extras = [SETTINGS[(field, state[field])] for field, views in scopes.items()
-                      if view in views and (field, state[field]) in SETTINGS]
+            extras = [settings[(field, state[field])] for field, views in scopes.items()
+                      if view in views and (field, state[field]) in settings]
             for ref in appearance:
                 if any(view in views for views in ref['parts'].values()):
                     extras.append(f"Use {ref['tag']} for {ROLE_NAMES[ref['role']]}.")

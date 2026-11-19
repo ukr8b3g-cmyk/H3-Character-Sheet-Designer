@@ -164,6 +164,18 @@ domTest('No clothing preserves 13 saved views and validates 11 preview panels in
     const preset = root.querySelector('.h3-preset-row select');
     const shape = root.querySelector('[data-appearance-choice="clothing_type"]');
     const clothing = root.querySelector('[data-view="clothing_front"]');
+    const shortSkirt = shape.querySelector('[value="short_skirt"]');
+    if (type === 'MiniMaxH3ImageCharacterSheetDesigner') {
+      assert.equal(shortSkirt.textContent, 'Short skirt · match reference hem');
+      choose(shape, 'short_skirt');
+      const skirtState = item.serialize().widgets_values[0];
+      assert.equal(JSON.parse(skirtState).clothing_type, 'short_skirt');
+      original.value = skirtState; item.onConfigure();
+      assert.equal(shape.value, 'short_skirt');
+      choose(shape, 'reference');
+    } else {
+      assert.equal(shortSkirt, null);
+    }
     choose(preset, 'clothing');
     const clothingOnly = original.value;
     choose(shape, 'none');

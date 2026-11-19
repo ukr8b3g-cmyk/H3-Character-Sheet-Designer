@@ -1,9 +1,14 @@
 # H3 Character Sheet Designer
 <img width="1288" height="864" alt="{ADFF3198-407B-4693-A454-F8ED0E0A625F}" src="https://github.com/user-attachments/assets/8478a706-620c-42e2-a13b-068fe601f0b3" />
 
-[日本語](#日本語) · **Package v1.5.2**
+[日本語](#日本語) · **Package v1.5.3**
 
 Create character reference sheets with native MiniMax H3 image-reference conditioning. One character image and up to three optional part references are passed through unchanged. Select up to 13 views: six head views, three full-body views, front/back clothing, paired hands and paired feet/footwear.
+
+## What's New — v1.5.3
+
+- In **MiniMax H3 Image**, choose **Clothing shape → Short skirt · match reference hem** when the reference has a separate short skirt. With **All · 13 views** and **Use Layout Image** on, the prompt follows the guide's full-body framing and matches the skirt hem to its position on the thigh. The two pale outfit slots in the guide mark where the model should draw the clothing front and back.
+- GPU verification in ComfyUI_W used the same three reference images, seed 42, and 3968 × 1024 with all 13 views and Layout Image on. All three full-body angles of the regular-proportioned character showed a thigh-length hem. Figure heights were 708 → 704 px (front), 704 → 701 px (side), and 706 → 702 px (back). The chibi character in **Skirt / robe** and the tall character in **Pants** were pixel-identical to their earlier outputs, including their robe and red trousers, and long sleeves and long trousers, respectively.
 
 ## What's New — v1.5.2
 
@@ -184,7 +189,7 @@ These are the previous node versions. Earlier Designer, Reference, Multi Referen
 
 ## Installation and updates
 
-[Download the v1.5.2 package](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.2/H3-Character-Sheet-Designer-v1.5.2.zip). It includes the Designer and both workflow JSONs.
+[Download the v1.5.3 package](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.3/H3-Character-Sheet-Designer-v1.5.3.zip). It includes the Designer and both workflow JSONs.
 
 ### New installation
 
@@ -198,10 +203,10 @@ cd ComfyUI/custom_nodes
 git clone https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer.git
 ```
 
-### Update to v1.5.2
+### Update to v1.5.3
 
-1. Save your open workflows and stop ComfyUI. Move the existing Designer folder outside `ComfyUI/custom_nodes` as a backup. Extract the v1.5.2 package to the original location so ComfyUI loads one copy of the Designer. For an existing Git clone on `main`, use `git pull --ff-only` in that clone.
-2. Restart the ComfyUI installation you updated and reload the browser. Open the matching workflow from `workflows`. Check that the Designer node title ends in **v1.5.2** and that **Head · 6 views** shows three columns and two rows.
+1. Save your open workflows and stop ComfyUI. Move the existing Designer folder outside `ComfyUI/custom_nodes` as a backup. Extract the v1.5.3 package to the original location so ComfyUI loads one copy of the Designer. For an existing Git clone on `main`, use `git pull --ff-only` in that clone.
+2. Restart the ComfyUI installation you updated and reload the browser. Open the matching workflow from `workflows`. In MiniMax H3 Image, check that **Clothing shape** includes **Short skirt · match reference hem**. The displayed node titles retain the existing **v1.5.2** suffix.
 
 ### Install an older version
 
@@ -214,6 +219,11 @@ v1.5.0 changes the Head · 6 views layout, guide, and prompt, so an existing wor
 <img width="2816" height="1280" alt="comfy_minimax_h3_fl2va_pruned_int8_convrot_20261004191840_00001_" src="https://github.com/user-attachments/assets/2265b1fd-3fc8-4331-b0db-5003621bf0b5" />
 
 ## 日本語
+
+### v1.5.3の変更点
+
+- MiniMax H3 Image版では、参照画像に独立した短いスカートがある場合、**衣装の型 → 短いスカート／参照の丈を保持**を選べます。**全13面**でLayout ImageをONにすると、ガイドに合わせて全身の大きさを保ち、参照画像の太ももに対する裾の位置を指示します。ガイドの淡い2枠は、衣服の前面と背面を描く位置です。
+- ComfyUI_WのGPUで、同じ参照画像3枚、seed 42、3968 × 1024、全13面、Layout Image ONで比較しました。通常頭身では全身3面が参照に近い太もも丈になり、人物の高さは正面708 → 704 px、側面704 → 701 px、背面706 → 702 pxでした。**スカート・ローブ**のちびキャラと**パンツ**の大柄な人物は修正前と画素単位で一致し、ローブと赤いズボン、長袖と長ズボンがそれぞれ維持されました。
 
 ### v1.5.2の変更点
 
@@ -238,13 +248,13 @@ MiniMax H3 Image版とP-H3版の **Head · 6 views** は、Layout ImageのON／O
 
 ### 新規インストール
 
-1. ComfyUIを停止し、[v1.5.2の本体ZIP](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.2/H3-Character-Sheet-Designer-v1.5.2.zip)を展開します。`ComfyUI/custom_nodes/H3-Character-Sheet-Designer/__init__.py` となるように配置してください。
+1. ComfyUIを停止し、[v1.5.3の本体ZIP](https://github.com/ukr8b3g-cmyk/H3-Character-Sheet-Designer/releases/download/v1.5.3/H3-Character-Sheet-Designer-v1.5.3.zip)を展開します。`ComfyUI/custom_nodes/H3-Character-Sheet-Designer/__init__.py` となるように配置してください。
 2. ComfyUIを起動してブラウザを再読み込みし、同梱の `workflows` から使うJSONを開きます。ワークフロー内のModel Linksにあるモデルを導入し、各ローダーで選択します。MiniMax H3 Image版にはComfyUI 0.45.0以上が必要です。
 
-### v1.5.2へ更新
+### v1.5.3へ更新
 
-1. 開いているワークフローを保存し、ComfyUIを停止します。既存のDesignerフォルダーを `custom_nodes` の外へバックアップし、同じ場所にv1.5.2の本体を展開します。Gitで導入している場合は、そのクローンの `main` で `git pull --ff-only` を実行できます。
-2. 更新したComfyUIを起動し直し、ブラウザを再読み込みします。同梱JSONを開き、両版のノード名が **v1.5.2** と表示され、**Head · 6 views** が3列×2段になることを確認します。
+1. 開いているワークフローを保存し、ComfyUIを停止します。既存のDesignerフォルダーを `custom_nodes` の外へバックアップし、同じ場所にv1.5.3の本体を展開します。Gitで導入している場合は、そのクローンの `main` で `git pull --ff-only` を実行できます。
+2. 更新したComfyUIを起動し直し、ブラウザを再読み込みします。MiniMax H3 Imageの同梱JSONを開き、**衣装の型**に**短いスカート／参照の丈を保持**があることを確認します。既存のノード名に付く **v1.5.2** 表示は維持しています。
 
 ### 旧バージョンの入手とインストール
 

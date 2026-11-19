@@ -1,3 +1,8 @@
+# v1.5.3
+
+- Add Short skirt · match reference hem to MiniMax H3 Image. For guided 13-view sheets, use the guide's full-body framing and match the separate skirt's hem to the reference.
+- Verify all three test references in ComfyUI_W at 3968 × 1024 and seed 42. The short skirt reached thigh length with a 3–4 px change in full-body height. The Skirt / robe and Pants controls matched their earlier outputs pixel for pixel.
+
 # v1.5.2
 
 - Describe panel positions in plain language for P-H3's guided 13-view sheets to reduce captions copied from the prompt.
