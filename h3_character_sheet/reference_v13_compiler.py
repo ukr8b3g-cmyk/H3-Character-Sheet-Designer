@@ -1,4 +1,5 @@
 """P-H3 sheet compiler using the native image-conditioning inputs."""
+from .expression_sheet import apply_expression_sheet
 from .head_six import apply_head_six
 from .on_compiler_13 import EXTRA_INPUTS, compile_reference13_state
 from .state_13 import effective_views
@@ -12,6 +13,8 @@ def compile_reference_v13_state(state_json, *, style='none', **kwargs):
     for reference in result['reference_plan']:
         slot = sources.index(reference['source']) + 1
         reference['core_input'] = f'images.image_{slot}'
+    if result['state'].get('expression_sheet'):
+        return apply_expression_sheet(result, style)
     views = effective_views(result['state'])
     if set(views) == set(PORTRAIT_IDS):
         state = {**result['state'], 'views': views}

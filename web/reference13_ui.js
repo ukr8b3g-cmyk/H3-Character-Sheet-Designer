@@ -1,7 +1,17 @@
-import {VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, IMAGE_RESOLUTION_PROFILES, CLOTHING_VIEWS, effectiveViews, presetOf, StateError} from './reference13_state.js';
-import {createArtwork, createGuideArtwork} from './reference13_artwork.js';
+import {VIEW_IDS, EXPRESSION_VIEW_IDS, PART_IDS, PART_PROMPT_MAX_LENGTH, PRESETS, V13_PRESETS, IMAGE_RESOLUTION_PROFILES, CLOTHING_VIEWS, effectiveViews, presetOf, StateError} from './reference13_state.js';
+import {createArtwork, createGuideArtwork, createExpressionOutline} from './reference13_artwork.js';
 import {MULTI_VIEW_IDS, MULTI_PRESETS, REFERENCE_INPUTS, REFERENCE_ROLES, SETTINGS, DEFAULTS, MULTI_MIRRORED_VIEWS} from './reference13_state.js';
 let sequence = 0;
+const expressionLabels = {
+  en: {names: ['Neutral', 'Joyful smile', 'Surprise', 'Anger', 'Sobbing', 'Scared & Trembling'],
+    positions: ['upper left', 'upper center', 'upper right', 'lower left', 'lower center', 'lower right']},
+  ja: {names: ['平常', '笑顔', '驚き', '怒り', '号泣', '恐怖・震え'],
+    positions: ['上段左', '上段中央', '上段右', '下段左', '下段中央', '下段右']},
+};
+const promptViewNames = {
+  en: {face_front: 'Front portrait', body_front: 'Full-body front', body_left: 'Full body facing right', body_back: 'Full-body back'},
+  ja: {face_front: '正面の顔', body_left: '右向きの全身側面'},
+};
 export const HEIGHT_PRESETS = [672, 896, 1120, 1344, 1792];
 export const STYLE_IDS = ['none', 'anime', 'photo', 'realistic_painting', 'semi_realistic_anime', 'oil_painting', 'watercolor', 'gouache', 'colored_pencil', '3d'];
 const EN = {
@@ -12,6 +22,7 @@ const EN = {
   auto: 'Auto', manual: 'Manual', size: 'Output size', bodyHeight: 'Panel height', width: 'Width', height: 'Height', returnAuto: 'Back to Auto', updating: 'Updating dimensions…',
   resolution: 'Resolution', resolution_current: 'Current', resolution_high: 'High detail', resolution_max_8mp: '8 MP', resolution_max_16mp: '16 MP',
   resolutionProfile: 'Select a valid resolution.', resolutionHint: 'Current uses panel height. High detail increases pixel count toward 8 MP. Choose 8 MP or 16 MP to set the canvas area directly.',
+  invalid_expression_sheet: 'Expression sheet must be on or off.',
   imageResolutionWarning: 'This canvas exceeds 16 MP.',
   customHeight: 'Custom panel height', customHeightChoice: 'Custom…',
   autoHint: 'Auto keeps the requested full-body panel height.', manualHint: 'Manual keeps your canvas size when views change.',
@@ -43,6 +54,7 @@ const JA = {
   auto: 'Auto', manual: 'Manual', size: '出力サイズ', bodyHeight: '基準高', width: '幅', height: '高さ', returnAuto: 'Autoに戻す', updating: '寸法更新中…',
   resolution: '解像度', resolution_current: '現行', resolution_high: '高精細', resolution_max_8mp: '8 MP', resolution_max_16mp: '16 MP',
   resolutionProfile: '有効な解像度を選択してください。', resolutionHint: '現行は基準高で算出し、高精細は8 MPを上限に画素数を増やします。8 MPと16 MPは出力全体の画素数です。',
+  invalid_expression_sheet: '表情集はオンまたはオフを指定してください。',
   imageResolutionWarning: '出力サイズが16 MPを超えています。',
   customHeight: '基準高を手入力', customHeightChoice: '手入力…',
   autoHint: 'Autoは指定した全身パネルの高さを維持します。', manualHint: 'Manualはビューを変えても幅・高さを維持します。',
@@ -170,7 +182,8 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   root.classList.toggle('h3-multi-reference', multiReference);
   const nodeVersion = versionLabel ?? (v13 ? 'v1.5.2' : 'v1.2.2');
   root.dataset.nodeVersion = nodeVersion;
-  root.setAttribute('aria-label', `H3 Character Sheet Designer ${nodeVersion}`);
+  const variant = imageNode ? 'MiniMax H3 Image' : v13 ? 'P-H3' : '';
+  root.setAttribute('aria-label', [variant, 'H3 Character Sheet Designer', nodeVersion].filter(Boolean).join(' '));
   root.classList.toggle('h3-v13', v13);
   const viewIds = multiReference ? MULTI_VIEW_IDS : VIEW_IDS;
   const presets = v13 ? V13_PRESETS : multiReference ? MULTI_PRESETS : PRESETS;
@@ -180,7 +193,7 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   const partDrafts = new Map(); let selectedPart = PART_IDS[0], activeTab = 'layout';
   const drafts = new Map(); let customHeight = false; let localError = null, lastRaw = Symbol(), lastPreviewKey = null; let activeOutput = 0;
   const header = element('div', 'h3-intro'), intro = element('span'), count = element('span', 'h3-count'); header.append(intro, count);
-  const versionBadge = element('span', 'h3-node-version', nodeVersion); header.prepend(versionBadge);
+  const versionBadge = element('span', 'h3-node-version', [variant, nodeVersion].filter(Boolean).join(' · ')); header.prepend(versionBadge);
   const cards = element('div', 'h3-cards'), cardMap = new Map();
   const headRow = element('div', 'h3-card-row h3-head-row'), bodyRow = element('div', 'h3-card-row h3-body-row');
   if (multiReference) cards.append(headRow, bodyRow);
@@ -251,6 +264,26 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   }
   const returnAuto = button('h3-link-button'); listen(returnAuto, 'click', () => act(() => controller.setMode('auto')));
   const modeHint = element('div', 'h3-mode-hint'); controls.append(modeRow, numberRow, returnAuto, modeHint);
+  const expressionToggle = v13 ? button('h3-expression-toggle') : null;
+  const expressionLabel = v13 ? element('span') : null;
+  const expressionState = v13 ? element('span', 'h3-expression-state') : null;
+  const expressionSummary = v13 ? element('span', 'h3-expression-summary') : null;
+  if (expressionToggle) {
+    const caption = element('span', 'h3-expression-caption');
+    caption.append(expressionLabel, expressionSummary);
+    expressionState.setAttribute('aria-hidden', 'true');
+    expressionToggle.dataset.expressionSheet = '';
+    expressionToggle.append(caption, expressionState);
+    numberRow.classList.add('h3-expression-row');
+    numberRow.append(expressionToggle);
+    listen(expressionToggle, 'click', () => act(() => {
+      saveView();
+      controller.change(next => {
+        if (next.expression_sheet) delete next.expression_sheet;
+        else next.expression_sheet = true;
+      });
+    }));
+  }
   const metrics = element('div', 'h3-metrics'), dimensions = element('strong', 'h3-dimensions'), pixels = element('span', 'h3-pixels'), badge = element('span', 'h3-experimental'); metrics.append(dimensions, pixels, badge);
   const warning = element('div', 'h3-resolution-note');
   const status = element('div', 'h3-status'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
@@ -364,12 +397,14 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   promptsPanel.setAttribute('aria-labelledby', id + '-prompts-tab');
   const viewEditor = element('details'), viewSummary = element('summary');
   viewEditor.open = true;
-  const viewSelect = element('select', 'h3-part-select'), viewInput = element('textarea', 'h3-part-input');
+  const viewPicker = element('fieldset', 'h3-prompt-picker'), pickerLegend = element('legend');
+  const viewChoices = element('div', 'h3-prompt-choices'), promptOptions = new Map();
+  viewPicker.append(pickerLegend, viewChoices);
+  const viewInput = element('textarea', 'h3-part-input');
   const viewHelp = element('p', 'h3-part-hint'), viewApply = button('h3-apply'), viewReset = button('h3-apply');
   const viewPreview = element('details'), viewPreviewSummary = element('summary'), viewPreviewText = element('pre');
   viewPreviewText.style.whiteSpace = 'pre-wrap';
   let selectedView = VIEW_IDS[0], viewDirty = false, viewComposing = false;
-  for (const view of VIEW_IDS) { const option = element('option'); option.value = view; viewSelect.append(option); }
   viewInput.rows = 5; viewInput.spellcheck = false;
   function saveView() {
     if (!viewDirty) return;
@@ -380,16 +415,19 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
   listen(viewInput, 'compositionstart', () => { viewComposing = true; });
   listen(viewInput, 'compositionend', () => { viewComposing = false; viewDirty = true; });
   listen(viewInput, 'keydown', event => event.stopPropagation());
-  listen(viewSelect, 'change', () => {
-    const next = viewSelect.value; viewSelect.value = selectedView; act(saveView);
-    if (viewDirty) return;
-    selectedView = next; viewSelect.value = next; render();
+  listen(viewChoices, 'change', event => {
+    const next = event.target.value;
+    act(() => {
+      saveView();
+      selectedView = next;
+    });
+    if (selectedView !== next) promptOptions.get(selectedView)?.radio.focus();
   });
   listen(viewApply, 'click', () => act(saveView));
   listen(viewReset, 'click', () => act(() => {
     controller.setViewPrompt(selectedView, null); viewDirty = false;
   }));
-  viewEditor.append(viewSummary, viewSelect, viewInput, viewHelp, viewApply, viewReset);
+  viewEditor.append(viewSummary, viewPicker, viewInput, viewHelp, viewApply, viewReset);
   viewPreview.append(viewPreviewSummary, viewPreviewText); promptsPanel.append(viewEditor, viewPreview);
   if (v13) root.append(promptsPanel);
   // Keep node dragging out of text controls, but let browser keyboard accessibility work.
@@ -426,12 +464,42 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     }
     stage.hidden = activeTab !== 'layout'; partPanel.hidden = activeTab !== 'parts'; stylePanel.hidden = activeTab !== 'style'; settingsPanel.hidden = activeTab !== 'settings'; promptsPanel.hidden = activeTab !== 'prompts';
     const ja = language === 'ja', current = controller.isCurrentPreview;
-    viewSummary.textContent = ja ? 'ビューのプロンプトを編集' : 'Edit view prompts';
+    const expressions = Boolean(state?.expression_sheet);
+    const editableViews = expressions ? EXPRESSION_VIEW_IDS : VIEW_IDS;
+    const labels = expressionLabels[ja ? 'ja' : 'en'];
+    viewSummary.textContent = expressions ? (ja ? '表情のプロンプトを編集' : 'Edit expression prompts')
+      : (ja ? 'ビューのプロンプトを編集' : 'Edit view prompts');
     viewApply.textContent = ja ? '適用' : 'Apply';
     viewReset.textContent = ja ? '初期値に戻す' : 'Reset this prompt';
     viewHelp.textContent = ja ? '選んだビューの基本文を置き換えます。空欄も保存できます。配置・参照・部位・各設定の指示は別途加わります。各2,000文字まで。' : 'Replace this view’s base prompt; blank is allowed. Layout, references, part prompts and settings are added separately. Up to 2,000 UTF-16 units each.';
-    viewSelect.value = selectedView; viewSelect.setAttribute('aria-label', ja ? '編集するビュー' : 'View to edit');
-    for (const option of viewSelect.options) option.textContent = t[option.value] ?? option.value;
+    if (expressions) viewHelp.textContent = ja ? '選んだ表情の基本文を置き換えます。空欄も保存できます。位置と正面向きは共通です。'
+      : 'Replace the selected expression prompt. A blank is allowed. Its position and front-facing orientation still apply.';
+    pickerLegend.textContent = expressions
+      ? (ja ? '編集する表情を選択' : 'Choose an expression to edit')
+      : (ja ? '編集するビューを選択' : 'Choose a view to edit');
+    viewPicker.disabled = !state;
+    if (!promptOptions.has(editableViews[0])) {
+      selectedView = editableViews[0];
+      promptOptions.clear();
+      viewChoices.classList.toggle('h3-prompt-expressions', expressions);
+      viewChoices.replaceChildren(...editableViews.map(view => {
+        const choice = element('label', 'h3-prompt-choice'), radio = element('input'), name = element('span');
+        radio.type = 'radio'; radio.name = id + '-prompt-target'; radio.value = view;
+        const icon = expressions ? createExpressionOutline(view) : createArtwork(view, id + '-prompt-' + view, {garment: v13});
+        choice.append(radio, icon, name);
+        promptOptions.set(view, {choice, radio, name});
+        return choice;
+      }));
+    }
+    editableViews.forEach((view, i) => {
+      const {choice, radio, name} = promptOptions.get(view);
+      const label = expressions ? `${i + 1}. ${labels.names[i]}` : (promptViewNames[ja ? 'ja' : 'en'][view] ?? t[view]);
+      const edited = Object.hasOwn(state?.view_prompts ?? {}, view) ? (ja ? '（編集済み）' : ' (edited)') : '';
+      name.textContent = label + edited;
+      choice.title = expressions ? `${label} · ${labels.positions[i]}` : (cardMap.get(view)?.card.title || label);
+      radio.setAttribute('aria-label', (expressions ? choice.title : label) + edited);
+      radio.checked = view === selectedView;
+    });
     const override = state?.view_prompts?.[selectedView];
     const natural = state?.clothing_type === 'none';
     const editHint = ja ? '編集した文章はそのまま使用されます。衣服の指定が残っている場合は内容を確認してください。'
@@ -439,12 +507,16 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     if (natural && override !== undefined && effectiveViews(state).includes(selectedView)) viewHelp.textContent += ` ${editHint}`;
     const defaults = current ? controller.preview?.default_view_prompts?.[selectedView] : undefined;
     viewInput.disabled = !state || (override === undefined && defaults === undefined);
-    viewInput.setAttribute('aria-label', viewSummary.textContent);
+    viewInput.setAttribute('aria-label', viewSummary.textContent + ' · ' + promptOptions.get(selectedView).name.textContent);
     viewApply.disabled = !state || viewInput.disabled; viewReset.disabled = !state;
     if (!viewDirty) viewInput.value = override ?? defaults ?? '';
     viewPreviewSummary.textContent = ja ? '各ビューの指示（設定プレビュー）' : 'Per-view prompts (settings preview)';
-    viewPreviewText.textContent = current ? (controller.preview?.view_prompts ?? []).join('\n\n') : t.pending;
-    previewTag.textContent = activeTab === 'layout' ? (language === 'ja' ? (useLayoutImage() ? '生成に渡す配置画像' : v13 ? '配置ガイド' : '配置の目安') : (useLayoutImage() ? 'Generation layout image' : v13 ? 'Layout guide' : 'Conceptual layout')) : activeTab === 'style' ? t.style : t.partSaved;
+    const records = controller.preview?.view_prompts ?? [];
+    viewPreviewText.textContent = current ? records.map((text, i) => expressions
+      ? `${i + 1}. ${labels.names[i]} · ${labels.positions[i]}\n${text}` : text).join('\n\n') : t.pending;
+    previewTag.textContent = activeTab === 'layout' && expressions ? (ja ? '表情の配置' : 'Expression layout')
+      : activeTab === 'prompts' ? variant
+      : activeTab === 'layout' ? (language === 'ja' ? (useLayoutImage() ? '生成に渡す配置画像' : v13 ? '配置ガイド' : '配置の目安') : (useLayoutImage() ? 'Generation layout image' : v13 ? 'Layout guide' : 'Conceptual layout')) : activeTab === 'style' ? t.style : t.partSaved;
     const selectedStyle = readStyle();
     styleStatus.hidden = !reference || selectedStyle === 'none'; styleBadge.textContent = `${t.style}：${t[`style_${selectedStyle}`] ?? selectedStyle}`;
     clearStyle.textContent = t.clearStyle; clearStyle.disabled = !writeStyle;
@@ -535,7 +607,8 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     const p = controller.preview, valid = controller.isCurrentPreview && Boolean(controller.state);
     canvas.hidden = !valid; empty.hidden = valid; gallery.hidden = true;
     empty.textContent = controller.error ? t.invalid : controller.previewError ? t.unavailable : t.empty;
-    const key = valid ? JSON.stringify([p.semantic_layout, p.guide_geometry, useLayoutImage()]) : null;
+    const expressions = Boolean(controller.state?.expression_sheet);
+    const key = valid ? JSON.stringify([p.semantic_layout, p.guide_geometry, useLayoutImage(), expressions && language]) : null;
     if (key !== lastPreviewKey) {
       canvas.replaceChildren(); lastPreviewKey = key;
       if (valid && (useLayoutImage() || (v13 && p.guide_geometry))) {
@@ -545,6 +618,12 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
           const box = element('div', 'h3-panel'); box.dataset.panel = panel.id;
           Object.assign(box.style, {left: `${left/p.width*100}%`, top: `${top/p.height*100}%`, width: `${(right-left)/p.width*100}%`, height: `${(bottom-top)/p.height*100}%`});
           if (panel.blank && p.guide_geometry.panel_fill) box.style.backgroundColor = p.guide_geometry.panel_fill;
+          if (expressions) {
+            const index = EXPRESSION_VIEW_IDS.indexOf(panel.id);
+            const label = `${index + 1}. ${expressionLabels[language].names[index]}`;
+            box.classList.add('h3-expression-panel');
+            box.append(createExpressionOutline(panel.id), element('span', 'h3-expression-name', label));
+          }
           canvas.append(box);
         }
       } else if (valid) {
@@ -575,7 +654,11 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
     const state = controller.state, current = controller.isCurrentPreview;
 
     const natural = state?.clothing_type === 'none', ja = language === 'ja';
-    intro.textContent = t.intro; count.textContent = natural
+    const expressions = Boolean(state?.expression_sheet);
+    intro.textContent = expressions ? (ja ? '表情集' : 'Expression sheet') : t.intro;
+    count.textContent = expressions
+      ? (ja ? '表情6面を生成' : '6 expressions')
+      : natural
       ? (ja ? `選択${state.views.length}／生成${effectiveViews(state).length}` : `${state.views.length} selected · ${effectiveViews(state).length} generated`)
       : `${state?.views.length ?? 0} / ${viewIds.length} ${t.selected}`;
     for (const [view, {card, label}] of cardMap) {
@@ -600,6 +683,16 @@ export function createDesignerUI({controller, v13 = false, imageNode = false, ve
       resolution.title = state?.size.mode === 'manual' ? t.manualHint : t.resolutionHint;
       for (const option of resolution.options) option.textContent = t[`resolution_${option.value}`];
       resolution.value = state?.resolution_profile ?? 'current';
+    }
+    if (expressionToggle) {
+      expressionLabel.textContent = ja ? '表情集' : 'Expressions';
+      expressionState.textContent = expressions ? 'ON' : 'OFF';
+      expressionToggle.disabled = !state;
+      expressionToggle.setAttribute('aria-pressed', String(expressions));
+      expressionSummary.textContent = ja ? '正面6面' : '6 frontal portraits';
+      expressionToggle.title = ja
+        ? 'ONで正面の表情6面を生成します。OFFで通常のビュー・衣服・手足の設定と部位別・ビュー別プロンプトに戻ります。\n上段　平常・笑顔・驚き\n下段　怒り・号泣・恐怖・震え'
+        : 'Turn on for six front-facing expressions. Turn off to use your view, clothing, hand and foot settings and part or view prompts again.\nTop row: Neutral · Joyful smile · Surprise\nBottom row: Anger · Sobbing · Scared & Trembling';
     }
     modeHint.textContent = outputAware && readBatchOut() ? (language === 'ja' ? '各画像を個別に生成。Manual寸法は全画像に共通。Autoはビュー種別ごとの寸法。表示中の画像をクリックしてManualへ切替できます。' : 'Each view is generated separately. Manual dimensions apply to every image; Auto uses the view type. Select a preview to freeze its dimensions in Manual.') : outputAware && state?.size.mode === 'manual' ? (language === 'ja' ? '指定した画像サイズ内に選択ビューを再配置します。' : 'Selected views are rearranged inside the requested canvas.') : state?.size.mode === 'manual' ? t.manualHint : t.autoHint;
     renderFields(); renderParts(); renderRoles();

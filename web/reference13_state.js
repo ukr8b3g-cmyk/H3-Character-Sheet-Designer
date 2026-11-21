@@ -10,6 +10,8 @@ export const MULTI_PRESETS = Object.freeze({five: ['face_front', 'face_left', 'b
 export const PRESETS = MULTI_PRESETS;
 export const V13_PRESETS = Object.freeze({five: PRESETS.five, basic: PRESETS.basic, turnaround: PRESETS.turnaround, single: PRESETS.single, seven: [...PRESETS.five, 'hands', 'feet'], head: PRESETS.head, clothing: PRESETS.clothing, detail: PRESETS.detail});
 export const IMAGE_RESOLUTION_PROFILES = Object.freeze(['current', 'high', 'max_8mp', 'max_16mp']);
+export const EXPRESSION_VIEW_IDS = Object.freeze(['neutral', 'joy', 'surprise', 'anger', 'sadness', 'confusion']
+  .map(expression => `expression_${expression}`));
 export const REFERENCE_INPUTS = ['reference_image_1', 'reference_image_2', 'reference_image_3'];
 export const REFERENCE_ROLES = ['same_character', 'face', 'head', 'clothing', 'clothing_front', 'clothing_back', 'hands', 'footwear'];
 export const SETTINGS = Object.freeze({hand_state: ['reference', 'bare', 'gloved'], clothing_mode: ['worn', 'garment'], clothing_type: ['reference', 'pants', 'skirt_robe'], footwear_state: ['reference', 'shod', 'unshod']});
@@ -29,17 +31,22 @@ function keys(value, expected, path) {
   const actual = Object.keys(value);
   if (actual.length !== expected.length || actual.some(key => !expected.includes(key))) fail('keys', path);
 }
-export function normalizeReference13State(state, max = Infinity, imageNode = false, allowNoClothing = imageNode) {
+export function normalizeReference13State(state, max = Infinity, imageNode = false, currentDesigner = imageNode) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) fail('object', 'state');
   if ([1, 2].includes(state.schema_version)) return normalizeState(state, max);
   if (state.schema_version !== 3) fail('version');
   const hasResolution = imageNode && Object.hasOwn(state, 'resolution_profile');
-  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...(Object.hasOwn(state, 'reference_roles') ? ['reference_roles'] : []), ...(Object.hasOwn(state, 'view_prompts') ? ['view_prompts'] : []), ...(hasResolution ? ['resolution_profile'] : [])], 'state');
+  const hasExpressions = currentDesigner && Object.hasOwn(state, 'expression_sheet');
+  const optional = ['reference_roles', 'view_prompts'].filter(key => Object.hasOwn(state, key));
+  if (hasResolution) optional.push('resolution_profile');
+  if (hasExpressions) optional.push('expression_sheet');
+  keys(state, ['schema_version', 'views', 'size', 'part_prompts', ...Object.keys(SETTINGS), ...optional], 'state');
   if (hasResolution && !IMAGE_RESOLUTION_PROFILES.includes(state.resolution_profile)) fail('resolutionProfile');
+  if (hasExpressions && typeof state.expression_sheet !== 'boolean') fail('invalid_expression_sheet');
   if (Object.hasOwn(state, 'view_prompts')) {
     if (!state.view_prompts || typeof state.view_prompts !== 'object' || Array.isArray(state.view_prompts)) fail('object', 'view_prompts');
     for (const [view, text] of Object.entries(state.view_prompts)) {
-      if (!VIEW_IDS.includes(view)) fail('views', view);
+      if (!VIEW_IDS.includes(view) && !(currentDesigner && EXPRESSION_VIEW_IDS.includes(view))) fail('views', view);
       if (typeof text !== 'string' || !text.isWellFormed() || text.length > 2000) fail('view_prompt', view);
     }
   }
@@ -50,7 +57,7 @@ export function normalizeReference13State(state, max = Infinity, imageNode = fal
   for (const [field, values] of Object.entries(SETTINGS)) {
     if (field === 'clothing_type' && imageNode && state[field] === 'short_skirt') continue;
     if (field === 'clothing_type' && state[field] === 'none') {
-      if (!allowNoClothing) fail('no_clothing_unsupported_node');
+      if (!currentDesigner) fail('no_clothing_unsupported_node');
     } else if (!values.includes(state[field])) fail('setting', field);
   }
   if (!Array.isArray(state.views) || !state.views.length || state.views.some(view => !VIEW_IDS.includes(view))) fail('views');
@@ -66,10 +73,10 @@ export function normalizeReference13State(state, max = Infinity, imageNode = fal
     const text = validatePartPrompt(state.part_prompts[part]);
     if (text.trim()) parts[part] = text;
   }
-  return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]])), ...(hasResolution ? {resolution_profile: state.resolution_profile} : {})};
+  return {...(Object.hasOwn(state, 'view_prompts') ? {view_prompts: {...state.view_prompts}} : {}), schema_version: 3, views: VIEW_IDS.filter(view => state.views.includes(view)), size, part_prompts: parts, ...(Object.hasOwn(state, 'reference_roles') ? {reference_roles: {...state.reference_roles}} : {}), ...Object.fromEntries(Object.keys(SETTINGS).map(field => [field, state[field]])), ...(hasResolution ? {resolution_profile: state.resolution_profile} : {}), ...(state.expression_sheet ? {expression_sheet: true} : {})};
 }
-export const parseReference13State = (raw, max, imageNode = false, allowNoClothing = imageNode) =>
-  normalizeReference13State(parseJSONStrict(raw), max, imageNode, allowNoClothing);
+export const parseReference13State = (raw, max, imageNode = false, currentDesigner = imageNode) =>
+  normalizeReference13State(parseJSONStrict(raw), max, imageNode, currentDesigner);
 export const serializeReference13State = (state, max) => JSON.stringify(normalizeReference13State(state, max));
 export const presetOf = state => Object.entries(PRESETS).find(([, views]) => views.join() === state?.views.join())?.[0] ?? 'custom';
 function promote(state) { return {...structuredClone(state), schema_version: 3, part_prompts: structuredClone(state.part_prompts ?? {}), ...DEFAULTS}; }
@@ -99,7 +106,7 @@ export class Reference13Controller extends DesignerController {
   }
   setViewPrompt(view, text) {
     this.syncFromSource();
-    if (!VIEW_IDS.includes(view)) fail('views', view);
+    if (!VIEW_IDS.includes(view) && !EXPRESSION_VIEW_IDS.includes(view)) fail('views', view);
     if (text !== null && (typeof text !== 'string' || !text.isWellFormed() || text.length > 2000)) fail('view_prompt', view);
     if (!this.state) return false;
     const next = this.state.schema_version < 3 ? promote(this.state) : structuredClone(this.state);

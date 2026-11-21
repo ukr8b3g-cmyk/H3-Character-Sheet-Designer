@@ -14,6 +14,93 @@ from h3_character_sheet.view_catalog_13 import PRESETS, VIEW_IDS
 
 
 class MiniMaxImageTests(unittest.TestCase):
+    def test_expression_edits_are_isolated_and_reset_on_both_designers(self):
+        normal = {**DEFAULT_STATE, 'view_prompts': {'face_front': 'Normal front view only.'}}
+        for compile_state in (compile_minimax_image_state, compile_reference_v13_state):
+            for guide in (False, True):
+                with self.subTest(compiler=compile_state.__name__, guide=guide):
+                    def run(state):
+                        return compile_state(json.dumps(state), use_layout_image=guide)
+
+                    base = run({**normal, 'expression_sheet': True})
+                    ids = [p['id'] for p in base['layout']['panels']]
+                    self.assertEqual(list(base['default_view_prompts']), ids)
+                    expected = [
+                        'Show a calm, neutral expression.', 'Show a joyful smile expression.',
+                        'Show a surprised expression.', 'Show a fierce, angry glare expression.',
+                        'Show a sad, sobbing expression.', 'Show a frightened, trembling expression.',
+                    ]
+                    self.assertEqual(list(base['default_view_prompts'].values()), expected)
+                    positions = ['upper-left', 'upper-center', 'upper-right', 'lower-left', 'lower-center', 'lower-right']
+                    self.assertEqual(base['view_prompts'], [f'The {pos} portrait. {text}'
+                                                            for pos, text in zip(positions, expected)])
+                    self.assertIn('\n'.join(base['view_prompts']), base['prompt'])
+                    self.assertEqual(base['layout']['panels'][-1]['content'], 'fear and trembling')
+                    custom = run({**normal, 'expression_sheet': True,
+                                  'view_prompts': {ids[-2]: '', ids[-1]: 'My sixth expression.'}})
+                    self.assertEqual(custom['view_prompts'][-2:], ['The lower-center portrait.',
+                                                                  'The lower-right portrait. My sixth expression.'])
+                    restored = json.loads(custom['state_json'])
+                    del restored['view_prompts'][ids[-1]]
+                    reset = run(restored)
+                    self.assertEqual(reset['view_prompts'][-1], base['view_prompts'][-1])
+                    self.assertEqual(reset['view_prompts'][-2], custom['view_prompts'][-2])
+                    overrides = {**normal['view_prompts'], ids[1]: 'A gentle smile.', ids[2]: ''}
+                    edited = run({**normal, 'view_prompts': overrides, 'expression_sheet': True})
+                    self.assertEqual(edited['state']['view_prompts'], overrides)
+                    self.assertEqual(edited['view_prompts'][1], 'The upper-center portrait. A gentle smile.')
+                    self.assertEqual(edited['view_prompts'][2], 'The upper-right portrait.')
+                    self.assertIn(edited['view_prompts'][1], edited['prompt'])
+                    self.assertNotIn('a joyful smile expression', edited['prompt'])
+                    self.assertNotIn('Normal front view only.', edited['prompt'])
+                    self.assertEqual(edited['guide_geometry'], base['guide_geometry'])
+                    saved = json.loads(edited['state_json'])
+                    del saved['view_prompts'][ids[1]]
+                    self.assertEqual(run(saved)['view_prompts'][1], base['view_prompts'][1])
+                    del saved['expression_sheet']
+                    self.assertEqual(run(saved)['prompt'], run(normal)['prompt'])
+
+    def test_expression_sheet_keeps_saved_views_and_matches_head_six_dimensions(self):
+        state = {**DEFAULT_STATE, 'views': list(PRESETS['detail']),
+                 'clothing_type': 'short_skirt', 'view_prompts': {'face_front': 'Custom angle.'}}
+        expected = ['neutral', 'joy', 'surprise', 'anger', 'sadness', 'confusion']
+        for profile in ('current', 'high', 'max_8mp', 'max_16mp'):
+            with self.subTest(profile=profile):
+                state['resolution_profile'] = profile
+                raw = json.dumps({**state, 'expression_sheet': True})
+                on = compile_minimax_image_state(raw, use_layout_image=True)
+                off = compile_minimax_image_state(raw)
+                head = compile_minimax_image_state(json.dumps({**state, 'views': PRESETS['head']}))
+                self.assertEqual(on['layout'], off['layout'])
+                self.assertEqual(on['layout']['canvas'], head['layout']['canvas'])
+                self.assertEqual([p['id'] for p in on['layout']['panels']],
+                                 [f'expression_{expression}' for expression in expected])
+                self.assertEqual([p['view'] for p in on['layout']['panels']], ['front-facing portrait'] * 6)
+                saved = json.loads(on['state_json'])
+                self.assertTrue(saved.pop('expression_sheet'))
+                self.assertEqual(saved['views'], state['views'])
+                self.assertEqual(saved['view_prompts'], state['view_prompts'])
+                self.assertEqual(saved['clothing_type'], 'short_skirt')
+                restored = compile_minimax_image_state(json.dumps(saved))
+                self.assertEqual(len(restored['layout']['panels']), 13)
+                self.assertIn('Custom angle.', restored['prompt'])
+                self.assertNotIn('Custom angle.', on['prompt'])
+                self.assertIn('six pale areas in <Picture 2>', on['prompt'])
+                self.assertNotIn('<Picture 2>', off['prompt'])
+
+        manual = {**state['size'], 'mode': 'manual', 'manual_width': 1536, 'manual_height': 1024}
+        raw = json.dumps({**state, 'size': manual, 'views': PRESETS['single'], 'expression_sheet': True})
+        result = compile_minimax_image_state(raw, use_layout_image=True)
+        self.assertEqual(result['layout']['canvas'], [1536, 1024])
+        geometry = result['guide_geometry']
+        self.assertEqual(geometry['frame_width'], 0)
+        self.assertTrue(all(panel['blank'] for panel in geometry['panels']))
+        with patch('h3_character_sheet.guide_13.Image.open', side_effect=AssertionError('Mannequin asset read')):
+            image = render_reference13_guide(geometry, result['layout'])
+        self.assertEqual(set(pixel for _, pixel in image.getcolors()), {(255, 255, 255), (242, 242, 242)})
+        with self.assertRaises(StateValidationError):
+            compile_reference_v13_state(raw)
+
     def test_guided_full_sheet_outfit_keeps_two_neutral_areas_and_custom_text(self):
         state = {**DEFAULT_STATE, 'views': list(VIEW_IDS)}
         auto = compile_minimax_image_state(json.dumps(state), use_layout_image=True)

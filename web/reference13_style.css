@@ -32,7 +32,8 @@
 .h3-v13 .h3-mode-row { flex-direction: column; align-items: stretch; align-self: end; gap: 3px; }
 .h3-v13 .h3-mode-group { height: 32px; }
 .h3-v13 .h3-number-row { display: grid; grid-template-columns: minmax(90px, 112px) repeat(2, minmax(64px, 80px)); gap: 6px; }
-.h3-v13 .h3-resolution-row { grid-template-columns: minmax(106px, 128px) minmax(90px, 112px) repeat(2, minmax(64px, 80px)); }
+.h3-v13 .h3-resolution-row { grid-template-columns: minmax(100px, 128px) minmax(86px, 112px) repeat(2, minmax(58px, 80px)) minmax(158px, 1fr); }
+.h3-v13 .h3-expression-row:not(.h3-resolution-row) { grid-template-columns: minmax(90px, 112px) repeat(2, minmax(64px, 80px)) minmax(158px, 1fr); }
 .h3-v13 .h3-number-field { min-width: 0; }
 .h3-v13 .h3-number-field label, .h3-v13 .h3-field-title { font-size: 13px; }
 .h3-v13 .h3-input-line input, .h3-v13 .h3-input-line select { height: 32px; padding: 3px 6px; font-size: 14px; }
@@ -41,6 +42,24 @@
 .h3-image-controls .h3-field-title, .h3-image-controls .h3-number-field label { line-height: 18px; }
 .h3-image-controls .h3-mode { min-height: 0; padding-block: 0; }
 .h3-image-controls .h3-input-line > select { flex: none; }
+.h3-designer .h3-expression-toggle {
+  align-self: end; justify-self: end; display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; width: 100%; max-width: 300px; height: 42px; padding: 0 8px; text-align: left;
+  border: 1px solid #687e92; border-radius: 6px; background: #26313e; font-size: 15px; font-weight: 600;
+}
+.h3-designer .h3-expression-toggle[aria-pressed=true] { background: #486961; color: #f0fff9; }
+.h3-expression-caption {
+  display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; line-height: 18px;
+}
+.h3-expression-summary { font-size: 12px; font-weight: 400; white-space: nowrap; }
+.h3-expression-state { flex: none; min-width: 3ch; font-size: 12px; font-weight: 700; text-align: center; }
+.h3-panel.h3-expression-panel {
+  container-type: size; display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.h3-panel.h3-expression-panel svg {
+  width: 78%; height: 65%; fill: none; stroke: #a2a9ae; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.h3-expression-name { color: #444e55; font-size: min(12cqw, 17cqh, 16px); line-height: 1.2; white-space: nowrap; }
 .h3-v13 .h3-metrics { flex-wrap: nowrap; min-height: 24px; }
 .h3-v13 .h3-dimensions { font-size: 18px; }
 .h3-v13 .h3-pixels, .h3-v13 .h3-status { font-size: 12px; }
@@ -51,5 +70,19 @@
 .h3-view-prompts summary { display: flex; justify-content: space-between; cursor: pointer; padding: 10px; border: 1px solid #586f81; border-radius: 6px; margin-bottom: 8px; font-weight: 600; }
 .h3-view-prompts summary::after { content: '+'; }
 .h3-view-prompts details[open] > summary::after { content: '−'; }
-.h3-view-prompts select, .h3-view-prompts textarea { box-sizing: border-box; width: 100%; }
+.h3-view-prompts textarea { box-sizing: border-box; width: 100%; }
+.h3-prompt-picker { min-width: 0; border: 0; margin: 0 0 8px; padding: 0; }
+.h3-prompt-picker legend { padding: 0 0 5px; color: var(--h3-text); font-size: 14px; font-weight: 600; }
+.h3-prompt-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(144px, 100%), 1fr)); gap: 4px; }
+.h3-prompt-expressions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.h3-prompt-choice {
+  display: flex; align-items: center; gap: 6px; box-sizing: border-box; min-height: 40px; padding: 4px 8px;
+  border: 1px solid #586f81; border-radius: 5px; background: #26313e; cursor: pointer;
+  font-size: 14px; line-height: 1.25; overflow-wrap: anywhere;
+}
+.h3-prompt-choice:hover, .h3-prompt-choice:focus-within { border-color: var(--h3-accent); }
+.h3-prompt-choice:has(input:checked) { border-color: var(--h3-accent); background: #304d47; }
+.h3-prompt-choice input { flex: none; width: 15px; height: 15px; margin: 0; accent-color: var(--h3-accent); }
+.h3-prompt-choice .h3-artwork { flex: none; width: 28px; height: 28px; }
+.h3-prompt-choice > svg { flex: none; width: 28px; height: 28px; fill: none; stroke: #c5d4da; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 .h3-view-prompts pre { max-height: 360px; overflow: auto; }

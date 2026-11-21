@@ -3,7 +3,7 @@ from .compiler import DEFAULT_MAX_RESOLUTION, EXPERIMENTAL_PIXEL_THRESHOLD, Stat
 from .guide_13 import derive_guide_geometry, tighten_guide_layout, fit_auto_body_height, frame_full_sheet_headwear, _contained_size
 from .layout_13 import compute_semantic_layout
 from .off_compiler_13 import compile_extended_prompt, compile_off_prompt_13, panel_instruction
-from .view_catalog_13 import VIEW_IDS
+from .view_catalog_13 import PORTRAIT_IDS, VIEW_IDS
 from .reference_compiler import STYLE_PROMPTS
 from .state_13 import effective_views, parse_reference13_state, serialize_reference13_state
 from .multi_reference_compiler import ROLE_INSTRUCTIONS
@@ -26,7 +26,10 @@ def compile_reference13_state(state_json, *, use_layout_image=False, style='none
                                     allow_no_clothing=optimize_outfit)
     if optimize_outfit:
         saved["clothing_mode"] = "garment"
-    state = {**saved, 'views': effective_views(saved)}
+    if saved.get('expression_sheet'):
+        state = {**saved, 'views': list(PORTRAIT_IDS), 'clothing_type': 'reference', 'part_prompts': {}, 'view_prompts': {}}
+    else:
+        state = {**saved, 'views': effective_views(saved)}
     full_sheet_positions = describe_full_sheet_positions and set(state['views']) == set(VIEW_IDS)
     natural = state['clothing_type'] == 'none'
     roles = state.get('reference_roles', {})

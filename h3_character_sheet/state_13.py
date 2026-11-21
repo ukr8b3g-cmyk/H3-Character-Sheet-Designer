@@ -4,7 +4,7 @@ from .compiler import (
     StateValidationError, _BLANK_CHARACTERS, _check_max_resolution, _exact_keys,
     _size_value, decode_json, parse_state, serialize_state,
 )
-from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, LEGACY_VIEW_IDS, PORTRAIT_IDS, PRESETS, VIEW_IDS
+from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, EXPRESSION_DESCRIPTIONS, LEGACY_VIEW_IDS, PORTRAIT_IDS, PRESETS, VIEW_IDS
 
 from .reference_plan import REFERENCE_ROLES
 REFERENCE_INPUTS = tuple(f'reference_image_{i}' for i in range(1, 4))
@@ -38,6 +38,10 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
         raise StateValidationError('Reference13 supports schema_version 1, 2 or 3.', 'unsupported_schema')
     optional = tuple(key for key in ('reference_roles', 'view_prompts') if key in state
                      and (key != 'view_prompts' or allow_view_prompts))
+    if allow_view_prompts and 'expression_sheet' in state:
+        optional += ('expression_sheet',)
+        if type(state['expression_sheet']) is not bool:
+            raise StateValidationError('Expression sheet must be boolean.', 'invalid_expression_sheet')
     _exact_keys(state, ('schema_version', 'views', 'size', 'part_prompts', *SETTINGS, *optional), 'state')
     if 'reference_roles' in state:
         _exact_keys(state['reference_roles'], REFERENCE_INPUTS, 'reference_roles')
@@ -45,7 +49,7 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
             raise StateValidationError('Unknown reference role.', 'invalid_role')
     if 'view_prompts' in optional:
         overrides = state['view_prompts']
-        if type(overrides) is not dict or set(overrides) - set(VIEW_IDS):
+        if type(overrides) is not dict or set(overrides) - set(VIEW_IDS) - EXPRESSION_DESCRIPTIONS.keys():
             raise StateValidationError('Unknown view prompt IDs.', 'invalid_view_prompts')
         for text in overrides.values():
             if type(text) is not str or any(0xD800 <= ord(c) <= 0xDFFF for c in text):
@@ -92,7 +96,8 @@ def parse_reference13_state(raw, *, max_resolution=DEFAULT_MAX_RESOLUTION, allow
     return {'schema_version': 3, 'views': [view for view in VIEW_IDS if view in views],
             'size': normalized_size, 'part_prompts': normalized_prompts,
             **{field: state[field] for field in SETTINGS},
-            **({key: dict(state[key]) for key in optional})}
+            **{key: dict(state[key]) for key in ('view_prompts', 'reference_roles') if key in optional},
+            **({'expression_sheet': True} if state.get('expression_sheet') else {})}
 
 
 def legacy_state(state):

@@ -1,6 +1,6 @@
 import {getLocale, subscribeLocale, validatePreview} from './state.js';
 import {createDesignerUI, translations} from './reference13_ui.js';
-import {Reference13Controller, effectiveViews, parseReference13State, DEFAULTS, VIEW_IDS, PRESETS, V13_PRESETS} from './reference13_state.js';
+import {Reference13Controller, EXPRESSION_VIEW_IDS, effectiveViews, parseReference13State, DEFAULTS, VIEW_IDS, PRESETS, V13_PRESETS} from './reference13_state.js';
 const instances = new WeakMap();
 const textareaRecovery = new WeakMap();
 const pendingReinstall = new WeakMap();
@@ -130,7 +130,7 @@ export function installDesigner(node, app, api) {
   };
   const controller = new Controller({
     ...(v13 ? {adapter: {parse: parseV13, serialize: (state, max) => JSON.stringify(parseV13(JSON.stringify(state), max)),
-      validatePreview: (data, state) => validatePreview(data, {...state, views: effectiveViews(state)}),
+      validatePreview: (data, state) => validatePreview(data, {...state, views: state.expression_sheet ? EXPRESSION_VIEW_IDS : effectiveViews(state)}),
       migrate: state => structuredClone(state), viewIds: VIEW_IDS, presets: V13_PRESETS}} : {}),
     raw: original.value, readRaw: () => original.value, writeRaw: value => { original.value = value; },
     requestPreview: previewRequester(api, useLayoutImage, readStyle, readReferencePresence, v13, imageNode),

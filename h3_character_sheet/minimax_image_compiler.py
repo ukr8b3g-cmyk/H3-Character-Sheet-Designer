@@ -4,6 +4,7 @@ from math import sqrt
 
 from .compiler import StateValidationError, decode_json
 from .guide_13 import derive_guide_geometry
+from .expression_sheet import apply_expression_sheet
 from .head_six import apply_head_six
 from .on_compiler_13 import compile_reference13_state
 from .state_13 import applicable_settings, effective_views, part_views, serialize_reference13_state
@@ -14,8 +15,6 @@ from .view_catalog_13 import BODY_IDS, CLOTHING_IDS, NATURAL_SURFACE, NATURAL_VI
 RESOLUTION_PROFILES = ('current', 'high', 'max_8mp', 'max_16mp')
 EIGHT_MP = 8_000_000
 MAX_AUTO_PIXELS = 16_000_000
-
-
 VIEW_PROMPTS = {
     'face_front': 'Front portrait, complete head and shoulders.',
     'face_left': 'Profile portrait facing image-right, complete head and shoulders.',
@@ -141,7 +140,7 @@ def _apply_resolution(result, profile):
 
 
 def compile_minimax_image_state(state_json, **kwargs):
-    # Only this node accepts the optional setting in its saved state.
+    # Read MiniMax-only settings before calling the shared compiler.
     saved = decode_json(state_json)
     profile = None
     short_skirt = isinstance(saved, dict) and saved.get('schema_version') == 3 and saved.get('clothing_type') == 'short_skirt'
@@ -160,7 +159,7 @@ def compile_minimax_image_state(state_json, **kwargs):
     state = {**saved, 'views': effective_views(saved)}
     views = state['views']
     natural = state['clothing_type'] == 'none'
-    if not natural and result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
+    if not saved.get('expression_sheet') and not natural and result['guide_enabled'] and state['size']['mode'] == 'auto' and set(state['views']) == set(PRESETS['five']):
         result['guide_geometry'] = _standard_five_view_guide(result['semantic_layout'], state)
     if short_skirt:
         saved['clothing_type'] = 'short_skirt'
@@ -175,6 +174,8 @@ def compile_minimax_image_state(state_json, **kwargs):
              'reference_image_2', 'reference_image_3')
     for ref in refs:
         ref['core_input'] = f"images.image_{slots.index(ref['source'])}"
+    if saved.get('expression_sheet'):
+        return apply_expression_sheet(result, kwargs.get('style', 'none'))
     defaults = dict(VIEW_PROMPTS)
     overrides = state.get('view_prompts', {})
     guided_full_sheet = result['guide_enabled'] and not natural and set(views) == set(VIEW_IDS)

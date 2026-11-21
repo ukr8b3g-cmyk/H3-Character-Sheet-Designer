@@ -4,6 +4,16 @@ from .compiler import BODY_IDS, PRESETS as LEGACY_PRESETS, VIEW_IDS as LEGACY_VI
 PORTRAIT_IDS = ('face_front', 'face_left', 'face_right', 'face_3q_left', 'face_3q_right', 'face_back')
 CLOTHING_IDS = ('clothing_front', 'clothing_back')
 VIEW_IDS = (*PORTRAIT_IDS, *BODY_IDS, *CLOTHING_IDS, 'hands', 'feet')
+# Keep the stored slot IDs so existing custom prompts still open.
+EXPRESSION_CONTENT_ALIASES = {'expression_sadness': 'sobbing', 'expression_confusion': 'fear and trembling'}
+EXPRESSION_DESCRIPTIONS = {
+    'expression_neutral': 'a calm, neutral expression',
+    'expression_joy': 'a joyful smile expression',
+    'expression_surprise': 'a surprised expression',
+    'expression_anger': 'a fierce, angry glare expression',
+    'expression_sadness': 'a sad, sobbing expression',
+    'expression_confusion': 'a frightened, trembling expression',
+}
 NATURAL_SURFACE = ('Preserve the character’s natural body surface, colors, markings and body structure from <Picture 1>. '
                    'Keep the visible torso and lower body free of garments. Retain compatible accessories.')
 NATURAL_VIEW_PROMPTS = {

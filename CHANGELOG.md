@@ -1,3 +1,7 @@
+# v1.5.4
+
+Add a six-expression sheet to MiniMax H3 Image and P-H3. Both nodes support editing and resetting each portrait prompt in a three-column, two-row picker. The six defaults end in `expression.`. The workflow installation notes link to this package.
+
 # v1.5.3
 
 - Add Short skirt · match reference hem to MiniMax H3 Image. For guided 13-view sheets, use the guide's full-body framing and match the separate skirt's hem to the reference.

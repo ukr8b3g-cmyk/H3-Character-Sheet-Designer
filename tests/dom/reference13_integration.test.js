@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-import {DEFAULT_JSON, effectiveViews, parseReference13State} from '../../web/reference13_state.js';
+import {DEFAULT_JSON, EXPRESSION_VIEW_IDS, effectiveViews, parseReference13State} from '../../web/reference13_state.js';
 import {installDesigner} from '../../web/reference13_integration.js';
 let JSDOM;
 try { ({JSDOM} = await import(process.env.H3_JSDOM_PATH ? pathToFileURL(process.env.H3_JSDOM_PATH).href : 'jsdom')); } catch {}
@@ -43,11 +43,17 @@ function setup() {
   function resolve(index = requests.length - 1, prompt = 'current preview') {
     const request = requests[index], state = parseReference13State(JSON.parse(request.options.body).state_json, undefined,
       request.path.includes('/minimax_image/'), !request.path.includes('/reference13/'));
-    const views = effectiveViews(state);
+    const views = state.expression_sheet ? EXPRESSION_VIEW_IDS : effectiveViews(state);
     const layout = {canvas: [2208, 1280], feet_y: null,
       panels: views.map((id, i) => ({id, rect: [i / views.length, 0, 1 / views.length, 1]}))};
+    const guide_geometry = state.expression_sheet ? {canvas: layout.canvas, frame_width: 0, panel_fill: '#f2f2f2',
+      panels: views.map((id, i) => {
+        const left = (i % 3) * 736, top = Math.floor(i / 3) * 640;
+        return {id, blank: true, bounds: [left, top, left + 736, top + 640]};
+      })} : undefined;
     request.resolve({ok: true, json: async () => ({width: 2208, height: 1280, max_resolution: 16384,
-      layout, semantic_layout: layout, prompt})});
+      layout, semantic_layout: layout, guide_geometry, prompt,
+      default_view_prompts: Object.fromEntries(views.map(v => [v, 'Default ' + v]))})});
   }
   return {node, app, api, requests, transactions, resolve,
     locale(value) { locale = value; settings.dispatchEvent(new Event('Comfy.Locale.change')); },
@@ -137,7 +143,7 @@ domTest('P-H3 v1.5.2 has object-only clothing cards, screen directions and a ded
   const root = record.ui.root;
   assert.equal(root.querySelectorAll('[data-clothing-mode]').length, 0);
   assert.equal(root.dataset.nodeVersion, 'v1.5.2');
-  assert.equal(root.querySelector('.h3-node-version').textContent, 'v1.5.2');
+  assert.equal(root.querySelector('.h3-node-version').textContent, 'P-H3 · v1.5.2');
   const profile = root.querySelector('[data-view="face_right"]');
   assert.equal(profile.querySelector('.h3-card-label').textContent, 'Left-facing profile');
   assert.equal(profile.querySelector('[data-artwork]').style.transform, '');
@@ -149,11 +155,85 @@ domTest('P-H3 v1.5.2 has object-only clothing cards, screen directions and a ded
   assert.equal(root.querySelector('[data-preview-stage]').hidden, true);
   root.querySelector('[data-tab="layout"]').click();
   assert.equal(root.querySelectorAll('[data-reference-role]').length, 3);
-  assert.equal(root.querySelectorAll('img[src$="_garment.png"]').length, 2);
+  assert.equal(root.querySelectorAll('[data-view] img[src$="_garment.png"]').length, 2);
+  assert.equal(root.querySelectorAll('.h3-prompt-choice img[src$="_garment.png"]').length, 2);
   record.controller.preset('detail'); h.resolve();
   assert.equal(JSON.parse(item.serialize().widgets_values[0]).clothing_mode, 'garment');
   assert(h.requests.every(r => r.path === '/h3_character_sheet_designer/v1_3/preview'));
 });
+
+domTest('MiniMax expression sheet survives save and reload independently of view presets', async t => {
+  const h = setup(); t.after(h.cleanup);
+  const {item, original, record} = h.node('MiniMaxH3ImageCharacterSheetDesigner'), root = record.ui.root;
+  const toggle = root.querySelector('[data-expression-sheet]');
+  const preset = root.querySelector('.h3-preset-row select');
+  assert(toggle);
+  const height = root.querySelector('[data-field="manual_height"]').closest('.h3-number-field');
+  assert.equal(height.nextElementSibling, toggle);
+  const tip = toggle.title;
+  assert.match(tip, /Neutral.*Joyful smile.*Surprise/);
+  assert.match(tip, /Anger.*Sobbing.*Scared & Trembling/);
+  assert(!toggle.textContent.includes('Scared & Trembling'));
+  assert.equal(h.node('H3CharacterSheetDesignerReference13').record.ui.root.querySelector('[data-expression-sheet]'), null);
+
+  toggle.click();
+  choose(preset, 'detail');
+  h.resolve();
+  await tick();
+  assert.equal(root.querySelector('.h3-sheet').childElementCount, 6);
+  assert.equal(toggle.getAttribute('aria-pressed'), 'true');
+  assert.equal(toggle.title, tip);
+  const saved = item.serialize().widgets_values[0];
+  assert.equal(JSON.parse(saved).views.length, 13);
+  assert.equal(JSON.parse(saved).expression_sheet, true);
+  original.value = DEFAULT_JSON;
+  item.onConfigure();
+  assert.equal(toggle.getAttribute('aria-pressed'), 'false');
+  original.value = saved;
+  item.onConfigure();
+  assert.equal(toggle.getAttribute('aria-pressed'), 'true');
+
+  toggle.click();
+  h.resolve();
+  await tick();
+  assert.equal(root.querySelector('.h3-sheet').childElementCount, 13);
+  assert.equal(preset.value, 'detail');
+  assert.equal(toggle.title, tip);
+  assert(!Object.hasOwn(JSON.parse(item.serialize().widgets_values[0]), 'expression_sheet'));
+});
+
+for (const nodeType of ['MiniMaxH3ImageCharacterSheetDesigner', 'H3CharacterSheetDesignerReferenceV13']) {
+  domTest(nodeType + ' edits and resets numbered expression slots across locale and mode changes', async t => {
+    const h = setup(); t.after(h.cleanup);
+    const {record, item, original} = h.node(nodeType), root = record.ui.root;
+    const panel = root.querySelector('.h3-view-prompts'), picker = panel.querySelector('.h3-prompt-picker');
+    const input = panel.querySelector('textarea'), [apply, reset] = panel.querySelectorAll('button');
+    const toggle = root.querySelector('[data-expression-sheet]');
+    toggle.click(); h.resolve(); await tick();
+    root.querySelector('[data-tab="prompts"]').click();
+    assert(!panel.hidden && !panel.querySelector('details').hidden && !input.disabled);
+    assert.deepEqual([...picker.querySelectorAll('input')].map(o => o.value), EXPRESSION_VIEW_IDS);
+    assert.match(picker.querySelector('input[value="expression_confusion"]').getAttribute('aria-label'), /6.*Scared & Trembling.*lower right/);
+    picker.querySelector('[value="expression_joy"]').closest('label').click();
+    assert.match(picker.querySelector(':checked').getAttribute('aria-label'), /2.*Joyful smile.*upper center/);
+    input.value = 'A quiet smile'; input.dispatchEvent(new Event('input'));
+    h.locale('ja');
+    assert.match(picker.querySelector(':checked').getAttribute('aria-label'), /2.*笑顔.*上段中央/);
+    assert.match(picker.querySelector('[value="expression_confusion"]').getAttribute('aria-label'), /6.*恐怖・震え.*下段右/);
+    assert.equal(root.querySelector('[data-panel="expression_joy"] .h3-expression-name').textContent, '2. 笑顔');
+    assert.equal(root.querySelectorAll('.h3-expression-panel svg').length, 6);
+    assert.equal(input.value, 'A quiet smile');
+    apply.click(); h.resolve(); await tick();
+    const saved = item.serialize().widgets_values[0];
+    toggle.click(); h.resolve(); await tick();
+    assert.equal(picker.querySelectorAll('input').length, 13);
+    original.value = saved; item.onConfigure(); h.resolve(); await tick();
+    picker.querySelector('[value="expression_joy"]').click(); assert.equal(input.value, 'A quiet smile');
+    reset.click(); h.resolve(); await tick();
+    assert.equal(input.value, 'Default expression_joy');
+    assert(!JSON.parse(original.value).view_prompts);
+  });
+}
 
 domTest('No clothing preserves 13 saved views and validates 11 preview panels in both current nodes', async t => {
   const h = setup(); t.after(h.cleanup);
